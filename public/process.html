@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, viewport-fit=cover"
+    />
+    <meta name="theme-color" content="#0f1720" />
+    <meta
+      name="description"
+      content="Seu áudio está sendo processado - Audio FX"
+    />
+    <title>Processando - Audio FX</title>
+    <link rel="stylesheet" href="/process.css" />
+  </head>
+  <body>
+    <!-- Header removido do estilo antigo; página foca apenas no processamento -->
+
+    <main class="fxproc-main">
+      <div class="fxproc-wrap">
+        <!-- Back Button -->
+        <div class="fxproc-back">
+          <a
+            href="/"
+            class="fxproc-btn-back"
+            id="backBtn"
+            aria-label="Voltar para início"
+            >← Voltar</a
+          >
+        </div>
+
+        <!-- Music Card -->
+        <div class="fxproc-card">
+          <!-- Album Art -->
+          <div class="fxproc-art">
+            <img
+              id="thumbnail"
+              alt="Capa do áudio"
+              class="fxproc-thumb loading-placeholder"
+              loading="lazy"
+              width="50%"
+              height="50%"
+            />
+          </div>
+
+          <!-- Music Info -->
+          <div class="fxproc-info">
+            <h2 id="title" class="fxproc-title">Processando...</h2>
+
+            <p id="statusText" class="fxproc-status">
+              <span class="fxproc-status-label">Status:</span>
+              <span class="fxproc-status-value">Aguardando...</span>
+            </p>
+
+            <!-- Progress Bar -->
+            <div class="fxproc-bar">
+              <div id="barInner" class="fxproc-bar-inner"></div>
+            </div>
+
+            <!-- Controls -->
+            <div class="fxproc-controls">
+              <audio
+                id="audioPreview"
+                controls
+                aria-label="Pré-visualização de áudio"
+              ></audio>
+
+              <a
+                id="downloadLink"
+                class="fxproc-btn-download hidden"
+                download
+                aria-label="Download do áudio processado"
+              >
+                ⬇️ Download MP3
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Error Message -->
+        <div
+          id="errorMsg"
+          class="fxproc-alert fxproc-alert-error hidden"
+          role="alert"
+          aria-live="polite"
+        ></div>
+      </div>
+    </main>
+
+    <script>
+      // Remover animação de transição quando página carrega (volta do back button)
+      window.addEventListener("pageshow", (e) => {
+        const loadingScreen = document.querySelector(".transition-loading");
+        if (loadingScreen) {
+          loadingScreen.remove();
+        }
+      });
+    </script>
+
+    <script src="/process.js"></script>
+  </body>
+</html>

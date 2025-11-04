@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Teste de URLs - Batch Processor</title>
+    <style>
+      body {
+        font-family: monospace;
+        background: #0f1720;
+        color: #e8e8e8;
+        padding: 20px;
+        max-width: 800px;
+        margin: 0 auto;
+      }
+      .test-case {
+        background: #1a2332;
+        padding: 15px;
+        margin: 10px 0;
+        border-radius: 5px;
+        border-left: 4px solid #2196f3;
+      }
+      .test-case.pass {
+        border-left-color: #4caf50;
+      }
+      .test-case.fail {
+        border-left-color: #f44336;
+      }
+      .input {
+        background: #0f1720;
+        padding: 8px;
+        margin: 5px 0;
+        border-radius: 3px;
+        word-break: break-all;
+        color: #90caf9;
+      }
+      .output {
+        background: #0f1720;
+        padding: 8px;
+        margin: 5px 0;
+        border-radius: 3px;
+        word-break: break-all;
+        color: #81c784;
+      }
+      .status {
+        margin-top: 10px;
+        font-weight: bold;
+      }
+      .pass .status {
+        color: #4caf50;
+      }
+      .fail .status {
+        color: #f44336;
+      }
+      h1 {
+        color: #64b5f6;
+      }
+      h2 {
+        color: #90caf9;
+        margin-top: 30px;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>🧪 Teste de Validação de URLs - Batch Processor</h1>
+
+    <h2>Suas 5 URLs para testar:</h2>
+    <div id="results"></div>
+
+    <script>
+      // Função cleanUrl (copiada do batch.js)
+      function cleanUrl(url) {
+        return url
+          .trim()
+          .replace(/[\[\]]/g, "")
+          .replace(/[<>]/g, "")
+          .trim();
+      }
+
+      // Função isValidYouTubeUrl (copiada do batch.js)
+      function isValidYouTubeUrl(url) {
+        try {
+          const cleanedUrl = cleanUrl(url);
+          const urlObj = new URL(cleanedUrl);
+          return (
+            urlObj.hostname.includes("youtube.com") ||
+            urlObj.hostname.includes("youtu.be")
+          );
+        } catch (e) {
+          return false;
+        }
+      }
+
+      const testUrls = [
+        "[https://www.youtube.com/watch?v=ue3sDQcBKOI](https://www.youtube.com/watch?v=ue3sDQcBKOI)",
+        "[https://www.youtube.com/watch?v=iU-OrYPqxCc](https://www.youtube.com/watch?v=iU-OrYPqxCc)",
+        "[https://www.youtube.com/watch?v=K5Ehvb-gMAc](https://www.youtube.com/watch?v=K5Ehvb-gMAc)",
+        "[https://www.youtube.com/watch?v=Z94QdxVJKqs](https://www.youtube.com/watch?v=Z94QdxVJKqs)",
+        "[https://www.youtube.com/watch?v=YZFxgqR9ovU](https://www.youtube.com/watch?v=YZFxgqR9ovU)",
+      ];
+
+      let passed = 0;
+      let failed = 0;
+
+      const html = testUrls
+        .map((url, index) => {
+          const cleaned = cleanUrl(url);
+          const isValid = isValidYouTubeUrl(url);
+
+          if (isValid) {
+            passed++;
+          } else {
+            failed++;
+          }
+
+          return `
+          <div class="test-case ${isValid ? "pass" : "fail"}">
+            <strong>#${index + 1}</strong>
+            <div class="input"><strong>Input:</strong> ${url}</div>
+            <div class="output"><strong>Limpo:</strong> ${cleaned}</div>
+            <div class="status">${isValid ? "✅ VÁLIDA" : "❌ INVÁLIDA"}</div>
+          </div>
+        `;
+        })
+        .join("");
+
+      document.getElementById("results").innerHTML =
+        html +
+        `
+      <div style="margin-top: 30px; padding: 15px; background: #1a2332; border-radius: 5px;">
+        <strong>Resumo:</strong><br>
+        ✅ Passadas: ${passed}/${testUrls.length}<br>
+        ❌ Falhadas: ${failed}/${testUrls.length}
+      </div>
+    `;
+    </script>
+  </body>
+</html>

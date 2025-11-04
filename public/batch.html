@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, viewport-fit=cover"
+    />
+    <meta name="theme-color" content="#0f1720" />
+    <meta
+      name="description"
+      content="Processamento em massa de múltiplas músicas do YouTube"
+    />
+    <title>Processamento em Massa - Audio FX</title>
+    <style>
+      :root {
+        --bg: 222 40% 4%;
+        --panel: 222 40% 8%;
+        --txt: 220 15% 92%;
+      }
+      body {
+        margin: 0;
+        background: hsl(var(--bg));
+        color: hsl(var(--txt));
+      }
+      .container {
+        width: min(96vw, 1200px);
+        margin-inline: auto;
+        padding-inline: 12px;
+      }
+    </style>
+    <link rel="stylesheet" href="/styles.css" />
+    <style>
+      .batch-container {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 24px;
+        margin-top: 24px;
+      }
+
+      @media (max-width: 768px) {
+        .batch-container {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      .batch-form {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+      }
+
+      .url-input-group {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 8px;
+      }
+
+      .url-input-group input {
+        flex: 1;
+      }
+
+      .url-input-group button {
+        padding: 8px 16px;
+        background: hsl(210, 85%, 50%);
+        color: white;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        font-weight: 500;
+        transition: background 0.2s;
+      }
+
+      .url-input-group button:hover {
+        background: hsl(210, 85%, 45%);
+      }
+
+      .url-input-group button:disabled {
+        background: hsl(210, 85%, 30%);
+        cursor: not-allowed;
+      }
+
+      .urls-list {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        max-height: 200px;
+        overflow-y: auto;
+        padding: 12px;
+        background: hsl(var(--panel));
+        border-radius: 6px;
+        border: 1px solid hsl(220, 20%, 20%);
+      }
+
+      .url-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px;
+        background: hsl(220, 20%, 12%);
+        border-radius: 4px;
+        font-size: 0.9rem;
+      }
+
+      .url-item button {
+        margin-left: auto;
+        background: hsl(0, 85%, 50%);
+        color: white;
+        border: none;
+        width: 24px;
+        height: 24px;
+        border-radius: 3px;
+        cursor: pointer;
+        font-size: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .url-item button:hover {
+        background: hsl(0, 85%, 45%);
+      }
+
+      .batch-actions {
+        display: flex;
+        gap: 8px;
+      }
+
+      .batch-actions button {
+        flex: 1;
+        padding: 12px;
+        border: none;
+        border-radius: 6px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+
+      .btn-start {
+        background: hsl(120, 85%, 50%);
+        color: white;
+      }
+
+      .btn-start:hover:not(:disabled) {
+        background: hsl(120, 85%, 45%);
+      }
+
+      .btn-start:disabled {
+        background: hsl(120, 85%, 30%);
+        cursor: not-allowed;
+      }
+
+      .btn-clear {
+        background: hsl(0, 85%, 50%);
+        color: white;
+      }
+
+      .btn-clear:hover {
+        background: hsl(0, 85%, 45%);
+      }
+
+      .batch-stats {
+        padding: 12px;
+        background: hsl(var(--panel));
+        border-radius: 6px;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+        font-size: 0.9rem;
+      }
+
+      .stat-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      .stat-label {
+        color: hsl(220, 15%, 70%);
+      }
+
+      .stat-value {
+        font-weight: 600;
+        color: hsl(210, 85%, 60%);
+      }
+
+      .jobs-queue {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }
+
+      .job-card {
+        padding: 12px;
+        background: hsl(var(--panel));
+        border-radius: 6px;
+        border-left: 4px solid hsl(210, 85%, 50%);
+        transition: all 0.2s;
+      }
+
+      .job-card.done {
+        border-left-color: hsl(120, 85%, 50%);
+      }
+
+      .job-card.error {
+        border-left-color: hsl(0, 85%, 50%);
+      }
+
+      .job-card.processing {
+        border-left-color: hsl(45, 85%, 50%);
+      }
+
+      .job-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: start;
+        margin-bottom: 8px;
+      }
+
+      .job-title {
+        font-weight: 600;
+        margin: 0;
+        font-size: 0.95rem;
+      }
+
+      .job-status {
+        font-size: 0.8rem;
+        padding: 4px 8px;
+        border-radius: 3px;
+        background: hsl(210, 70%, 40%);
+        color: white;
+      }
+
+      .job-status.done {
+        background: hsl(120, 70%, 40%);
+      }
+
+      .job-status.error {
+        background: hsl(0, 70%, 40%);
+      }
+
+      .job-status.processing {
+        background: hsl(45, 70%, 40%);
+      }
+
+      .job-progress {
+        width: 100%;
+        height: 4px;
+        background: hsl(220, 20%, 20%);
+        border-radius: 2px;
+        overflow: hidden;
+        margin-bottom: 8px;
+      }
+
+      .job-progress-bar {
+        height: 100%;
+        background: linear-gradient(
+          90deg,
+          hsl(210, 85%, 50%),
+          hsl(180, 85%, 50%)
+        );
+        width: 0%;
+        transition: width 0.3s;
+      }
+
+      .job-progress.done .job-progress-bar {
+        background: linear-gradient(
+          90deg,
+          hsl(120, 85%, 50%),
+          hsl(140, 85%, 50%)
+        );
+      }
+
+      .job-info {
+        font-size: 0.85rem;
+        color: hsl(220, 15%, 70%);
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+      }
+
+      .job-footer {
+        margin-top: 8px;
+        display: flex;
+        gap: 8px;
+      }
+
+      .job-footer button {
+        padding: 6px 12px;
+        font-size: 0.8rem;
+        border: none;
+        border-radius: 3px;
+        cursor: pointer;
+        background: hsl(210, 85%, 50%);
+        color: white;
+        transition: background 0.2s;
+      }
+
+      .job-footer button:hover {
+        background: hsl(210, 85%, 45%);
+      }
+
+      .job-footer button:disabled {
+        background: hsl(210, 85%, 30%);
+        cursor: not-allowed;
+      }
+
+      .empty-state {
+        text-align: center;
+        padding: 32px 12px;
+        color: hsl(220, 15%, 50%);
+      }
+
+      .empty-state-icon {
+        font-size: 3rem;
+        margin-bottom: 12px;
+      }
+
+      .back-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        margin-bottom: 24px;
+        color: hsl(210, 85%, 60%);
+        text-decoration: none;
+        font-size: 0.9rem;
+        transition: gap 0.2s;
+      }
+
+      .back-link:hover {
+        gap: 10px;
+      }
+
+      .form-hint {
+        font-size: 0.8rem;
+        color: hsl(220, 15%, 60%);
+        margin-top: 4px;
+      }
+
+      .url-count {
+        font-size: 0.85rem;
+        color: hsl(220, 15%, 70%);
+        margin-top: 4px;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Header / Navbar -->
+    <header class="nav">
+      <div class="container nav-inner">
+        <a class="brand" href="/" aria-label="Audio FX home">
+          <span class="dot" aria-hidden="true"></span>
+          <span>Audio&nbsp;FX</span>
+        </a>
+        <nav class="nav-links" id="navLinks" aria-label="Principal">
+          <a href="/#como">Como funciona</a>
+          <a href="/#presets">Presets</a>
+          <a href="/#sobre">Sobre</a>
+        </nav>
+        <div class="nav-actions">
+          <button
+            class="icon-btn"
+            id="themeToggle"
+            aria-label="Alternar tema"
+          ></button>
+          <button
+            class="icon-btn nav-toggle"
+            id="navToggle"
+            aria-label="Abrir menu"
+            aria-expanded="false"
+          ></button>
+        </div>
+      </div>
+    </header>
+
+    <main class="main-container">
+      <div class="container page-wrapper">
+        <a href="/" class="back-link">← Voltar</a>
+
+        <!-- Hero -->
+        <section class="hero" aria-labelledby="batch-title">
+          <div class="hero-inner">
+            <h1 id="batch-title">Processamento em massa</h1>
+            <p class="lead">
+              Adicione até 10 links do YouTube e processe todos simultaneamente.
+              O site continua rápido enquanto a fila é processada em background.
+            </p>
+          </div>
+        </section>
+
+        <!-- Main Batch Card -->
+        <div class="card-primary">
+          <div class="batch-container">
+            <!-- Formulário -->
+            <div class="batch-form">
+              <div class="form-field">
+                <label for="batchPreset" class="form-label"
+                  >Efeito (Preset)</label
+                >
+                <select
+                  id="batchPreset"
+                  class="form-select"
+                  aria-label="Selecione um efeito"
+                >
+                  <option value="SLOWED">🐢 SLOWED (0.88x velocidade)</option>
+                  <option value="SPEED_125">
+                    🐇 SPEED UP (1.25x velocidade)
+                  </option>
+                  <option value="ULTRA_SLOWED">
+                    🌀 ULTRA_SLOWED (10% velocidade + reverb)
+                  </option>
+                  <option value="MUFFLED_SLOWED">
+                    🔊 MUFFLED_SLOWED (80% + passa-baixa 300Hz)
+                  </option>
+                  <option value="MUFFLED_SPEED">
+                    ⚡ MUFFLED_SPEED (125% + passa-baixa 500Hz)
+                  </option>
+                  <option value="DAYCORE">
+                    ☀️ DAYCORE (80% + pitch -4 semitons)
+                  </option>
+                  <option value="NIGHTCORE">
+                    🌙 NIGHTCORE (135% + pitch +5-6 semitons)
+                  </option>
+                  <option value="8D">
+                    🎧 8D (reverb + panorama automático)
+                  </option>
+                </select>
+              </div>
+
+              <div class="form-field">
+                <label for="batchUrl" class="form-label">YouTube URL</label>
+                <div class="url-input-group">
+                  <input
+                    id="batchUrl"
+                    class="form-input"
+                    type="url"
+                    placeholder="https://youtu.be/..."
+                    aria-label="URL do vídeo YouTube"
+                  />
+                  <button
+                    id="addUrlBtn"
+                    type="button"
+                    aria-label="Adicionar URL"
+                  >
+                    Adicionar
+                  </button>
+                </div>
+                <small class="form-hint"
+                  >Ou cole múltiplos links (um por linha) e clique em
+                  "Adicionar"</small
+                >
+                <div class="url-count">
+                  URLs adicionadas: <span id="urlCount">0</span>/10
+                </div>
+              </div>
+
+              <textarea
+                id="batchUrlsMulti"
+                class="form-input"
+                placeholder="Cole múltiplos links aqui (um por linha)..."
+                style="
+                  min-height: 100px;
+                  font-family: monospace;
+                  font-size: 0.85rem;
+                "
+                aria-label="Múltiplos URLs"
+              ></textarea>
+
+              <div class="batch-stats">
+                <div class="stat-item">
+                  <span class="stat-label">Total na fila:</span>
+                  <span class="stat-value" id="statsTotal">0</span>
+                </div>
+                <div class="stat-item">
+                  <span class="stat-label">Processando:</span>
+                  <span class="stat-value" id="statsProcessing">0</span>
+                </div>
+                <div class="stat-item">
+                  <span class="stat-label">Concluídos:</span>
+                  <span class="stat-value" id="statsDone">0</span>
+                </div>
+                <div class="stat-item">
+                  <span class="stat-label">Erros:</span>
+                  <span class="stat-value" id="statsError">0</span>
+                </div>
+              </div>
+
+              <div class="batch-actions">
+                <button id="batchStartBtn" class="btn-start" type="button">
+                  Processar tudo (máx 10)
+                </button>
+                <button id="batchClearBtn" class="btn-clear" type="button">
+                  Limpar
+                </button>
+              </div>
+
+              <div
+                id="batchErrorMsg"
+                class="alert alert-error hidden"
+                role="alert"
+                aria-live="polite"
+              ></div>
+            </div>
+
+            <!-- Fila de Jobs -->
+            <div>
+              <h3 style="margin-top: 0; margin-bottom: 12px">
+                Fila de processamento
+              </h3>
+              <div class="jobs-queue" id="jobsQueue">
+                <div class="empty-state">
+                  <div class="empty-state-icon">📭</div>
+                  <p>Nenhum job adicionado</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <script src="/batch.js"></script>
+  </body>
+</html>

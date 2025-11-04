@@ -1,0 +1,15 @@
+version: "3.8"
+
+services:
+  app:
+    build: .
+    container_name: ytfx-processor
+    ports:
+      - "8080:8080"
+    environment:
+      - NODE_ENV=production
+      - PORT=8080
+    volumes:
+      - ./storage/out:/app/storage/out
+      - ./storage/meta:/app/storage/meta
+    restart: unless-stopped
