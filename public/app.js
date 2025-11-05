@@ -26,7 +26,8 @@ function isValidYouTubeUrl(url) {
     const urlObj = new URL(url);
     return (
       urlObj.hostname.includes("youtube.com") ||
-      urlObj.hostname.includes("youtu.be")
+      urlObj.hostname.includes("youtu.be") ||
+      urlObj.hostname.includes("music.youtube.com")
     );
   } catch (e) {
     return false;
