@@ -1,25 +1,30 @@
 /* ========================================
-   Modern responsive UI (Vanilla CSS)
-   - Fluid type, container queries, glassmorphism
-   - Dark mode default with optional light
-   - Reduced motion friendly
-   ======================================== */
+  Modern SaaS UI (Vanilla CSS)
+  - Neomodern minimal, calm & elegant (Linear/Vercel/Notion vibes)
+  - Fluid type, container queries, subtle glassmorphism
+  - Dark mode default with optional light
+  - Reduced motion friendly
+  ======================================== */
 
 /* Design tokens (HSL) */
 :root {
   color-scheme: dark light;
-  --bg: 222 40% 4%;
-  --panel: 222 40% 8%;
+  /* Base palette */
+  --bg: 222 40% 4%; /* gray-900 like */
+  --panel: 222 40% 7.5%; /* slightly lighter for panels */
   --surface: 222 40% 11%;
-  --txt: 220 15% 92%;
+  --txt: 220 15% 92%; /* off-white */
   --muted: 220 10% 65%;
-  --primary: 190 90% 52%;
-  --accent: 270 95% 65%;
+  /* Brand accents (exact to identity) */
+  --cyan: 191 100% 50%; /* #00E0FF */
+  --violet: 255 100% 69%; /* ~#7B61FF */
+  --primary: var(--cyan);
+  --accent: var(--violet);
   --ok: 150 70% 45%;
   --warn: 40 95% 55%;
   --danger: 0 85% 60%;
   --glass: 0.6; /* glass backdrop-opacity */
-  --ring: 190 90% 52%;
+  --ring: var(--cyan);
 
   /* Spacing scale (px) */
   --s-2: 2px;
@@ -38,15 +43,15 @@
   --fs-sm: clamp(0.85rem, 1vw, 0.975rem);
   --fs-h3: clamp(1.125rem, 2vw, 1.35rem);
   --fs-h2: clamp(1.25rem, 2.5vw, 2rem);
-  --fs-h1: clamp(1.6rem, 4vw, 2.4rem);
+  --fs-h1: clamp(1.8rem, 4vw, 2.6rem);
 
   /* Layout width */
   --container: min(96vw, 1200px);
-  --radius: 12px;
-  --radius-lg: 16px;
+  --radius: 22px; /* larger radii for calm UI */
+  --radius-lg: 28px;
   --border: 1px solid hsl(var(--txt) / 0.08);
-  --shadow: 0 10px 35px hsl(var(--accent) / 0.08);
-  --transition: 160ms ease;
+  --shadow: 0 20px 60px hsl(var(--accent) / 0.1), 0 4px 18px hsl(0 0% 0% / 0.25);
+  --transition: 180ms ease;
 }
 
 /* Light theme override */
@@ -56,7 +61,7 @@
   --surface: 222 20% 96.5%;
   --txt: 222 24% 12%;
   --muted: 222 8% 44%;
-  --shadow: 0 10px 30px hsl(222 30% 40% / 0.15);
+  --shadow: 0 24px 60px hsl(222 30% 40% / 0.16);
 }
 
 * {
@@ -67,22 +72,13 @@ html {
 }
 body {
   margin: 0;
-  font-family: Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto,
-    Ubuntu, Cantarell, Noto Sans, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+  font-family: "Inter", "General Sans", "Satoshi", ui-sans-serif, system-ui,
+    -apple-system, "Segoe UI", Roboto, Ubuntu, Cantarell, "Noto Sans", Arial,
+    "Apple Color Emoji", "Segoe UI Emoji";
   font-size: var(--fs-body);
   line-height: 1.55;
   color: hsl(var(--txt));
-  background: radial-gradient(
-      1200px 600px at 20% -10%,
-      hsl(var(--accent) / 0.15),
-      transparent 40%
-    ),
-    radial-gradient(
-      1000px 700px at 110% 10%,
-      hsl(var(--primary) / 0.18),
-      transparent 45%
-    ),
-    hsl(var(--bg));
+  background: hsl(var(--bg));
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
 }
@@ -279,17 +275,17 @@ p {
   background: linear-gradient(135deg, hsl(var(--accent)), hsl(var(--primary)));
   color: white;
   border: none;
-  padding: 14px 16px;
-  border-radius: 12px;
+  padding: 14px 18px;
+  border-radius: 22px;
   font-weight: 600;
   cursor: pointer;
   transition: transform var(--transition), box-shadow var(--transition),
     opacity var(--transition);
-  box-shadow: 0 8px 22px hsl(var(--accent) / 0.25);
+  box-shadow: 0 16px 44px hsl(var(--accent) / 0.22);
 }
 .btn-primary:hover:not(:disabled) {
   transform: translateY(-2px);
-  box-shadow: 0 10px 28px hsl(var(--accent) / 0.35);
+  box-shadow: 0 24px 60px hsl(var(--accent) / 0.28);
 }
 .btn-primary:disabled {
   opacity: 0.6;
@@ -306,22 +302,22 @@ p {
   justify-content: center;
   gap: 10px;
   padding: 12px 14px;
-  border-radius: 12px;
-  border: 1px solid hsl(var(--accent));
-  background: hsl(var(--accent) / 0.15);
+  border-radius: 18px;
+  border: 1px solid hsl(var(--accent) / 0.8);
+  background: hsl(var(--accent) / 0.12);
   color: hsl(var(--accent));
   text-decoration: none;
   font-weight: 600;
   transition: background var(--transition), transform var(--transition);
 }
 .btn-secondary:hover {
-  background: hsl(var(--accent) / 0.25);
+  background: hsl(var(--accent) / 0.2);
   transform: translateY(-1px);
 }
 
 /* Form card */
 .card-primary {
-  background: hsl(var(--panel) / 0.75);
+  background: hsl(var(--panel) / 0.7);
   backdrop-filter: blur(10px);
   border: var(--border);
   border-radius: var(--radius-lg);
@@ -345,7 +341,7 @@ p {
 .form-input,
 .form-select {
   padding: 12px 14px;
-  border-radius: 12px;
+  border-radius: 16px;
   border: var(--border);
   background: hsl(var(--surface) / 0.9);
   color: hsl(var(--txt));
@@ -396,7 +392,7 @@ p {
   padding: var(--s-16);
   border-radius: var(--radius);
   border: var(--border);
-  background: hsl(var(--panel) / 0.75);
+  background: hsl(var(--panel) / 0.7);
   backdrop-filter: blur(8px);
   transition: transform var(--transition), background var(--transition),
     border-color var(--transition), box-shadow var(--transition);
@@ -416,10 +412,10 @@ p {
 .card .icon {
   width: 36px;
   height: 36px;
-  border-radius: 10px;
+  border-radius: 12px;
   display: grid;
   place-items: center;
-  background: hsl(var(--accent) / 0.15);
+  background: hsl(var(--accent) / 0.12);
   border: 1px solid hsl(var(--accent) / 0.5);
   color: hsl(var(--accent));
 }
@@ -462,7 +458,7 @@ p {
   padding: var(--s-16);
   border-radius: var(--radius);
   border: var(--border);
-  background: hsl(var(--surface) / 0.7);
+  background: hsl(var(--surface) / 0.6);
   display: grid;
   gap: var(--s-8);
 }
@@ -483,7 +479,7 @@ p {
 
 /* Progress & audio / result card */
 .music-card {
-  background: hsl(var(--panel) / 0.99);
+  background: hsl(var(--panel) / 0.9);
   border-radius: var(--radius-lg);
   border: var(--border);
   box-shadow: var(--shadow);
@@ -596,8 +592,8 @@ audio {
   aspect-ratio: 1;
   margin: var(--s-24) auto var(--s-24);
   position: relative;
-  border: 2px solid hsl(var(--accent) / 0.4);
-  border-radius: 20px;
+  border: 2px solid hsl(var(--accent) / 0.35);
+  border-radius: 24px;
   background: hsl(var(--surface));
   overflow: hidden;
   box-shadow: 0 20px 60px hsl(var(--accent) / 0.25),
@@ -636,17 +632,17 @@ audio {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  background: hsl(var(--accent) / 0.15);
+  background: hsl(var(--accent) / 0.12);
   color: hsl(var(--accent));
   padding: 10px 12px;
-  border-radius: 10px;
+  border-radius: 14px;
   text-decoration: none;
   font-weight: 600;
-  border: 1px solid hsl(var(--accent));
+  border: 1px solid hsl(var(--accent) / 0.8);
   transition: background var(--transition), transform var(--transition);
 }
 .btn-back:hover {
-  background: hsl(var(--accent) / 0.25);
+  background: hsl(var(--accent) / 0.2);
   transform: translateY(-1px);
 }
 
@@ -769,4 +765,160 @@ audio {
 ::selection {
   background: hsl(var(--accent));
   color: white;
+}
+
+/* ============= Landing Wave Background ============= */
+.wave-hero {
+  position: relative;
+  overflow: hidden;
+}
+.wave-hero .wave-bg {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  opacity: 0.25;
+}
+.wave-hero .wave-bg svg {
+  width: 140%;
+  min-width: 1200px;
+  height: 100%;
+  transform: translateX(-10%);
+}
+.wave-hero .wave-gradient-stop-1 {
+  stop-color: hsl(var(--accent));
+}
+.wave-hero .wave-gradient-stop-2 {
+  stop-color: hsl(var(--primary));
+}
+.wave-hero .wave-path {
+  filter: blur(1px);
+  animation: waveSlide 18s ease-in-out infinite alternate;
+}
+@keyframes waveSlide {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-6%);
+  }
+}
+
+/* ============= Pricing ============= */
+.pricing {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: var(--s-16);
+}
+.pricing-card {
+  background: hsl(var(--panel) / 0.7);
+  border: var(--border);
+  border-radius: var(--radius-lg);
+  padding: var(--s-24);
+  box-shadow: var(--shadow);
+  display: grid;
+  gap: var(--s-12);
+}
+.pricing-card .price {
+  font-size: clamp(1.6rem, 3vw, 2rem);
+  font-weight: 800;
+}
+.pricing-card ul {
+  margin: 0;
+  padding-left: 1.2em;
+  color: hsl(var(--muted));
+}
+.pricing-card .cta {
+  margin-top: var(--s-8);
+}
+
+/* ============= Dashboard layout ============= */
+.dashboard {
+  container-type: inline-size;
+}
+.dash-grid {
+  display: grid;
+  gap: var(--s-16);
+  grid-template-columns: 1.1fr 0.9fr 1fr; /* URL/Input | Presets | Queue */
+}
+@media (max-width: 1100px) {
+  .dash-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+@media (max-width: 760px) {
+  .dash-grid {
+    grid-template-columns: 1fr;
+  }
+}
+.dash-card {
+  background: hsl(var(--panel) / 0.7);
+  border: var(--border);
+  border-radius: var(--radius);
+  padding: var(--s-16);
+  box-shadow: var(--shadow);
+}
+.dash-title {
+  margin: 0 0 var(--s-8);
+}
+.dash-section {
+  display: grid;
+  gap: var(--s-12);
+}
+.dash-controls {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: var(--s-8);
+}
+.dash-dropzone {
+  border: 1px dashed hsl(var(--txt) / 0.15);
+  border-radius: 16px;
+  padding: var(--s-16);
+  text-align: center;
+  color: hsl(var(--muted));
+}
+.preset-list {
+  display: grid;
+  gap: 10px;
+}
+.preset-item {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid hsl(var(--txt) / 0.08);
+  background: hsl(var(--surface) / 0.7);
+}
+.queue {
+  display: grid;
+  gap: var(--s-8);
+}
+.queue-item {
+  border: 1px solid hsl(var(--txt) / 0.08);
+  border-radius: 12px;
+  background: hsl(var(--surface) / 0.7);
+  padding: 12px;
+}
+.queue-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+.queue-meta {
+  color: hsl(var(--muted));
+  font-size: var(--fs-sm);
+}
+.queue-bar {
+  height: 8px;
+  background: hsl(var(--txt) / 0.08);
+  border-radius: 999px;
+  overflow: hidden;
+}
+.queue-bar > span {
+  display: block;
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, hsl(var(--accent)), hsl(var(--primary)));
+  transition: width 200ms ease;
 }

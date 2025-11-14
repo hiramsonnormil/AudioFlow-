@@ -1,296 +1,1202 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
   <head>
-    <meta charset="utf-8" />
-    <meta
-      name="viewport"
-      content="width=device-width, initial-scale=1.0, viewport-fit=cover"
-    />
-    <meta name="theme-color" content="#0f1720" />
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta
       name="description"
-      content="Audio FX - Transforme sua música com efeitos incríveis"
+      content="phona — Transform audio with professional effects. Fast, elegant, intuitive."
     />
-    <title>Audio FX Processor</title>
-    <!-- Critical minimal CSS to avoid FOUC and set base colors -->
+    <meta name="theme-color" content="#0A0A0A" />
+    <title>phona — Creative Audio Processing</title>
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Tailwind Config -->
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              primary: "#7B61FF",
+              secondary: "#00E0FF",
+              dark: "#0A0A0A",
+              "dark-lighter": "#141414",
+              "dark-card": "#1A1A1A",
+              "gray-text": "#A0A0A0",
+            },
+            fontFamily: {
+              sans: ["Inter", "system-ui", "sans-serif"],
+              display: ["Satoshi", "Inter", "sans-serif"],
+            },
+            borderRadius: {
+              xl: "20px",
+              "2xl": "30px",
+            },
+          },
+        },
+      };
+    </script>
+
     <style>
-      :root {
-        --bg: 222 40% 4%;
-        --panel: 222 40% 8%;
-        --txt: 220 15% 92%;
+      @import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap");
+      @import url("https://api.fontshare.com/v2/css?f[]=satoshi@700,500,400&display=swap");
+
+      * {
+        font-family: "Inter", system-ui, sans-serif;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
       }
+
+      h1,
+      h2,
+      h3,
+      h4 {
+        font-family: "Satoshi", "Inter", sans-serif;
+        letter-spacing: -0.02em;
+      }
+
       body {
-        margin: 0;
-        background: hsl(var(--bg));
-        color: hsl(var(--txt));
+        background: #0a0a0a;
+        color: #e5e5e5;
       }
-      .container {
-        width: min(96vw, 1200px);
-        margin-inline: auto;
-        padding-inline: 12px;
+
+      .glass-card {
+        background: rgba(26, 26, 26, 0.6);
+        backdrop-filter: blur(20px);
+        border: 1px solid rgba(255, 255, 255, 0.06);
+      }
+
+      .glass-hover {
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+
+      .glass-hover:hover {
+        background: rgba(26, 26, 26, 0.8);
+        border-color: rgba(123, 97, 255, 0.3);
+        transform: translateY(-2px);
+      }
+
+      .btn-primary {
+        background: linear-gradient(135deg, #7b61ff 0%, #9d7fff 100%);
+        box-shadow: 0 4px 24px rgba(123, 97, 255, 0.3);
+        transition: all 0.3s ease;
+      }
+
+      .btn-primary:hover {
+        box-shadow: 0 8px 32px rgba(123, 97, 255, 0.5);
+        transform: translateY(-1px);
+      }
+
+      .btn-secondary {
+        background: rgba(26, 26, 26, 0.8);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        transition: all 0.3s ease;
+      }
+
+      .btn-secondary:hover {
+        background: rgba(36, 36, 36, 0.9);
+        border-color: rgba(255, 255, 255, 0.2);
+      }
+
+      @keyframes waveform {
+        0%,
+        100% {
+          transform: scaleY(0.5);
+        }
+        50% {
+          transform: scaleY(1);
+        }
+      }
+
+      .waveform-bar {
+        animation: waveform 1.2s ease-in-out infinite;
+      }
+
+      @keyframes float-slow {
+        0%,
+        100% {
+          transform: translateY(0px) rotate(0deg);
+        }
+        50% {
+          transform: translateY(-20px) rotate(2deg);
+        }
+      }
+
+      .float-element {
+        animation: float-slow 6s ease-in-out infinite;
+      }
+
+      @keyframes fade-in-up {
+        from {
+          opacity: 0;
+          transform: translateY(30px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      /* Scroll-reveal: start hidden until in-view */
+      .fade-in-up {
+        opacity: 0;
+        transform: translateY(30px);
+      }
+      .fade-in-up.in-view {
+        animation: fade-in-up 0.8s ease-out forwards;
+      }
+
+      .text-gradient-primary {
+        background: linear-gradient(135deg, #7b61ff 0%, #00e0ff 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+      }
+
+      .icon-wrapper {
+        width: 48px;
+        height: 48px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: rgba(123, 97, 255, 0.1);
+        border: 1px solid rgba(123, 97, 255, 0.2);
+        border-radius: 16px;
+        transition: all 0.3s ease;
+      }
+
+      .icon-wrapper:hover {
+        background: rgba(123, 97, 255, 0.15);
+        border-color: rgba(123, 97, 255, 0.4);
+      }
+
+      input,
+      select {
+        background: rgba(26, 26, 26, 0.8);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        transition: all 0.3s ease;
+      }
+
+      input:focus,
+      select:focus {
+        background: rgba(26, 26, 26, 1);
+        border-color: rgba(123, 97, 255, 0.5);
+        outline: none;
+        box-shadow: 0 0 0 3px rgba(123, 97, 255, 0.1);
+      }
+
+      .pricing-card {
+        position: relative;
+        overflow: hidden;
+      }
+
+      .pricing-card::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 2px;
+        background: linear-gradient(90deg, #7b61ff 0%, #00e0ff 100%);
+        opacity: 0;
+        transition: opacity 0.3s ease;
+      }
+
+      .pricing-card:hover::before {
+        opacity: 1;
       }
     </style>
-    <link rel="stylesheet" href="/styles.css" />
   </head>
-  <body>
-    <!-- Header / Navbar -->
-    <header class="nav">
-      <div class="container nav-inner">
-        <a class="brand" href="/" aria-label="Audio FX home">
-          <span class="dot" aria-hidden="true"></span>
-          <span>Audio&nbsp;FX</span>
-        </a>
-        <nav class="nav-links" id="navLinks" aria-label="Principal">
-          <a href="#como">Como funciona</a>
-          <a href="#presets">Presets</a>
-          <a href="#sobre">Sobre</a>
-        </nav>
-        <div class="nav-actions">
-          <button
-            class="icon-btn"
-            id="themeToggle"
-            aria-label="Alternar tema"
-          ></button>
-          <button
-            class="icon-btn nav-toggle"
-            id="navToggle"
-            aria-label="Abrir menu"
-            aria-expanded="false"
-          ></button>
+  <body class="scroll-smooth">
+    <!-- Navigation -->
+    <nav
+      class="fixed top-0 left-0 right-0 z-50 glass-card border-b border-white/5"
+    >
+      <div class="max-w-7xl mx-auto px-6 lg:px-8">
+        <div class="flex justify-between items-center h-16">
+          <!-- Logo -->
+          <a href="#" class="flex items-center gap-3 group">
+            <div class="icon-wrapper">
+              <svg
+                class="w-5 h-5 text-primary"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"
+                />
+              </svg>
+            </div>
+            <span class="text-xl font-semibold tracking-tight">phona</span>
+          </a>
+
+          <!-- Menu Links -->
+          <div class="hidden md:flex items-center gap-8">
+            <a
+              href="#features"
+              class="text-sm text-gray-text hover:text-white transition-colors"
+              >Features</a
+            >
+            <a
+              href="#pricing"
+              class="text-sm text-gray-text hover:text-white transition-colors"
+              >Pricing</a
+            >
+            <a
+              href="#how-it-works"
+              class="text-sm text-gray-text hover:text-white transition-colors"
+              >How it works</a
+            >
+
+            <!-- User Navigation (dinamico) -->
+            <div id="user-nav-container"></div>
+          </div>
         </div>
       </div>
-    </header>
+    </nav>
 
-    <main class="main-container">
-      <div class="container page-wrapper">
-        <!-- Hero -->
-        <section class="hero" id="como" aria-labelledby="hero-title">
-          <div class="hero-inner">
-            <h1 id="hero-title">
-              Efeitos de áudio com estética moderna e qualidade
-            </h1>
-            <p class="lead">
-              Cole o link do YouTube e aplique presets como Nightcore, Daycore,
-              8D, Slowed+Reverb e mais. Interface responsiva, rápida e
-              acessível.
-            </p>
-            <div
-              style="
-                display: flex;
-                gap: 12px;
-                flex-wrap: wrap;
-                justify-content: center;
-              "
-            >
-              <a href="#form" class="btn-primary"
-                ><span class="btn-text">Processar único</span></a
-              >
-              <a
-                href="/batch.html"
-                class="btn-primary"
-                style="background: hsl(45, 85%, 50%)"
-                ><span class="btn-text">📦 Lote (10x)</span></a
-              >
+    <!-- Hero Section -->
+    <section
+      class="min-h-screen flex items-center justify-center px-6 pt-24 pb-20 relative overflow-hidden"
+    >
+      <!-- Subtle background gradient -->
+      <div
+        class="absolute top-0 left-1/4 w-96 h-96 bg-primary/10 rounded-full blur-3xl"
+      ></div>
+      <div
+        class="absolute bottom-0 right-1/4 w-96 h-96 bg-secondary/10 rounded-full blur-3xl"
+      ></div>
+
+      <!-- Animated waveform background -->
+      <div
+        class="absolute inset-0 flex items-center justify-center opacity-5 pointer-events-none"
+      >
+        <div class="flex gap-1 items-end h-32">
+          <div
+            class="waveform-bar w-1 bg-primary rounded-full"
+            style="height: 40%; animation-delay: 0s"
+          ></div>
+          <div
+            class="waveform-bar w-1 bg-primary rounded-full"
+            style="height: 70%; animation-delay: 0.1s"
+          ></div>
+          <div
+            class="waveform-bar w-1 bg-secondary rounded-full"
+            style="height: 50%; animation-delay: 0.2s"
+          ></div>
+          <div
+            class="waveform-bar w-1 bg-secondary rounded-full"
+            style="height: 90%; animation-delay: 0.3s"
+          ></div>
+          <div
+            class="waveform-bar w-1 bg-primary rounded-full"
+            style="height: 60%; animation-delay: 0.4s"
+          ></div>
+          <div
+            class="waveform-bar w-1 bg-primary rounded-full"
+            style="height: 80%; animation-delay: 0.5s"
+          ></div>
+          <div
+            class="waveform-bar w-1 bg-secondary rounded-full"
+            style="height: 45%; animation-delay: 0.6s"
+          ></div>
+        </div>
+      </div>
+
+      <div class="relative z-10 max-w-5xl mx-auto text-center fade-in-up">
+        <div
+          class="inline-block mb-4 px-4 py-1.5 rounded-full glass-card text-xs font-medium text-gray-text border border-white/10"
+        >
+          ✨ Professional audio effects in seconds
+        </div>
+
+        <h1
+          class="text-5xl md:text-7xl lg:text-8xl font-bold mb-6 tracking-tight leading-tight"
+        >
+          Transform audio <br /><span class="text-gradient-primary"
+            >with elegance</span
+          >
+        </h1>
+
+        <p
+          class="text-lg md:text-xl text-gray-text mb-12 leading-relaxed max-w-2xl mx-auto font-light"
+        >
+          Apply creative effects like nightcore, slowed+reverb, and pitch
+          shifts. Fast processing, HD quality, intuitive interface.
+        </p>
+
+        <div class="flex flex-col sm:flex-row gap-4 justify-center mb-20">
+          <button
+            onclick="document.getElementById('main-form').scrollIntoView({ behavior: 'smooth' })"
+            class="btn-primary px-8 py-4 rounded-2xl font-semibold text-white"
+          >
+            Try for free
+          </button>
+          <a
+            href="/batch.html"
+            class="btn-secondary px-8 py-4 rounded-2xl font-semibold text-white"
+          >
+            Batch processing →
+          </a>
+        </div>
+
+        <!-- Stats -->
+        <div class="grid grid-cols-3 gap-8 md:gap-12 max-w-3xl mx-auto">
+          <div class="fade-in-up" style="animation-delay: 0.2s">
+            <div class="text-4xl font-bold text-gradient-primary mb-2">
+              < 2min
             </div>
+            <p class="text-sm text-gray-text">Average processing</p>
           </div>
-        </section>
+          <div class="fade-in-up" style="animation-delay: 0.4s">
+            <div class="text-4xl font-bold text-gradient-primary mb-2">8+</div>
+            <p class="text-sm text-gray-text">Professional presets</p>
+          </div>
+          <div class="fade-in-up" style="animation-delay: 0.6s">
+            <div class="text-4xl font-bold text-gradient-primary mb-2">HD</div>
+            <p class="text-sm text-gray-text">Quality guaranteed</p>
+          </div>
+        </div>
+      </div>
+    </section>
 
-        <!-- Main Card -->
-        <div class="card-primary">
-          <form id="form" class="form-group" novalidate>
+    <!-- 3-Step Process Overview -->
+    <section class="py-20 px-6">
+      <div class="max-w-6xl mx-auto">
+        <div class="text-center mb-16">
+          <h2 class="text-3xl md:text-5xl font-bold mb-4 tracking-tight">
+            How it works
+          </h2>
+          <p class="text-gray-text text-lg font-light">
+            Three simple steps to transform your audio
+          </p>
+        </div>
+
+        <div class="grid md:grid-cols-3 gap-8">
+          <!-- Step 1 -->
+          <div class="glass-card glass-hover rounded-2xl p-8 text-center">
+            <div
+              class="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-primary/10 border border-primary/20 mb-6"
+            >
+              <svg
+                class="w-8 h-8 text-primary"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
+                />
+              </svg>
+            </div>
+            <h3 class="text-xl font-semibold mb-3">Upload</h3>
+            <p class="text-gray-text text-sm leading-relaxed">
+              Paste a YouTube link or upload your audio file directly
+            </p>
+          </div>
+
+          <!-- Step 2 -->
+          <div class="glass-card glass-hover rounded-2xl p-8 text-center">
+            <div
+              class="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-secondary/10 border border-secondary/20 mb-6"
+            >
+              <svg
+                class="w-8 h-8 text-secondary"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"
+                />
+              </svg>
+            </div>
+            <h3 class="text-xl font-semibold mb-3">Process</h3>
+            <p class="text-gray-text text-sm leading-relaxed">
+              Choose from 8+ professional presets and let AI do the work
+            </p>
+          </div>
+
+          <!-- Step 3 -->
+          <div class="glass-card glass-hover rounded-2xl p-8 text-center">
+            <div
+              class="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-primary/10 border border-primary/20 mb-6"
+            >
+              <svg
+                class="w-8 h-8 text-primary"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
+                />
+              </svg>
+            </div>
+            <h3 class="text-xl font-semibold mb-3">Download</h3>
+            <p class="text-gray-text text-sm leading-relaxed">
+              Get your HD quality audio in seconds, ready to share
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Main Form Section -->
+    <section id="main-form" class="py-20 px-6">
+      <div class="max-w-5xl mx-auto">
+        <div class="glass-card rounded-2xl p-8 md:p-12 border border-white/10">
+          <div class="text-center mb-10">
+            <h2 class="text-3xl md:text-4xl font-bold mb-3 tracking-tight">
+              Start creating
+            </h2>
+            <p class="text-gray-text">
+              Paste your YouTube link and select an effect
+            </p>
+          </div>
+
+          <form id="form" class="max-w-3xl mx-auto space-y-6" novalidate>
             <!-- URL Input -->
-            <div class="form-field">
-              <label for="url" class="form-label">YouTube URL</label>
+            <div>
+              <label class="block text-sm font-medium text-gray-text mb-3">
+                YouTube URL
+              </label>
               <input
                 id="url"
-                class="form-input"
                 type="url"
                 placeholder="https://youtu.be/..."
-                aria-label="URL do vídeo YouTube"
+                class="w-full px-5 py-4 rounded-xl text-white placeholder-gray-text/50"
                 required
               />
-              <small class="form-hint">Cole o link do vídeo do YouTube</small>
             </div>
 
             <!-- Preset Select -->
-            <div class="form-field">
-              <label for="preset" class="form-label">Efeito (Preset)</label>
+            <div>
+              <label
+                for="preset"
+                class="block text-sm font-medium text-gray-text mb-3"
+              >
+                Select effect
+              </label>
               <select
                 id="preset"
-                class="form-select"
-                aria-label="Selecione um efeito"
+                class="w-full px-5 py-4 rounded-xl text-white cursor-pointer"
               >
-                <option value="SLOWED">🐢 SLOWED (0.88x velocidade)</option>
-                <option value="SPEED_125">
-                  🐇 SPEED UP (1.25x velocidade)
-                </option>
-                <option value="ULTRA_SLOWED">
-                  🌀 ULTRA_SLOWED (10% velocidade + reverb)
-                </option>
-                <option value="MUFFLED_SLOWED">
-                  🔊 MUFFLED_SLOWED (80% + passa-baixa 300Hz)
-                </option>
-                <option value="MUFFLED_SPEED">
-                  ⚡ MUFFLED_SPEED (125% + passa-baixa 500Hz)
+                <option value="SLOWED">Slowed — Reduced speed (0.88×)</option>
+                <option value="NIGHTCORE">
+                  Nightcore — High energy (135% + pitch up)
                 </option>
                 <option value="DAYCORE">
-                  ☀️ DAYCORE (80% + pitch -4 semitons)
+                  Daycore — Deep effect (80% + pitch down)
                 </option>
-                <option value="NIGHTCORE">
-                  🌙 NIGHTCORE (135% + pitch +5-6 semitons)
+                <option value="8D">8D Audio — Immersive panning</option>
+                <option value="ULTRA_SLOWED">
+                  Ultra Slowed — Hypnotic (60% + reverb)
                 </option>
-                <option value="8D">🎧 8D (reverb + panorama automático)</option>
+                <option value="SPEED_125">
+                  Speed Up — Accelerated (1.25×)
+                </option>
+                <option value="MUFFLED_SLOWED">
+                  Muffled Slowed — Soft effect (85% + lowpass)
+                </option>
+                <option value="MUFFLED_SPEED">
+                  Muffled Speed — Distorted (120% + lowpass)
+                </option>
               </select>
             </div>
 
-            <!-- Action Buttons -->
-            <div class="form-actions">
-              <button id="start" class="btn-primary" type="submit">
-                <span class="btn-text">Processar</span>
-              </button>
-            </div>
-          </form>
+            <!-- Action Button -->
+            <button
+              id="start"
+              type="submit"
+              class="w-full btn-primary py-4 rounded-xl font-semibold text-white text-lg"
+            >
+              Process audio
+            </button>
 
-          <!-- Error Message -->
-          <div
-            id="errorMsg"
-            class="alert alert-error hidden"
-            role="alert"
-            aria-live="polite"
-          ></div>
+            <!-- Error Message -->
+            <div
+              id="errorMsg"
+              class="hidden bg-red-500/10 border border-red-500/30 text-red-400 px-5 py-4 rounded-xl text-sm"
+              role="alert"
+            ></div>
+          </form>
+        </div>
+      </div>
+    </section>
+
+    <!-- Features Section -->
+    <section id="features" class="py-20 px-6 bg-dark-lighter">
+      <div class="max-w-7xl mx-auto">
+        <div class="text-center mb-16">
+          <h2 class="text-3xl md:text-5xl font-bold mb-4 tracking-tight">
+            Everything you need
+          </h2>
+          <p class="text-gray-text text-lg font-light max-w-2xl mx-auto">
+            Professional tools to transform audio with creativity and precision
+          </p>
         </div>
 
-        <!-- Preset/feature cards -->
-        <section class="section" id="presets" aria-labelledby="cards-title">
-          <h2 id="cards-title">Presets e recursos</h2>
-          <div class="card-grid">
-            <article class="card">
-              <div class="head">
-                <div class="icon" aria-hidden="true">🐢</div>
-                <h3>SLOWED</h3>
-              </div>
-              <div class="body">
-                <p>
-                  Tempo 0.88× preservando o pitch. Textura suave com
-                  normalização loudness.
-                </p>
-              </div>
-            </article>
-            <article class="card">
-              <div class="head">
-                <div class="icon" aria-hidden="true">🌙</div>
-                <h3>NIGHTCORE</h3>
-              </div>
-              <div class="body">
-                <p>
-                  135% de tempo e pitch up para uma sensação energética sem
-                  distorção.
-                </p>
-              </div>
-            </article>
-            <article class="card">
-              <div class="head">
-                <div class="icon" aria-hidden="true">☀️</div>
-                <h3>DAYCORE</h3>
-              </div>
-              <div class="body">
-                <p>
-                  80% de tempo e pitch down (~−4 semitons) com reverb leve para
-                  corpo.
-                </p>
-              </div>
-            </article>
-            <article class="card">
-              <div class="head">
-                <div class="icon" aria-hidden="true">🎧</div>
-                <h3>8D</h3>
-              </div>
-              <div class="body">
-                <p>
-                  Pan autom. lento + leve reverb. Limiter anti-clipping e
-                  loudness seguro.
-                </p>
-              </div>
-            </article>
-            <article class="card">
-              <div class="head">
-                <div class="icon" aria-hidden="true">🌀</div>
-                <h3>Ultra Slowed</h3>
-              </div>
-              <div class="body">
-                <p>
-                  Drone etéreo com tempo 0.12×, reverb amplo, lowpass suave e
-                  normalização.
-                </p>
-              </div>
-            </article>
-            <article class="card">
-              <div class="head">
-                <div class="icon" aria-hidden="true">⚡</div>
-                <h3>Velocidade +</h3>
-              </div>
-              <div class="body">
-                <p>
-                  1.25× com pitch preservado. Ideal para estudos e playlists
-                  aceleradas.
-                </p>
-              </div>
-            </article>
+        <div class="grid md:grid-cols-3 gap-6">
+          <!-- Card 1 -->
+          <div class="glass-card glass-hover rounded-2xl p-8">
+            <div class="icon-wrapper mb-6">
+              <svg
+                class="w-6 h-6 text-primary"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M13 10V3L4 14h7v7l9-11h-7z"
+                />
+              </svg>
+            </div>
+            <h3 class="text-xl font-semibold mb-3">Lightning fast</h3>
+            <p class="text-gray-text text-sm leading-relaxed">
+              Process audio in under 2 minutes with HD quality preserved
+            </p>
           </div>
-        </section>
 
-        <!-- Metrics panel -->
-        <section class="section" aria-labelledby="metrics-title">
-          <h2 id="metrics-title">Painel rápido</h2>
-          <div class="metrics" role="region" aria-label="Métricas">
-            <div class="metric">
-              <div class="label">Processados hoje</div>
-              <div class="value">128</div>
-              <div class="trend up">+12%</div>
+          <!-- Card 2 -->
+          <div class="glass-card glass-hover rounded-2xl p-8">
+            <div class="icon-wrapper mb-6">
+              <svg
+                class="w-6 h-6 text-secondary"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"
+                />
+              </svg>
             </div>
-            <div class="metric">
-              <div class="label">Tempo médio</div>
-              <div class="value">46s</div>
-              <div class="trend down">−6%</div>
-            </div>
-            <div class="metric">
-              <div class="label">Taxa de sucesso</div>
-              <div class="value">99.1%</div>
-              <div class="trend up">+0.3%</div>
-            </div>
-            <div class="metric">
-              <div class="label">Tarefas ativas</div>
-              <div class="value">3</div>
-            </div>
+            <h3 class="text-xl font-semibold mb-3">8+ Presets</h3>
+            <p class="text-gray-text text-sm leading-relaxed">
+              Choose from nightcore, daycore, 8D, slowed, and more
+            </p>
           </div>
-        </section>
 
-        <!-- Footer Info -->
-        <footer class="footer">
-          <p class="footer-text">
-            Qualidade de áudio preservada • Processamento rápido • 100% seguro
-          </p>
-        </footer>
+          <!-- Card 3 -->
+          <div class="glass-card glass-hover rounded-2xl p-8">
+            <div class="icon-wrapper mb-6">
+              <svg
+                class="w-6 h-6 text-primary"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"
+                />
+              </svg>
+            </div>
+            <h3 class="text-xl font-semibold mb-3">HD Quality</h3>
+            <p class="text-gray-text text-sm leading-relaxed">
+              High-quality MP3 output with professional normalization
+            </p>
+          </div>
+
+          <!-- Card 4 -->
+          <div class="glass-card glass-hover rounded-2xl p-8">
+            <div class="icon-wrapper mb-6">
+              <svg
+                class="w-6 h-6 text-secondary"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+                />
+              </svg>
+            </div>
+            <h3 class="text-xl font-semibold mb-3">Private & secure</h3>
+            <p class="text-gray-text text-sm leading-relaxed">
+              Your data stays private. No permanent storage
+            </p>
+          </div>
+
+          <!-- Card 5 -->
+          <div class="glass-card glass-hover rounded-2xl p-8">
+            <div class="icon-wrapper mb-6">
+              <svg
+                class="w-6 h-6 text-primary"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"
+                />
+              </svg>
+            </div>
+            <h3 class="text-xl font-semibold mb-3">Fully responsive</h3>
+            <p class="text-gray-text text-sm leading-relaxed">
+              Works perfectly on desktop, tablet, and mobile devices
+            </p>
+          </div>
+
+          <!-- Card 6 -->
+          <div class="glass-card glass-hover rounded-2xl p-8">
+            <div class="icon-wrapper mb-6">
+              <svg
+                class="w-6 h-6 text-secondary"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"
+                />
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                />
+              </svg>
+            </div>
+            <h3 class="text-xl font-semibold mb-3">Live preview</h3>
+            <p class="text-gray-text text-sm leading-relaxed">
+              Listen to a preview before downloading the final result
+            </p>
+          </div>
+        </div>
       </div>
-    </main>
+    </section>
+
+    <!-- Pricing Section -->
+    <section id="pricing" class="py-20 px-6">
+      <div class="max-w-7xl mx-auto">
+        <div class="text-center mb-16">
+          <h2 class="text-3xl md:text-5xl font-bold mb-4 tracking-tight">
+            Simple, transparent pricing
+          </h2>
+          <p class="text-gray-text text-lg font-light max-w-2xl mx-auto">
+            Start for free, upgrade when you need more
+          </p>
+        </div>
+
+        <div class="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto">
+          <!-- Free Plan -->
+          <div
+            class="glass-card pricing-card rounded-2xl p-8 border border-white/10"
+          >
+            <div class="mb-6">
+              <h3 class="text-xl font-semibold mb-2">Free</h3>
+              <div class="flex items-baseline gap-1 mb-4">
+                <span class="text-4xl font-bold">$0</span>
+                <span class="text-gray-text text-sm">/month</span>
+              </div>
+              <p class="text-gray-text text-sm">Perfect for trying out</p>
+            </div>
+            <ul class="space-y-3 mb-8">
+              <li class="flex items-start gap-3 text-sm">
+                <svg
+                  class="w-5 h-5 text-primary mt-0.5 flex-shrink-0"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M5 13l4 4L19 7"
+                  />
+                </svg>
+                <span>5 processes per month</span>
+              </li>
+              <li class="flex items-start gap-3 text-sm">
+                <svg
+                  class="w-5 h-5 text-primary mt-0.5 flex-shrink-0"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M5 13l4 4L19 7"
+                  />
+                </svg>
+                <span>All 8+ presets</span>
+              </li>
+              <li class="flex items-start gap-3 text-sm">
+                <svg
+                  class="w-5 h-5 text-primary mt-0.5 flex-shrink-0"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M5 13l4 4L19 7"
+                  />
+                </svg>
+                <span>HD quality output</span>
+              </li>
+            </ul>
+            <button
+              class="w-full btn-secondary py-3 rounded-xl font-medium text-white"
+            >
+              Get started
+            </button>
+          </div>
+
+          <!-- Pro Plan -->
+          <div
+            class="glass-card pricing-card rounded-2xl p-8 border border-primary/30 relative"
+          >
+            <div
+              class="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2"
+            >
+              <span
+                class="inline-block px-4 py-1 rounded-full bg-primary text-white text-xs font-semibold"
+              >
+                Most popular
+              </span>
+            </div>
+            <div class="mb-6">
+              <h3 class="text-xl font-semibold mb-2">Pro</h3>
+              <div class="flex items-baseline gap-1 mb-4">
+                <span class="text-4xl font-bold">$12</span>
+                <span class="text-gray-text text-sm">/month</span>
+              </div>
+              <p class="text-gray-text text-sm">For regular users</p>
+            </div>
+            <ul class="space-y-3 mb-8">
+              <li class="flex items-start gap-3 text-sm">
+                <svg
+                  class="w-5 h-5 text-primary mt-0.5 flex-shrink-0"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M5 13l4 4L19 7"
+                  />
+                </svg>
+                <span>Unlimited processes</span>
+              </li>
+              <li class="flex items-start gap-3 text-sm">
+                <svg
+                  class="w-5 h-5 text-primary mt-0.5 flex-shrink-0"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M5 13l4 4L19 7"
+                  />
+                </svg>
+                <span>Priority processing</span>
+              </li>
+              <li class="flex items-start gap-3 text-sm">
+                <svg
+                  class="w-5 h-5 text-primary mt-0.5 flex-shrink-0"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M5 13l4 4L19 7"
+                  />
+                </svg>
+                <span>Batch processing</span>
+              </li>
+              <li class="flex items-start gap-3 text-sm">
+                <svg
+                  class="w-5 h-5 text-primary mt-0.5 flex-shrink-0"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M5 13l4 4L19 7"
+                  />
+                </svg>
+                <span>Custom presets</span>
+              </li>
+            </ul>
+            <button
+              class="w-full btn-primary py-3 rounded-xl font-medium text-white"
+            >
+              Start free trial
+            </button>
+          </div>
+
+          <!-- Enterprise Plan -->
+          <div
+            class="glass-card pricing-card rounded-2xl p-8 border border-white/10"
+          >
+            <div class="mb-6">
+              <h3 class="text-xl font-semibold mb-2">Enterprise</h3>
+              <div class="flex items-baseline gap-1 mb-4">
+                <span class="text-4xl font-bold">Custom</span>
+              </div>
+              <p class="text-gray-text text-sm">For teams & agencies</p>
+            </div>
+            <ul class="space-y-3 mb-8">
+              <li class="flex items-start gap-3 text-sm">
+                <svg
+                  class="w-5 h-5 text-primary mt-0.5 flex-shrink-0"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M5 13l4 4L19 7"
+                  />
+                </svg>
+                <span>Everything in Pro</span>
+              </li>
+              <li class="flex items-start gap-3 text-sm">
+                <svg
+                  class="w-5 h-5 text-primary mt-0.5 flex-shrink-0"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M5 13l4 4L19 7"
+                  />
+                </svg>
+                <span>API access</span>
+              </li>
+              <li class="flex items-start gap-3 text-sm">
+                <svg
+                  class="w-5 h-5 text-primary mt-0.5 flex-shrink-0"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M5 13l4 4L19 7"
+                  />
+                </svg>
+                <span>Dedicated support</span>
+              </li>
+              <li class="flex items-start gap-3 text-sm">
+                <svg
+                  class="w-5 h-5 text-primary mt-0.5 flex-shrink-0"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M5 13l4 4L19 7"
+                  />
+                </svg>
+                <span>Custom integrations</span>
+              </li>
+            </ul>
+            <button
+              class="w-full btn-secondary py-3 rounded-xl font-medium text-white"
+            >
+              Contact sales
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Presets Section -->
+    <section id="presets" class="py-20 px-6 bg-dark-lighter">
+      <div class="max-w-7xl mx-auto">
+        <div class="text-center mb-16">
+          <h2 class="text-3xl md:text-5xl font-bold mb-4 tracking-tight">
+            Professional presets
+          </h2>
+          <p class="text-gray-text text-lg font-light max-w-2xl mx-auto">
+            Each preset is carefully tuned for optimal sound quality
+          </p>
+        </div>
+
+        <div class="grid md:grid-cols-2 gap-6">
+          <!-- Preset Cards -->
+          <div class="glass-card glass-hover rounded-2xl p-8">
+            <div class="flex items-start gap-4 mb-4">
+              <div>
+                <h3 class="text-xl font-semibold">Slowed</h3>
+                <p class="text-gray-text text-sm">Speed: 0.88×</p>
+              </div>
+            </div>
+            <p class="text-gray-text text-sm leading-relaxed">
+              Reduces speed while maintaining pitch. Perfect for relaxation and
+              beat analysis.
+            </p>
+          </div>
+
+          <div class="glass-card glass-hover rounded-2xl p-8">
+            <div class="flex items-start gap-4 mb-4">
+              <div>
+                <h3 class="text-xl font-semibold">Nightcore</h3>
+                <p class="text-gray-text text-sm">Speed: 135% + Pitch ↑</p>
+              </div>
+            </div>
+            <p class="text-gray-text text-sm leading-relaxed">
+              Boosts energy with higher tones. Great for motivation and
+              workouts.
+            </p>
+          </div>
+
+          <div class="glass-card glass-hover rounded-2xl p-8">
+            <div class="flex items-start gap-4 mb-4">
+              <div>
+                <h3 class="text-xl font-semibold">Daycore</h3>
+                <p class="text-gray-text text-sm">Speed: 80% + Pitch ↓</p>
+              </div>
+            </div>
+            <p class="text-gray-text text-sm leading-relaxed">
+              Creates deep, dramatic atmosphere. Ideal for reflection.
+            </p>
+          </div>
+
+          <div class="glass-card glass-hover rounded-2xl p-8">
+            <div class="flex items-start gap-4 mb-4">
+              <div>
+                <h3 class="text-xl font-semibold">8D Audio</h3>
+                <p class="text-gray-text text-sm">Auto panning + Reverb</p>
+              </div>
+            </div>
+            <p class="text-gray-text text-sm leading-relaxed">
+              Creates immersive 3D effect. Best experienced with headphones.
+            </p>
+          </div>
+
+          <div class="glass-card glass-hover rounded-2xl p-8">
+            <div class="flex items-start gap-4 mb-4">
+              <div>
+                <h3 class="text-xl font-semibold">Ultra Slowed</h3>
+                <p class="text-gray-text text-sm">Speed: 60% + Reverb</p>
+              </div>
+            </div>
+            <p class="text-gray-text text-sm leading-relaxed">
+              Extreme hypnotic effect. Creates ethereal sonic textures.
+            </p>
+          </div>
+
+          <div class="glass-card glass-hover rounded-2xl p-8">
+            <div class="flex items-start gap-4 mb-4">
+              <div>
+                <h3 class="text-xl font-semibold">Speed Up</h3>
+                <p class="text-gray-text text-sm">Speed: 1.25×</p>
+              </div>
+            </div>
+            <p class="text-gray-text text-sm leading-relaxed">
+              Accelerates while keeping original tone. Great for studying.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section id="how-it-works" class="py-20 px-6">
+      <div class="max-w-4xl mx-auto text-center">
+        <div class="glass-card rounded-2xl p-12 md:p-16 border border-white/10">
+          <h2 class="text-3xl md:text-5xl font-bold mb-6 tracking-tight">
+            Ready to transform <br />your audio?
+          </h2>
+          <p class="text-gray-text text-lg mb-10 max-w-2xl mx-auto font-light">
+            Join thousands of creators using phona to bring their audio to life
+          </p>
+          <div class="flex flex-col sm:flex-row gap-4 justify-center">
+            <button
+              onclick="document.getElementById('main-form').scrollIntoView({ behavior: 'smooth' })"
+              class="btn-primary px-8 py-4 rounded-2xl font-semibold text-white"
+            >
+              Start for free
+            </button>
+            <a
+              href="/batch.html"
+              class="btn-secondary px-8 py-4 rounded-2xl font-semibold text-white"
+            >
+              View batch processing
+            </a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="border-t border-white/5 py-12 px-6">
+      <div class="max-w-7xl mx-auto">
+        <div class="grid md:grid-cols-4 gap-8 mb-10">
+          <!-- Brand -->
+          <div class="md:col-span-2">
+            <div class="flex items-center gap-3 mb-4">
+              <div class="icon-wrapper">
+                <svg
+                  class="w-5 h-5 text-primary"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"
+                  />
+                </svg>
+              </div>
+              <span class="text-xl font-semibold">phona</span>
+            </div>
+            <p class="text-gray-text text-sm leading-relaxed max-w-xs">
+              Professional audio processing platform. Transform your sound with
+              creative effects.
+            </p>
+          </div>
+
+          <!-- Links -->
+          <div>
+            <h4 class="font-semibold mb-4 text-sm">Product</h4>
+            <ul class="space-y-2 text-sm text-gray-text">
+              <li>
+                <a href="#features" class="hover:text-white transition-colors"
+                  >Features</a
+                >
+              </li>
+              <li>
+                <a href="#pricing" class="hover:text-white transition-colors"
+                  >Pricing</a
+                >
+              </li>
+              <li>
+                <a href="#presets" class="hover:text-white transition-colors"
+                  >Presets</a
+                >
+              </li>
+              <li>
+                <a href="/batch.html" class="hover:text-white transition-colors"
+                  >Batch</a
+                >
+              </li>
+            </ul>
+          </div>
+
+          <!-- Company -->
+          <div>
+            <h4 class="font-semibold mb-4 text-sm">Company</h4>
+            <ul class="space-y-2 text-sm text-gray-text">
+              <li>
+                <a href="#" class="hover:text-white transition-colors">About</a>
+              </li>
+              <li>
+                <a href="#" class="hover:text-white transition-colors">Blog</a>
+              </li>
+              <li>
+                <a href="#" class="hover:text-white transition-colors"
+                  >Privacy</a
+                >
+              </li>
+              <li>
+                <a href="#" class="hover:text-white transition-colors">Terms</a>
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- Bottom -->
+        <div
+          class="pt-8 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-gray-text"
+        >
+          <p>&copy; 2025 phona. All rights reserved.</p>
+          <div class="flex gap-6">
+            <span>HD Quality</span>
+            <span>•</span>
+            <span>Fast Processing</span>
+            <span>•</span>
+            <span>Secure</span>
+          </div>
+        </div>
+      </div>
+    </footer>
 
     <script>
-      // Remover animação de transição quando página carrega (volta do back button)
-      window.addEventListener("pageshow", (e) => {
-        const loadingScreen = document.querySelector(".transition-loading");
-        if (loadingScreen) {
-          loadingScreen.remove();
-        }
-
-        // Resetar botão quando volta
-        const startBtn = document.getElementById("start");
-        if (startBtn) {
-          startBtn.disabled = false;
-          startBtn.innerHTML = '<span class="btn-text">Processar</span>';
-        }
-      });
+      // Reveal-on-scroll for elements with .fade-in-up (reveal-once)
+      (function () {
+        const els = document.querySelectorAll(".fade-in-up");
+        if (!("IntersectionObserver" in window) || els.length === 0) return;
+        const observer = new IntersectionObserver(
+          (entries) => {
+            entries.forEach((entry) => {
+              if (entry.isIntersecting) {
+                entry.target.classList.add("in-view");
+                observer.unobserve(entry.target); // reveal once
+              }
+            });
+          },
+          { root: null, threshold: 0.2, rootMargin: "0px 0px -10% 0px" }
+        );
+        els.forEach((el) => observer.observe(el));
+      })();
     </script>
-
     <script src="/app.js"></script>
   </body>
 </html>

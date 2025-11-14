@@ -2,7 +2,7 @@ FROM node:18-alpine
 
 # Instalar FFmpeg 6.1 e yt-dlp (dependências necessárias)
 RUN apk add --no-cache ffmpeg python3 py3-pip && \
-    pip3 install --no-cache-dir yt-dlp
+    pip3 install --no-cache-dir --break-system-packages yt-dlp
 
 WORKDIR /app
 
@@ -12,6 +12,7 @@ RUN npm ci --production
 
 # Copiar arquivos da aplicação
 COPY server.js .
+COPY src/ src/
 COPY public/ public/
 
 # Criar diretórios de armazenamento

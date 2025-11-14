@@ -34,83 +34,87 @@ function isValidYouTubeUrl(url) {
 }
 
 // Prefetch de thumbnail quando mouse entra no botão
-startBtn.addEventListener("mouseover", () => {
-  const url = urlEl.value.trim();
+if (startBtn && urlEl) {
+  startBtn.addEventListener("mouseover", () => {
+    const url = urlEl.value.trim();
 
-  // Validar URL
-  if (!url || !isValidYouTubeUrl(url)) {
-    return;
-  }
+    // Validar URL
+    if (!url || !isValidYouTubeUrl(url)) {
+      return;
+    }
 
-  // Extrair video ID
-  const videoId = extractVideoId(url);
-  if (!videoId) {
-    return;
-  }
+    // Extrair video ID
+    const videoId = extractVideoId(url);
+    if (!videoId) {
+      return;
+    }
 
-  // Verificar se já foi precarregado nesta sessão
-  const cachedVideoId = sessionStorage.getItem("prefetchedVideoId");
-  if (cachedVideoId === videoId) {
-    return; // Já foi precarregado, não faz nada
-  }
+    // Verificar se já foi precarregado nesta sessão
+    const cachedVideoId = sessionStorage.getItem("prefetchedVideoId");
+    if (cachedVideoId === videoId) {
+      return; // Já foi precarregado, não faz nada
+    }
 
-  // Prefetch da thumbnail
-  console.log("Prefetching thumbnail for video:", videoId);
-  const thumbUrl = `https://i.ytimg.com/vi/${videoId}/maxresdefault.jpg`;
+    // Prefetch da thumbnail
+    console.log("Prefetching thumbnail for video:", videoId);
+    const thumbUrl = `https://i.ytimg.com/vi/${videoId}/maxresdefault.jpg`;
 
-  const img = new Image();
-  img.onload = () => {
-    console.log("Thumbnail prefetched successfully");
-    sessionStorage.setItem("prefetchedVideoId", videoId);
-    sessionStorage.setItem("prefetchedThumbUrl", thumbUrl);
-  };
-  img.onerror = () => {
-    console.log("maxresdefault failed, trying hqdefault");
-    const fallbackUrl = `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`;
-    const imgFallback = new Image();
-    imgFallback.onload = () => {
-      console.log("Fallback thumbnail prefetched");
+    const img = new Image();
+    img.onload = () => {
+      console.log("Thumbnail prefetched successfully");
       sessionStorage.setItem("prefetchedVideoId", videoId);
-      sessionStorage.setItem("prefetchedThumbUrl", fallbackUrl);
+      sessionStorage.setItem("prefetchedThumbUrl", thumbUrl);
     };
-    imgFallback.src = fallbackUrl;
-  };
-  img.src = thumbUrl;
-});
+    img.onerror = () => {
+      console.log("maxresdefault failed, trying hqdefault");
+      const fallbackUrl = `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`;
+      const imgFallback = new Image();
+      imgFallback.onload = () => {
+        console.log("Fallback thumbnail prefetched");
+        sessionStorage.setItem("prefetchedVideoId", videoId);
+        sessionStorage.setItem("prefetchedThumbUrl", fallbackUrl);
+      };
+      imgFallback.src = fallbackUrl;
+    };
+    img.src = thumbUrl;
+  });
+}
 
-form.addEventListener("submit", async (e) => {
-  e.preventDefault();
-  const url = urlEl.value.trim();
-  const preset = presetEl.value;
+if (form && startBtn) {
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const url = (urlEl?.value || "").trim();
+    const preset = presetEl?.value;
 
-  // Validação básica
-  if (!url || !preset) {
-    showError("URL e Preset são obrigatórios");
-    return;
-  }
+    // Validação básica
+    if (!url || !preset) {
+      showError("URL e Preset são obrigatórios");
+      return;
+    }
 
-  try {
-    // Desabilitar botão
-    startBtn.disabled = true;
-    startBtn.innerHTML = '<span class="btn-text">Carregando...</span>';
+    try {
+      // Desabilitar botão
+      startBtn.disabled = true;
+      startBtn.innerHTML = '<span class="btn-text">Carregando...</span>';
 
-    // Fazer requisição POST para criar o job
-    const r = await fetch("/process", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ url, preset }),
-    });
-    const j = await r.json();
-    if (!r.ok) throw new Error(j.error || "server error");
+      // Fazer requisição POST para criar o job
+      const r = await fetch("/process", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ url, preset }),
+      });
+      const j = await r.json();
+      if (!r.ok) throw new Error(j.error || "server error");
 
-    // Transição suave para página de processamento
-    transitionToProcessPage(j.id);
-  } catch (err) {
-    showError("Erro: " + err.message);
-    startBtn.disabled = false;
-    startBtn.innerHTML = '<span class="btn-text">Processar</span>';
-  }
-});
+      // Transição suave para página de processamento
+      transitionToProcessPage(j.id);
+    } catch (err) {
+      showError("Erro: " + err.message);
+      startBtn.disabled = false;
+      startBtn.innerHTML = '<span class="btn-text">Processar</span>';
+    }
+  });
+}
 
 function transitionToProcessPage(jobId) {
   // Criar elemento com animação de carregamento
@@ -131,6 +135,7 @@ function transitionToProcessPage(jobId) {
 }
 
 function showError(message) {
+  if (!errorMsg) return;
   errorMsg.textContent = message;
   errorMsg.classList.remove("hidden");
   setTimeout(() => {
