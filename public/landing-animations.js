@@ -1,464 +1,704 @@
 /* ==========================================
-   AUDIOFLOW LANDING ANIMATIONS
+   PHONA LANDING ANIMATIONS
    ========================================== */
 
 // Smooth scroll
 function scrollToSection(id) {
-    const element = document.getElementById(id);
-    if (element) {
-        element.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
+  const element = document.getElementById(id);
+  if (element) {
+    element.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
 }
 
 function scrollToProcessor() {
-    const processor = document.getElementById('processor');
-    if (processor) {
-        processor.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
+  const processor = document.getElementById("processor");
+  if (processor) {
+    processor.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
 }
 
-// Sticky CTA visibility
-const stickyCta = document.querySelector('.sticky-cta');
-const processorSection = document.getElementById('processor');
+// Sticky CTA visibility (otimizado com throttle)
+const stickyCta = document.querySelector(".sticky-cta");
+const processorSection = document.getElementById("processor");
 
 if (stickyCta && processorSection) {
-    window.addEventListener('scroll', () => {
-        const processorRect = processorSection.getBoundingClientRect();
-        const isProcessorVisible = processorRect.top <= window.innerHeight && processorRect.bottom >= 0;
-        
-        if (isProcessorVisible) {
-            stickyCta.style.opacity = '0';
-            stickyCta.style.pointerEvents = 'none';
-        } else {
-            stickyCta.style.opacity = '1';
-            stickyCta.style.pointerEvents = 'all';
-        }
-    });
+  let ticking = false;
+
+  window.addEventListener(
+    "scroll",
+    () => {
+      if (!ticking) {
+        window.requestAnimationFrame(() => {
+          const processorRect = processorSection.getBoundingClientRect();
+          const isProcessorVisible =
+            processorRect.top <= window.innerHeight &&
+            processorRect.bottom >= 0;
+
+          if (isProcessorVisible) {
+            stickyCta.style.opacity = "0";
+            stickyCta.style.pointerEvents = "none";
+          } else {
+            stickyCta.style.opacity = "1";
+            stickyCta.style.pointerEvents = "all";
+          }
+          ticking = false;
+        });
+        ticking = true;
+      }
+    },
+    { passive: true }
+  );
 }
 
-// Hero waveform animation
-const canvas = document.getElementById('waveformCanvas');
+// Hero waveform animation (otimizado)
+const canvas = document.getElementById("waveformCanvas");
 if (canvas) {
-    const ctx = canvas.getContext('2d');
-    
-    function resizeCanvas() {
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight;
+  const ctx = canvas.getContext("2d");
+  let animationId;
+  let isAnimating = false;
+
+  function resizeCanvas() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+  }
+
+  resizeCanvas();
+  window.addEventListener("resize", resizeCanvas);
+
+  let time = 0;
+  let frameCount = 0;
+  const skipFrames = 1; // Renderiza a cada 2 frames (30fps ao invés de 60fps)
+
+  function drawWaveform() {
+    frameCount++;
+
+    // Pula frames para melhor performance
+    if (frameCount % skipFrames !== 0) {
+      animationId = requestAnimationFrame(drawWaveform);
+      return;
     }
-    
-    resizeCanvas();
-    window.addEventListener('resize', resizeCanvas);
-    
-    let time = 0;
-    function drawWaveform() {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        
-        // Multiple wave layers
-        for (let layer = 0; layer < 5; layer++) {
-            ctx.strokeStyle = `rgba(194, 140, 102, ${0.08 + layer * 0.02})`;
-            ctx.lineWidth = 2;
-            ctx.beginPath();
-            
-            for (let x = 0; x < canvas.width; x += 4) {
-                const frequency = 0.008 + layer * 0.002;
-                const amplitude = 25 + layer * 8;
-                const phase = time * 0.5 + layer * 50;
-                const y = canvas.height / 2 + Math.sin((x + phase) * frequency) * amplitude;
-                
-                if (x === 0) {
-                    ctx.moveTo(x, y);
-                } else {
-                    ctx.lineTo(x, y);
-                }
-            }
-            
-            ctx.stroke();
+
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // Reduzido para 3 camadas ao invés de 5
+    for (let layer = 0; layer < 3; layer++) {
+      ctx.strokeStyle = `rgba(194, 140, 102, ${0.06 + layer * 0.03})`;
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+
+      // Aumentado o step de 4 para 8 para menos pontos
+      for (let x = 0; x < canvas.width; x += 8) {
+        const frequency = 0.008 + layer * 0.002;
+        const amplitude = 20 + layer * 10;
+        const phase = time * 0.3 + layer * 50;
+        const y =
+          canvas.height / 2 + Math.sin((x + phase) * frequency) * amplitude;
+
+        if (x === 0) {
+          ctx.moveTo(x, y);
+        } else {
+          ctx.lineTo(x, y);
         }
-        
-        time += 1;
-        requestAnimationFrame(drawWaveform);
+      }
+
+      ctx.stroke();
     }
-    
-    drawWaveform();
+
+    time += 1;
+    animationId = requestAnimationFrame(drawWaveform);
+  }
+
+  // Inicia animação apenas quando visível
+  const observer = new IntersectionObserver(
+    (entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting && !isAnimating) {
+          isAnimating = true;
+          drawWaveform();
+        } else if (!entry.isIntersecting && isAnimating) {
+          isAnimating = false;
+          cancelAnimationFrame(animationId);
+        }
+      });
+    },
+    { threshold: 0.1 }
+  );
+
+  observer.observe(canvas);
 }
 
 // Mockup waveform
-const mockupCanvas = document.getElementById('mockupWaveCanvas');
+const mockupCanvas = document.getElementById("mockupWaveCanvas");
 if (mockupCanvas) {
-    const mockupCtx = mockupCanvas.getContext('2d');
-    
-    function drawMockupWave() {
-        mockupCtx.clearRect(0, 0, mockupCanvas.width, mockupCanvas.height);
-        
-        // Create waveform bars
-        const barCount = 120;
-        const barWidth = mockupCanvas.width / barCount;
-        
-        for (let i = 0; i < barCount; i++) {
-            const progress = i / barCount;
-            
-            // Create varying heights for natural waveform look
-            const baseHeight = Math.sin(progress * Math.PI * 3) * 0.6 + 0.4;
-            const randomness = Math.random() * 0.3;
-            const height = (baseHeight + randomness) * mockupCanvas.height * 0.8;
-            
-            const x = i * barWidth;
-            const y = (mockupCanvas.height - height) / 2;
-            
-            // Gradient based on position
-            const alpha = progress < 0.45 ? 0.4 : 0.15;
-            mockupCtx.fillStyle = `rgba(194, 140, 102, ${alpha})`;
-            mockupCtx.fillRect(x, y, barWidth - 1, height);
-        }
+  const mockupCtx = mockupCanvas.getContext("2d");
+
+  function drawMockupWave() {
+    mockupCtx.clearRect(0, 0, mockupCanvas.width, mockupCanvas.height);
+
+    // Create waveform bars
+    const barCount = 120;
+    const barWidth = mockupCanvas.width / barCount;
+
+    for (let i = 0; i < barCount; i++) {
+      const progress = i / barCount;
+
+      // Create varying heights for natural waveform look
+      const baseHeight = Math.sin(progress * Math.PI * 3) * 0.6 + 0.4;
+      const randomness = Math.random() * 0.3;
+      const height = (baseHeight + randomness) * mockupCanvas.height * 0.8;
+
+      const x = i * barWidth;
+      const y = (mockupCanvas.height - height) / 2;
+
+      // Gradient based on position
+      const alpha = progress < 0.45 ? 0.4 : 0.15;
+      mockupCtx.fillStyle = `rgba(194, 140, 102, ${alpha})`;
+      mockupCtx.fillRect(x, y, barWidth - 1, height);
     }
-    
-    drawMockupWave();
+  }
+
+  drawMockupWave();
 }
 
 // Effect cards wave animation on hover
-const effectCards = document.querySelectorAll('.effect-card');
-effectCards.forEach(card => {
-    const waveCanvas = card.querySelector('.effect-wave');
-    if (!waveCanvas) return;
-    
-    const ctx = waveCanvas.getContext('2d');
-    const effect = card.dataset.effect;
-    
-    function drawEffectWave() {
-        ctx.clearRect(0, 0, waveCanvas.width, waveCanvas.height);
-        
-        const barCount = 40;
-        const barWidth = waveCanvas.width / barCount;
-        
-        for (let i = 0; i < barCount; i++) {
-            let height;
-            
-            // Different wave patterns for different effects
-            switch(effect) {
-                case 'slowed':
-                    height = Math.sin(i * 0.3) * 15 + 20;
-                    break;
-                case 'reverb':
-                    height = Math.abs(Math.sin(i * 0.2) * Math.cos(i * 0.1)) * 30 + 10;
-                    break;
-                case 'daycore':
-                    height = Math.sin(i * 0.25) * 18 + 18;
-                    break;
-                case 'nightcore':
-                    height = Math.abs(Math.sin(i * 0.5)) * 25 + 15;
-                    break;
-                case '8d':
-                    height = Math.sin(i * 0.4) * Math.cos(i * 0.2) * 20 + 20;
-                    break;
-                case 'vaporwave':
-                    height = (Math.sin(i * 0.15) + Math.random() * 0.5) * 15 + 15;
-                    break;
-                default:
-                    height = Math.random() * 30 + 10;
-            }
-            
-            const x = i * barWidth;
-            const y = (waveCanvas.height - height) / 2;
-            
-            ctx.fillStyle = 'rgba(194, 140, 102, 0.5)';
-            ctx.fillRect(x, y, barWidth - 1, height);
-        }
+const effectCards = document.querySelectorAll(".effect-card");
+effectCards.forEach((card) => {
+  const waveCanvas = card.querySelector(".effect-wave");
+  if (!waveCanvas) return;
+
+  const ctx = waveCanvas.getContext("2d");
+  const effect = card.dataset.effect;
+
+  function drawEffectWave() {
+    ctx.clearRect(0, 0, waveCanvas.width, waveCanvas.height);
+
+    const barCount = 40;
+    const barWidth = waveCanvas.width / barCount;
+
+    for (let i = 0; i < barCount; i++) {
+      let height;
+
+      // Different wave patterns for different effects
+      switch (effect) {
+        case "slowed":
+          height = Math.sin(i * 0.3) * 15 + 20;
+          break;
+        case "reverb":
+          height = Math.abs(Math.sin(i * 0.2) * Math.cos(i * 0.1)) * 30 + 10;
+          break;
+        case "daycore":
+          height = Math.sin(i * 0.25) * 18 + 18;
+          break;
+        case "nightcore":
+          height = Math.abs(Math.sin(i * 0.5)) * 25 + 15;
+          break;
+        case "8d":
+          height = Math.sin(i * 0.4) * Math.cos(i * 0.2) * 20 + 20;
+          break;
+        case "vaporwave":
+          height = (Math.sin(i * 0.15) + Math.random() * 0.5) * 15 + 15;
+          break;
+        default:
+          height = Math.random() * 30 + 10;
+      }
+
+      const x = i * barWidth;
+      const y = (waveCanvas.height - height) / 2;
+
+      ctx.fillStyle = "rgba(194, 140, 102, 0.5)";
+      ctx.fillRect(x, y, barWidth - 1, height);
     }
-    
-    card.addEventListener('mouseenter', drawEffectWave);
+  }
+
+  card.addEventListener("mouseenter", drawEffectWave);
 });
 
-// Example spectrum visualization
-const spectrumCanvases = document.querySelectorAll('.spectrum-canvas');
+// Example spectrum visualization (otimizado)
+const spectrumCanvases = document.querySelectorAll(".spectrum-canvas");
 spectrumCanvases.forEach((canvas, index) => {
-    const ctx = canvas.getContext('2d');
-    const isProcessed = canvas.classList.contains('processed');
-    
-    let animationId;
-    let time = 0;
-    
-    function drawSpectrum() {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        
-        const barCount = 60;
-        const barWidth = canvas.width / barCount;
-        
-        for (let i = 0; i < barCount; i++) {
-            const frequency = i / barCount;
-            
-            // Different spectrum for processed audio
-            let height;
-            if (isProcessed) {
-                // More bass (left side) for slowed effect
-                const bassBoost = Math.max(0, 1 - frequency * 2);
-                height = (Math.sin(time * 0.05 + i * 0.2) * 0.5 + 0.5) * (30 + bassBoost * 20);
-            } else {
-                // Normal spectrum
-                height = (Math.sin(time * 0.08 + i * 0.15) * 0.5 + 0.5) * 40;
-            }
-            
-            const x = i * barWidth;
-            const y = canvas.height - height;
-            
-            const gradient = ctx.createLinearGradient(x, y, x, canvas.height);
-            if (isProcessed) {
-                gradient.addColorStop(0, 'rgba(194, 140, 102, 0.6)');
-                gradient.addColorStop(1, 'rgba(194, 140, 102, 0.2)');
-            } else {
-                gradient.addColorStop(0, 'rgba(194, 140, 102, 0.3)');
-                gradient.addColorStop(1, 'rgba(194, 140, 102, 0.1)');
-            }
-            
-            ctx.fillStyle = gradient;
-            ctx.fillRect(x, y, barWidth - 1, height);
-        }
-        
-        time += 1;
-        animationId = requestAnimationFrame(drawSpectrum);
+  const ctx = canvas.getContext("2d");
+  const isProcessed = canvas.classList.contains("processed");
+
+  let animationId;
+  let time = 0;
+  let frameCount = 0;
+  const skipFrames = 2; // Renderiza a cada 3 frames
+
+  function drawSpectrum() {
+    frameCount++;
+
+    // Pula frames para melhor performance
+    if (frameCount % skipFrames !== 0) {
+      animationId = requestAnimationFrame(drawSpectrum);
+      return;
     }
-    
-    // Start animation when in viewport
-    const observer = new IntersectionObserver((entries) => {
-        entries.forEach(entry => {
-            if (entry.isIntersecting) {
-                drawSpectrum();
-            } else {
-                cancelAnimationFrame(animationId);
-            }
-        });
-    });
-    
-    observer.observe(canvas);
+
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    const barCount = 40; // Reduzido de 60 para 40
+    const barWidth = canvas.width / barCount;
+
+    for (let i = 0; i < barCount; i++) {
+      const frequency = i / barCount;
+
+      // Different spectrum for processed audio
+      let height;
+      if (isProcessed) {
+        // More bass (left side) for slowed effect
+        const bassBoost = Math.max(0, 1 - frequency * 2);
+        height =
+          (Math.sin(time * 0.04 + i * 0.2) * 0.5 + 0.5) * (30 + bassBoost * 20);
+      } else {
+        // Normal spectrum
+        height = (Math.sin(time * 0.06 + i * 0.15) * 0.5 + 0.5) * 40;
+      }
+
+      const x = i * barWidth;
+      const y = canvas.height - height;
+
+      // Simplificado sem gradiente para melhor performance
+      ctx.fillStyle = isProcessed
+        ? "rgba(194, 140, 102, 0.4)"
+        : "rgba(194, 140, 102, 0.2)";
+      ctx.fillRect(x, y, barWidth - 1, height);
+    }
+
+    time += 1;
+    animationId = requestAnimationFrame(drawSpectrum);
+  }
+
+  // Start animation when in viewport
+  const observer = new IntersectionObserver(
+    (entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          drawSpectrum();
+        } else {
+          cancelAnimationFrame(animationId);
+          frameCount = 0;
+        }
+      });
+    },
+    { threshold: 0.3 }
+  );
+
+  observer.observe(canvas);
 });
 
-// Parallax effect on scroll
-const hero = document.querySelector('.hero-content');
+// Parallax effect on scroll (otimizado com throttle)
+const hero = document.querySelector(".hero-content");
 if (hero) {
-    window.addEventListener('scroll', () => {
-        const scrolled = window.pageYOffset;
-        const rate = scrolled * 0.5;
-        hero.style.transform = `translateY(${rate}px)`;
-    });
+  let ticking = false;
+
+  window.addEventListener(
+    "scroll",
+    () => {
+      if (!ticking) {
+        window.requestAnimationFrame(() => {
+          const scrolled = window.pageYOffset;
+          const rate = scrolled * 0.3; // Reduzido de 0.5 para 0.3
+          hero.style.transform = `translate3d(0, ${rate}px, 0)`;
+          ticking = false;
+        });
+        ticking = true;
+      }
+    },
+    { passive: true }
+  );
 }
 
-// Intersection observer for fade-in animations
+// Intersection observer for fade-in animations (otimizado)
 const observerOptions = {
-    threshold: 0.1,
-    rootMargin: '0px 0px -100px 0px'
+  threshold: 0.15,
+  rootMargin: "0px 0px -50px 0px",
 };
 
-const fadeElements = document.querySelectorAll('.effect-card, .step, .example-card');
+const fadeElements = document.querySelectorAll(
+  ".effect-card, .step, .example-card"
+);
 const fadeObserver = new IntersectionObserver((entries) => {
-    entries.forEach((entry, index) => {
-        if (entry.isIntersecting) {
-            setTimeout(() => {
-                entry.target.style.opacity = '1';
-                entry.target.style.transform = 'translateY(0)';
-            }, index * 100);
-            fadeObserver.unobserve(entry.target);
-        }
-    });
+  entries.forEach((entry) => {
+    if (entry.isIntersecting) {
+      // Remove o delay individual para evitar muitas operações
+      entry.target.style.opacity = "1";
+      entry.target.style.transform = "translate3d(0, 0, 0)";
+      fadeObserver.unobserve(entry.target);
+    }
+  });
 }, observerOptions);
 
-fadeElements.forEach(element => {
-    element.style.opacity = '0';
-    element.style.transform = 'translateY(20px)';
-    element.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
-    fadeObserver.observe(element);
+fadeElements.forEach((element) => {
+  element.style.opacity = "0";
+  element.style.transform = "translate3d(0, 20px, 0)";
+  element.style.transition = "opacity 0.4s ease, transform 0.4s ease";
+  fadeObserver.observe(element);
 });
 
 // Knob interaction
-const knobs = document.querySelectorAll('.knob-dial');
-knobs.forEach(knob => {
-    let rotation = 0;
-    
-    knob.addEventListener('mousedown', (e) => {
-        const startY = e.clientY;
-        const startRotation = rotation;
-        
-        function onMouseMove(e) {
-            const deltaY = startY - e.clientY;
-            rotation = startRotation + deltaY;
-            rotation = Math.max(-135, Math.min(135, rotation));
-            knob.style.transform = `rotate(${rotation}deg)`;
-        }
-        
-        function onMouseUp() {
-            document.removeEventListener('mousemove', onMouseMove);
-            document.removeEventListener('mouseup', onMouseUp);
-        }
-        
-        document.addEventListener('mousemove', onMouseMove);
-        document.addEventListener('mouseup', onMouseUp);
-    });
+const knobs = document.querySelectorAll(".knob-dial");
+knobs.forEach((knob) => {
+  let rotation = 0;
+
+  knob.addEventListener("mousedown", (e) => {
+    const startY = e.clientY;
+    const startRotation = rotation;
+
+    function onMouseMove(e) {
+      const deltaY = startY - e.clientY;
+      rotation = startRotation + deltaY;
+      rotation = Math.max(-135, Math.min(135, rotation));
+      knob.style.transform = `rotate(${rotation}deg)`;
+    }
+
+    function onMouseUp() {
+      document.removeEventListener("mousemove", onMouseMove);
+      document.removeEventListener("mouseup", onMouseUp);
+    }
+
+    document.addEventListener("mousemove", onMouseMove);
+    document.addEventListener("mouseup", onMouseUp);
+  });
 });
 
 // Mockup play button animation
-const mockupPlay = document.querySelector('.mockup-play');
+const mockupPlay = document.querySelector(".mockup-play");
 if (mockupPlay) {
-    let isPlaying = false;
-    
-    mockupPlay.addEventListener('click', () => {
-        isPlaying = !isPlaying;
-        
-        if (isPlaying) {
-            mockupPlay.innerHTML = `
+  let isPlaying = false;
+
+  mockupPlay.addEventListener("click", () => {
+    isPlaying = !isPlaying;
+
+    if (isPlaying) {
+      mockupPlay.innerHTML = `
                 <svg viewBox="0 0 24 24" fill="currentColor">
                     <path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z"/>
                 </svg>
             `;
-        } else {
-            mockupPlay.innerHTML = `
+    } else {
+      mockupPlay.innerHTML = `
                 <svg viewBox="0 0 24 24" fill="currentColor">
                     <path d="M8 5v14l11-7z"/>
                 </svg>
             `;
-        }
-    });
+    }
+  });
 }
 
 // Example vinyl play buttons
-const examplePlays = document.querySelectorAll('.example-play');
-examplePlays.forEach(btn => {
-    btn.addEventListener('click', () => {
-        const card = btn.closest('.example-card');
-        const vinyl = card.querySelector('.vinyl-disc');
-        const isPlaying = vinyl.style.animationPlayState === 'running';
-        
-        if (isPlaying) {
-            vinyl.style.animationPlayState = 'paused';
-            btn.innerHTML = `
+const examplePlays = document.querySelectorAll(".example-play");
+examplePlays.forEach((btn) => {
+  btn.addEventListener("click", () => {
+    const card = btn.closest(".example-card");
+    const vinyl = card.querySelector(".vinyl-disc");
+    const isPlaying = vinyl.style.animationPlayState === "running";
+
+    if (isPlaying) {
+      vinyl.style.animationPlayState = "paused";
+      btn.innerHTML = `
                 <svg viewBox="0 0 24 24" fill="currentColor">
                     <path d="M8 5v14l11-7z"/>
                 </svg>
             `;
-        } else {
-            vinyl.style.animationPlayState = 'running';
-            btn.innerHTML = `
+    } else {
+      vinyl.style.animationPlayState = "running";
+      btn.innerHTML = `
                 <svg viewBox="0 0 24 24" fill="currentColor">
                     <path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z"/>
                 </svg>
             `;
-            
-            // Reset other playing vinyls
-            document.querySelectorAll('.vinyl-disc').forEach(otherVinyl => {
-                if (otherVinyl !== vinyl) {
-                    otherVinyl.style.animationPlayState = 'paused';
-                }
-            });
-            
-            document.querySelectorAll('.example-play').forEach(otherBtn => {
-                if (otherBtn !== btn) {
-                    otherBtn.innerHTML = `
+
+      // Reset other playing vinyls
+      document.querySelectorAll(".vinyl-disc").forEach((otherVinyl) => {
+        if (otherVinyl !== vinyl) {
+          otherVinyl.style.animationPlayState = "paused";
+        }
+      });
+
+      document.querySelectorAll(".example-play").forEach((otherBtn) => {
+        if (otherBtn !== btn) {
+          otherBtn.innerHTML = `
                         <svg viewBox="0 0 24 24" fill="currentColor">
                             <path d="M8 5v14l11-7z"/>
                         </svg>
                     `;
-                }
-            });
         }
-    });
+      });
+    }
+  });
 });
 
 // Load presets dynamically
 async function loadPresets() {
-    try {
-        const response = await fetch('/api/presets');
-        const presets = await response.json();
-        
-        const select = document.getElementById('presetSelect');
-        if (select) {
-            select.innerHTML = '<option value="">Selecione um preset</option>';
-            presets.forEach(preset => {
-                const option = document.createElement('option');
-                option.value = preset.name;
-                option.textContent = preset.name.toUpperCase();
-                select.appendChild(option);
-            });
-        }
-    } catch (error) {
-        console.error('Error loading presets:', error);
-        const select = document.getElementById('presetSelect');
-        if (select) {
-            select.innerHTML = '<option value="">Erro ao carregar presets</option>';
-        }
+  try {
+    const response = await fetch("/api/presets");
+    const presets = await response.json();
+
+    const select = document.getElementById("presetSelect");
+    if (select) {
+      select.innerHTML = '<option value="">Selecione um preset</option>';
+      presets.forEach((preset) => {
+        const option = document.createElement("option");
+        option.value = preset.name;
+        option.textContent = preset.name.toUpperCase();
+        select.appendChild(option);
+      });
     }
+  } catch (error) {
+    console.error("Error loading presets:", error);
+    const select = document.getElementById("presetSelect");
+    if (select) {
+      select.innerHTML = '<option value="">Erro ao carregar presets</option>';
+    }
+  }
+}
+
+// Load presets function
+async function loadPresets() {
+  const presetSelect = document.getElementById("presetSelect");
+  if (!presetSelect) return;
+
+  try {
+    const response = await fetch("/presets");
+    if (!response.ok) throw new Error("Failed to load presets");
+
+    const presets = await response.json();
+
+    // Clear existing options
+    presetSelect.innerHTML = "";
+
+    // Add default option
+    const defaultOption = document.createElement("option");
+    defaultOption.value = "";
+    defaultOption.textContent = "Selecione um efeito...";
+    presetSelect.appendChild(defaultOption);
+
+    // Add each preset to native select (fallback)
+    presets.forEach((preset) => {
+      const option = document.createElement("option");
+      option.value = preset.id;
+      option.textContent = `${preset.name} - ${preset.description}`;
+      option.dataset.icon = preset.icon;
+      presetSelect.appendChild(option);
+    });
+
+    // Create custom select with icons
+    createCustomSelect(presetSelect, presets);
+
+    console.log(`✅ Loaded ${presets.length} presets`);
+  } catch (error) {
+    console.error("Error loading presets:", error);
+    if (presetSelect.options.length === 0) {
+      presetSelect.innerHTML =
+        '<option value="">Erro ao carregar presets</option>';
+    }
+  }
+}
+
+// Create custom select dropdown with icons
+function createCustomSelect(nativeSelect, presets) {
+  const wrapper = nativeSelect.closest(".select-wrapper");
+  if (!wrapper) return;
+
+  // Add custom select class
+  wrapper.classList.add("custom-select");
+
+  // Create custom select structure
+  const trigger = document.createElement("div");
+  trigger.className = "custom-select-trigger";
+
+  const iconSpan = document.createElement("span");
+  iconSpan.className = "custom-select-icon";
+
+  const textSpan = document.createElement("span");
+  textSpan.textContent = "Selecione um efeito...";
+
+  const arrow = document.createElement("span");
+  arrow.className = "custom-select-arrow";
+  arrow.innerHTML =
+    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+
+  trigger.appendChild(iconSpan);
+  trigger.appendChild(textSpan);
+  trigger.appendChild(arrow);
+
+  // Create dropdown
+  const dropdown = document.createElement("div");
+  dropdown.className = "custom-select-dropdown";
+
+  // Add placeholder option
+  const placeholderOption = document.createElement("div");
+  placeholderOption.className = "custom-select-option placeholder";
+  placeholderOption.textContent = "Selecione um efeito...";
+  placeholderOption.dataset.value = "";
+  dropdown.appendChild(placeholderOption);
+
+  // Add preset options
+  presets.forEach((preset) => {
+    const option = document.createElement("div");
+    option.className = "custom-select-option";
+    option.dataset.value = preset.id;
+
+    const optionIcon = document.createElement("span");
+    optionIcon.className = "custom-select-option-icon";
+    optionIcon.innerHTML = preset.icon;
+
+    const optionText = document.createElement("span");
+    optionText.className = "custom-select-option-text";
+    optionText.textContent = `${preset.name} - ${preset.description}`;
+
+    option.appendChild(optionIcon);
+    option.appendChild(optionText);
+    dropdown.appendChild(option);
+
+    // Click handler for option
+    option.addEventListener("click", () => {
+      selectOption(
+        option,
+        preset,
+        nativeSelect,
+        wrapper,
+        trigger,
+        iconSpan,
+        textSpan
+      );
+    });
+  });
+
+  // Toggle dropdown
+  trigger.addEventListener("click", (e) => {
+    e.stopPropagation();
+    wrapper.classList.toggle("open");
+  });
+
+  // Close dropdown when clicking outside
+  document.addEventListener("click", (e) => {
+    if (!wrapper.contains(e.target)) {
+      wrapper.classList.remove("open");
+    }
+  });
+
+  // Append custom select
+  wrapper.appendChild(trigger);
+  wrapper.appendChild(dropdown);
+
+  // Hide native select visually but keep it functional
+  wrapper.classList.add("native-hidden");
+}
+
+function selectOption(
+  optionEl,
+  preset,
+  nativeSelect,
+  wrapper,
+  trigger,
+  iconSpan,
+  textSpan
+) {
+  // Remove selected class from all options
+  wrapper.querySelectorAll(".custom-select-option").forEach((opt) => {
+    opt.classList.remove("selected");
+  });
+
+  // Add selected class
+  optionEl.classList.add("selected");
+
+  // Update trigger
+  if (preset) {
+    iconSpan.innerHTML = preset.icon;
+    textSpan.textContent = `${preset.name} - ${preset.description}`;
+    nativeSelect.value = preset.id;
+  } else {
+    iconSpan.innerHTML = "";
+    textSpan.textContent = "Selecione um efeito...";
+    nativeSelect.value = "";
+  }
+
+  // Trigger change event on native select
+  nativeSelect.dispatchEvent(new Event("change", { bubbles: true }));
+
+  // Close dropdown
+  wrapper.classList.remove("open");
+}
+
+// Função para transição suave para página de processamento
+function transitionToProcessPage(jobId) {
+  // Criar elemento com animação de carregamento
+  const loadingScreen = document.createElement("div");
+  loadingScreen.className = "transition-loading";
+  loadingScreen.innerHTML = `
+    <div class="vinyl"></div>
+    <div class="loading-text">
+      Carregando<span class="loading-dots"></span>
+    </div>
+  `;
+  document.body.appendChild(loadingScreen);
+
+  // Aguardar um pouco e então navegar
+  setTimeout(() => {
+    window.location.href = `/process.html?id=${jobId}`;
+  }, 800);
+}
+
+function showError(message) {
+  alert(message);
 }
 
 // Process button handler
-const processBtn = document.getElementById('processBtn');
+const processBtn = document.getElementById("processBtn");
 if (processBtn) {
-    processBtn.addEventListener('click', async () => {
-        const urlInput = document.getElementById('youtubeUrl');
-        const presetSelect = document.getElementById('presetSelect');
-        const statusContainer = document.getElementById('statusContainer');
-        const resultContainer = document.getElementById('resultContainer');
-        
-        const url = urlInput.value.trim();
-        const preset = presetSelect.value;
-        
-        if (!url) {
-            alert('Por favor, insira um URL do YouTube');
-            return;
-        }
-        
-        if (!preset) {
-            alert('Por favor, selecione um preset');
-            return;
-        }
-        
-        // Show processing state
-        processBtn.classList.add('processing');
-        processBtn.disabled = true;
-        statusContainer.style.display = 'block';
-        resultContainer.style.display = 'none';
-        
-        try {
-            const response = await fetch('/api/process', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ url, preset }),
-            });
-            
-            const data = await response.json();
-            
-            if (data.success) {
-                // Show result
-                statusContainer.style.display = 'none';
-                resultContainer.style.display = 'block';
-                
-                const audioPlayer = document.getElementById('audioPlayer');
-                const downloadBtn = document.getElementById('downloadBtn');
-                
-                audioPlayer.src = data.audioUrl;
-                downloadBtn.href = data.audioUrl;
-                downloadBtn.download = data.filename || 'audio.mp3';
-            } else {
-                throw new Error(data.message || 'Erro ao processar áudio');
-            }
-        } catch (error) {
-            console.error('Error processing audio:', error);
-            alert('Erro ao processar áudio. Por favor, tente novamente.');
-            statusContainer.style.display = 'none';
-        } finally {
-            processBtn.classList.remove('processing');
-            processBtn.disabled = false;
-        }
-    });
+  processBtn.addEventListener("click", async () => {
+    const urlInput = document.getElementById("youtubeUrl");
+    const presetSelect = document.getElementById("presetSelect");
+
+    const url = urlInput.value.trim();
+    const preset = presetSelect.value;
+
+    // Validações
+    if (!url) {
+      showError("Por favor, insira um URL do YouTube");
+      return;
+    }
+
+    if (!preset) {
+      showError("Por favor, selecione um preset");
+      return;
+    }
+
+    try {
+      // Desabilitar botão
+      processBtn.disabled = true;
+      processBtn.innerHTML = '<span class="btn-text">Carregando...</span>';
+
+      // Fazer requisição POST para criar o job
+      const r = await fetch("/process", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ url, preset }),
+      });
+      const j = await r.json();
+      if (!r.ok) throw new Error(j.error || "server error");
+
+      // Transição suave para página de processamento
+      transitionToProcessPage(j.id);
+    } catch (err) {
+      showError("Erro: " + err.message);
+      processBtn.disabled = false;
+      processBtn.innerHTML = '<span class="btn-text">Processar áudio</span>';
+    }
+  });
 }
 
 // Initialize
-document.addEventListener('DOMContentLoaded', () => {
-    loadPresets();
-    
-    // Add smooth reveal on page load
-    document.body.style.opacity = '0';
-    setTimeout(() => {
-        document.body.style.transition = 'opacity 0.6s ease';
-        document.body.style.opacity = '1';
-    }, 100);
+document.addEventListener("DOMContentLoaded", () => {
+  loadPresets();
+
+  // Add smooth reveal on page load (otimizado)
+  document.body.style.opacity = "0";
+  // Usa requestAnimationFrame para evitar layout thrashing
+  requestAnimationFrame(() => {
+    document.body.style.transition = "opacity 0.4s ease";
+    document.body.style.opacity = "1";
+  });
 });
 
-console.log('🎵 AudioFlow Landing - Initialized');
+console.log("🎵 phona Landing - Initialized (Otimizado)");

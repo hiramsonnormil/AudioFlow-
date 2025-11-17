@@ -3,7 +3,7 @@ version: "3.8"
 services:
   app:
     build: .
-    container_name: ytfx-processor
+    container_name: phona-processor
     ports:
       - "8080:8080"
     environment:

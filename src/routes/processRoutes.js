@@ -20,5 +20,8 @@ export function createProcessRoutes(controller) {
   // GET /file/:id - Fazer download do arquivo
   router.get("/file/:id", (req, res) => controller.downloadFile(req, res));
 
+  // GET /presets - Listar presets disponíveis
+  router.get("/presets", (req, res) => controller.getPresets(req, res));
+
   return router;
 }

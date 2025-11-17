@@ -90,6 +90,15 @@ export class ProcessController {
   }
 
   /**
+   * GET /presets - Listar presets disponíveis
+   */
+  async getPresets(req, res) {
+    const { getEnabledPresets } = await import("../models/Preset.js");
+    const presets = getEnabledPresets();
+    res.json(presets);
+  }
+
+  /**
    * GET /file/:id - Fazer download do arquivo processado
    */
   downloadFile(req, res) {

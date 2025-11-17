@@ -4,6 +4,130 @@ const presetEl = document.getElementById("preset");
 const startBtn = document.getElementById("start");
 const errorMsg = document.getElementById("errorMsg");
 
+// Create custom select dropdown with icons
+function createCustomSelect(nativeSelect, presets) {
+  const wrapper = nativeSelect.closest(".select-wrapper");
+  if (!wrapper) return;
+
+  wrapper.classList.add("custom-select");
+
+  const trigger = document.createElement("div");
+  trigger.className = "custom-select-trigger";
+
+  const iconSpan = document.createElement("span");
+  iconSpan.className = "custom-select-icon";
+
+  const textSpan = document.createElement("span");
+  textSpan.textContent = "Selecione um efeito...";
+
+  const arrow = document.createElement("span");
+  arrow.className = "custom-select-arrow";
+  arrow.innerHTML =
+    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+
+  trigger.appendChild(iconSpan);
+  trigger.appendChild(textSpan);
+  trigger.appendChild(arrow);
+
+  const dropdown = document.createElement("div");
+  dropdown.className = "custom-select-dropdown";
+
+  const placeholderOption = document.createElement("div");
+  placeholderOption.className = "custom-select-option placeholder";
+  placeholderOption.textContent = "Selecione um efeito...";
+  placeholderOption.dataset.value = "";
+  dropdown.appendChild(placeholderOption);
+
+  presets.forEach((preset) => {
+    const option = document.createElement("div");
+    option.className = "custom-select-option";
+    option.dataset.value = preset.id;
+
+    const optionIcon = document.createElement("span");
+    optionIcon.className = "custom-select-option-icon";
+    optionIcon.innerHTML = preset.icon;
+
+    const optionText = document.createElement("span");
+    optionText.className = "custom-select-option-text";
+    optionText.textContent = `${preset.name} - ${preset.description}`;
+
+    option.appendChild(optionIcon);
+    option.appendChild(optionText);
+    dropdown.appendChild(option);
+
+    option.addEventListener("click", () => {
+      wrapper.querySelectorAll(".custom-select-option").forEach((opt) => {
+        opt.classList.remove("selected");
+      });
+      option.classList.add("selected");
+
+      if (preset) {
+        iconSpan.innerHTML = preset.icon;
+        textSpan.textContent = `${preset.name} - ${preset.description}`;
+        nativeSelect.value = preset.id;
+      }
+
+      nativeSelect.dispatchEvent(new Event("change", { bubbles: true }));
+      wrapper.classList.remove("open");
+    });
+  });
+
+  trigger.addEventListener("click", (e) => {
+    e.stopPropagation();
+    wrapper.classList.toggle("open");
+  });
+
+  document.addEventListener("click", (e) => {
+    if (!wrapper.contains(e.target)) {
+      wrapper.classList.remove("open");
+    }
+  });
+
+  wrapper.appendChild(trigger);
+  wrapper.appendChild(dropdown);
+  wrapper.classList.add("native-hidden");
+}
+
+// Carregar presets ao iniciar
+(async function loadPresets() {
+  if (!presetEl) return;
+
+  try {
+    const response = await fetch("/presets");
+    if (!response.ok) throw new Error("Failed to load presets");
+
+    const presets = await response.json();
+
+    // Limpar opções existentes
+    presetEl.innerHTML = "";
+
+    // Adicionar opção default
+    const defaultOption = document.createElement("option");
+    defaultOption.value = "";
+    defaultOption.textContent = "Selecione um efeito...";
+    presetEl.appendChild(defaultOption);
+
+    // Adicionar cada preset ao select nativo (fallback)
+    presets.forEach((preset) => {
+      const option = document.createElement("option");
+      option.value = preset.id;
+      option.textContent = `${preset.name} - ${preset.description}`;
+      option.dataset.icon = preset.icon;
+      presetEl.appendChild(option);
+    });
+
+    // Criar custom select com ícones
+    createCustomSelect(presetEl, presets);
+
+    console.log(`✅ Loaded ${presets.length} presets`);
+  } catch (error) {
+    console.error("Error loading presets:", error);
+    if (presetEl.options.length === 0) {
+      presetEl.innerHTML = '<option value="">Erro ao carregar presets</option>';
+    }
+  }
+})();
+
 // Função para extrair video ID do URL do YouTube
 function extractVideoId(url) {
   try {
@@ -33,52 +157,119 @@ function isValidYouTubeUrl(url) {
   }
 }
 
-// Prefetch de thumbnail quando mouse entra no botão
-if (startBtn && urlEl) {
-  startBtn.addEventListener("mouseover", () => {
-    const url = urlEl.value.trim();
+// Função para fazer prefetch da thumbnail
+function prefetchThumbnail() {
+  const url = urlEl?.value?.trim();
 
-    // Validar URL
-    if (!url || !isValidYouTubeUrl(url)) {
-      return;
-    }
+  // Validar URL
+  if (!url || !isValidYouTubeUrl(url)) {
+    return;
+  }
 
-    // Extrair video ID
-    const videoId = extractVideoId(url);
-    if (!videoId) {
-      return;
-    }
+  // Extrair video ID
+  const videoId = extractVideoId(url);
+  if (!videoId) {
+    return;
+  }
 
-    // Verificar se já foi precarregado nesta sessão
-    const cachedVideoId = sessionStorage.getItem("prefetchedVideoId");
-    if (cachedVideoId === videoId) {
-      return; // Já foi precarregado, não faz nada
-    }
+  // Verificar se já foi precarregado nesta sessão
+  const cachedVideoId = sessionStorage.getItem("prefetchedVideoId");
+  if (cachedVideoId === videoId) {
+    return; // Já foi precarregado, não faz nada
+  }
 
-    // Prefetch da thumbnail
-    console.log("Prefetching thumbnail for video:", videoId);
-    const thumbUrl = `https://i.ytimg.com/vi/${videoId}/maxresdefault.jpg`;
+  // Prefetch da thumbnail
+  console.log("Prefetching thumbnail for video:", videoId);
+  const thumbUrl = `https://i.ytimg.com/vi/${videoId}/maxresdefault.jpg`;
 
-    const img = new Image();
-    img.onload = () => {
-      console.log("Thumbnail prefetched successfully");
+  const img = new Image();
+  img.onload = () => {
+    console.log("Thumbnail prefetched successfully");
+    sessionStorage.setItem("prefetchedVideoId", videoId);
+    sessionStorage.setItem("prefetchedThumbUrl", thumbUrl);
+  };
+  img.onerror = () => {
+    console.log("maxresdefault failed, trying hqdefault");
+    const fallbackUrl = `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`;
+    const imgFallback = new Image();
+    imgFallback.onload = () => {
+      console.log("Fallback thumbnail prefetched");
       sessionStorage.setItem("prefetchedVideoId", videoId);
-      sessionStorage.setItem("prefetchedThumbUrl", thumbUrl);
+      sessionStorage.setItem("prefetchedThumbUrl", fallbackUrl);
     };
-    img.onerror = () => {
-      console.log("maxresdefault failed, trying hqdefault");
-      const fallbackUrl = `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`;
-      const imgFallback = new Image();
-      imgFallback.onload = () => {
-        console.log("Fallback thumbnail prefetched");
-        sessionStorage.setItem("prefetchedVideoId", videoId);
-        sessionStorage.setItem("prefetchedThumbUrl", fallbackUrl);
-      };
-      imgFallback.src = fallbackUrl;
-    };
-    img.src = thumbUrl;
-  });
+    imgFallback.src = fallbackUrl;
+  };
+  img.src = thumbUrl;
 }
+
+// Prefetch de thumbnail quando mouse entra no botão de processar
+if (startBtn && urlEl) {
+  startBtn.addEventListener("mouseover", prefetchThumbnail);
+  startBtn.addEventListener("focus", prefetchThumbnail);
+}
+
+// Prefetch também quando o input do YouTube tem valor e perde o foco
+if (urlEl) {
+  urlEl.addEventListener("blur", prefetchThumbnail);
+  urlEl.addEventListener("change", prefetchThumbnail);
+}
+
+// Adicionar prefetch nos botões principais da landing page
+(function initLandingButtonsPrefetch() {
+  const youtubeUrlInput = document.getElementById("youtubeUrl");
+  const processBtn = document.getElementById("processBtn");
+
+  if (youtubeUrlInput && processBtn) {
+    const prefetchFromMainForm = () => {
+      const url = youtubeUrlInput.value?.trim();
+      if (!url || !isValidYouTubeUrl(url)) {
+        return;
+      }
+
+      const videoId = extractVideoId(url);
+      if (!videoId) {
+        return;
+      }
+
+      const cachedVideoId = sessionStorage.getItem("prefetchedVideoId");
+      if (cachedVideoId === videoId) {
+        return;
+      }
+
+      console.log(
+        "Prefetching thumbnail from landing page for video:",
+        videoId
+      );
+      const thumbUrl = `https://i.ytimg.com/vi/${videoId}/maxresdefault.jpg`;
+
+      const img = new Image();
+      img.onload = () => {
+        console.log("Landing page thumbnail prefetched successfully");
+        sessionStorage.setItem("prefetchedVideoId", videoId);
+        sessionStorage.setItem("prefetchedThumbUrl", thumbUrl);
+      };
+      img.onerror = () => {
+        const fallbackUrl = `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`;
+        const imgFallback = new Image();
+        imgFallback.onload = () => {
+          console.log("Landing page fallback thumbnail prefetched");
+          sessionStorage.setItem("prefetchedVideoId", videoId);
+          sessionStorage.setItem("prefetchedThumbUrl", fallbackUrl);
+        };
+        imgFallback.src = fallbackUrl;
+      };
+      img.src = thumbUrl;
+    };
+
+    // Adicionar eventos ao botão principal
+    processBtn.addEventListener("mouseover", prefetchFromMainForm);
+    processBtn.addEventListener("focus", prefetchFromMainForm);
+
+    // Adicionar eventos ao input
+    youtubeUrlInput.addEventListener("blur", prefetchFromMainForm);
+    youtubeUrlInput.addEventListener("change", prefetchFromMainForm);
+  }
+})();
 
 if (form && startBtn) {
   form.addEventListener("submit", async (e) => {

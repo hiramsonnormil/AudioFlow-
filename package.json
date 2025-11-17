@@ -1,7 +1,7 @@
 {
-  "name": "ytfx-processor",
+  "name": "phona",
   "version": "1.0.0",
-  "description": "YouTube downloader + ffmpeg effects - simple Node.js app",
+  "description": "phona - Transforme o som do seu jeito com processamento de áudio profissional",
   "type": "module",
   "main": "server.js",
   "scripts": {

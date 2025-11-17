@@ -1,14 +1,23 @@
-const barInner = document.getElementById("barInner");
+const processBarInner = document.getElementById("processBarInner"); // barra do processamento
+const progressBar = document.getElementById("progressBar"); // container barra do player
+const playerBarInner = document.getElementById("playerBarInner"); // barra do player
+
 const statusText = document.getElementById("statusText");
+const statusBadge = document.getElementById("statusBadge");
+const statusLabel = document.getElementById("statusLabel");
 const titleEl = document.getElementById("title");
 const thumbnail = document.getElementById("thumbnail");
 const downloadLink = document.getElementById("downloadLink");
 const audioPreview = document.getElementById("audioPreview");
 const errorMsg = document.getElementById("errorMsg");
 const artEl = document.querySelector(".fxproc-art");
+const playBtn = document.getElementById("playBtn");
+const currentTimeEl = document.getElementById("currentTime");
+const durationEl = document.getElementById("duration");
 
 let pollId = null;
 let lastProgress = -1;
+let isPlaying = false;
 
 // Obter ID do job da URL
 const params = new URLSearchParams(window.location.search);
@@ -31,43 +40,37 @@ if (!jobId) {
   startPoll(jobId);
 }
 
-// Smooth spinning control (decelerate on pause)
-let spinRaf = null;
-let spinAngle = 0; // in degrees
-let spinVel = 0; // deg/sec
-let spinTarget = 0; // deg/sec
-let lastTs = null;
-const prefersReduce = window.matchMedia(
-  "(prefers-reduced-motion: reduce)"
-).matches;
-const MAX_SPEED = prefersReduce ? 30 : 120; // deg/sec
-const ACCEL = prefersReduce ? 3 : 8; // easing factor per second
+// ===== PLAY STATE / TOGGLE =====
 
-function spinFrame(ts) {
-  if (!lastTs) lastTs = ts;
-  const dt = Math.min(0.05, (ts - lastTs) / 1000); // clamp dt for stutter
-  lastTs = ts;
-  // Ease velocity towards target (critical damping style)
-  const k = Math.min(ACCEL * dt, 1);
-  spinVel += (spinTarget - spinVel) * k;
-  spinAngle = (spinAngle + spinVel * dt) % 360;
-  if (thumbnail) thumbnail.style.transform = `rotate(${spinAngle}deg)`;
-  if (artEl) artEl.style.setProperty("--fx-angle", `${spinAngle}deg`);
-  spinRaf = requestAnimationFrame(spinFrame);
-}
-function ensureSpinLoop() {
-  if (spinRaf == null) spinRaf = requestAnimationFrame(spinFrame);
-}
+// Controle visual (se quiser animar capa, etc)
 function setPlaying(on) {
-  spinTarget = on ? MAX_SPEED : 0;
   artEl?.classList.toggle("is-playing", !!on);
-  ensureSpinLoop();
 }
 
-// Hook audio events
+// Alternar play/pause
+function togglePlay() {
+  if (!audioPreview) return;
+  if (audioPreview.paused) {
+    audioPreview.play();
+  } else {
+    audioPreview.pause();
+  }
+}
+
+// Eventos do áudio
 if (audioPreview) {
-  audioPreview.addEventListener("play", () => setPlaying(true));
-  audioPreview.addEventListener("playing", () => setPlaying(true));
+  audioPreview.addEventListener("play", () => {
+    setPlaying(true);
+    isPlaying = true;
+    updatePlayButton();
+  });
+
+  audioPreview.addEventListener("playing", () => {
+    setPlaying(true);
+    isPlaying = true;
+    updatePlayButton();
+  });
+
   [
     "pause",
     "ended",
@@ -77,24 +80,103 @@ if (audioPreview) {
     "abort",
     "emptied",
     "error",
-  ].forEach((ev) => audioPreview.addEventListener(ev, () => setPlaying(false)));
+  ].forEach((ev) =>
+    audioPreview.addEventListener(ev, () => {
+      setPlaying(false);
+      isPlaying = false;
+      updatePlayButton();
+    })
+  );
+
+  // Atualiza tempo e barra do PLAYER
+  audioPreview.addEventListener("timeupdate", () => {
+    if (!audioPreview.duration) return;
+
+    if (currentTimeEl) {
+      currentTimeEl.textContent = formatTime(audioPreview.currentTime);
+    }
+
+    if (playerBarInner) {
+      const percent = (audioPreview.currentTime / audioPreview.duration) * 100;
+      playerBarInner.style.width = `${percent}%`;
+    }
+  });
+
+  // Duração total
+  audioPreview.addEventListener("loadedmetadata", () => {
+    if (durationEl && audioPreview.duration) {
+      durationEl.textContent = formatTime(audioPreview.duration);
+    }
+  });
 }
 
-// Cleanup
-window.addEventListener("visibilitychange", () => {
-  if (document.hidden && spinRaf) {
-    cancelAnimationFrame(spinRaf);
-    spinRaf = null;
-    lastTs = null;
-  } else if (!document.hidden) {
-    ensureSpinLoop();
+// Play/Pause – só funciona se clicar no SVG / conteúdo interno
+if (playBtn && audioPreview) {
+  playBtn.addEventListener("click", (e) => {
+    const svg = playBtn.querySelector("svg");
+    if (!svg) return;
+
+    if (e.target === svg || svg.contains(e.target)) {
+      e.stopPropagation();
+      togglePlay();
+    }
+  });
+}
+
+// Clique na barra do PLAYER = seek
+if (progressBar && audioPreview) {
+  progressBar.addEventListener("click", (e) => {
+    if (!audioPreview.duration) return;
+
+    const rect = progressBar.getBoundingClientRect();
+    const clickX = e.clientX - rect.left;
+    const ratio = Math.min(Math.max(clickX / rect.width, 0), 1);
+
+    audioPreview.currentTime = ratio * audioPreview.duration;
+  });
+}
+
+// Helpers
+
+function formatTime(seconds) {
+  if (!seconds || isNaN(seconds)) return "0:00";
+  const mins = Math.floor(seconds / 60);
+  const secs = Math.floor(seconds % 60);
+  return `${mins}:${secs.toString().padStart(2, "0")}`;
+}
+
+function updatePlayButton() {
+  if (!playBtn) return;
+
+  if (isPlaying) {
+    playBtn.innerHTML = `
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M6 4h4v16H6zM14 4h4v16h-4z"/>
+      </svg>
+    `;
+  } else {
+    playBtn.innerHTML = `
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M8 5v14l11-7z"/>
+      </svg>
+    `;
   }
-});
+}
+
+// Troca suave: some barra de processamento, aparece barra do player
+function switchToPlayerBar() {
+  const processBar = document.getElementById("processBar");
+  if (processBar) {
+    processBar.classList.add("fx-hide");
+  }
+  if (progressBar) {
+    progressBar.classList.add("fx-show");
+  }
+}
 
 function startPoll(id) {
   if (pollId) clearInterval(pollId);
 
-  // Função para extrair video ID do URL do YouTube
   function extractVideoId(url) {
     try {
       const urlObj = new URL(url);
@@ -110,7 +192,6 @@ function startPoll(id) {
     return null;
   }
 
-  // Precarregar thumbnail assim que possível (sem esperar API)
   let thumbPreloaded = false;
 
   pollId = setInterval(async () => {
@@ -120,7 +201,7 @@ function startPoll(id) {
       if (!r.ok) throw new Error("status fetch failed");
       const j = await r.json();
 
-      // Precarregar thumbnail na primeira chamada bem-sucedida (se não foi feito ainda)
+      // Thumbnail
       if (!thumbPreloaded && !thumbnail.src) {
         let videoId = j.videoId;
         if (!videoId && j.metadata?.youtubeUrl) {
@@ -143,22 +224,62 @@ function startPoll(id) {
         }
       }
 
-      // Atualizar barra de progresso apenas se mudou
-      if (j.progress !== lastProgress) {
-        barInner.style.width = j.progress + "%";
-        statusText.textContent = `${j.status} — ${j.progress}%`;
+      // Barra de PROCESSAMENTO (só enquanto não terminou)
+      if (j.progress !== lastProgress && j.status !== "DONE") {
+        if (processBarInner) {
+          processBarInner.style.width = j.progress + "%";
+        }
+
+        let statusMessage = "";
+        if (j.progress < 20) statusMessage = "Baixando áudio...";
+        else if (j.progress < 40) statusMessage = "Extraindo áudio...";
+        else if (j.progress < 60) statusMessage = "Aplicando efeitos...";
+        else if (j.progress < 80) statusMessage = "Renderizando áudio...";
+        else if (j.progress < 100) statusMessage = "Finalizando...";
+
+        statusText.textContent = `${statusMessage} ${j.progress}%`;
+
+        if (statusLabel) {
+          statusLabel.textContent = `${j.progress}%`;
+        }
+
         lastProgress = j.progress;
       }
 
-      // Carregar título
+      // Título
       if (j.title && titleEl.textContent === "Processando...") {
         titleEl.textContent = j.title;
       }
 
+      // DONE
       // Job concluído
       if (j.status === "DONE") {
         clearInterval(pollId);
-        statusText.textContent = "✅ Concluído";
+
+        // Atualiza o título principal
+        if (j.title && j.title.trim()) {
+          titleEl.textContent = j.title;
+        } else {
+          titleEl.textContent = "Seu áudio está pronto";
+        }
+
+        // Texto de status
+        statusText.textContent = "✅ Pronto para reproduzir!";
+
+        // Badge verde
+        if (statusBadge) {
+          statusBadge.style.background = "rgba(34, 197, 94, 0.1)";
+          statusBadge.style.borderColor = "rgba(34, 197, 94, 0.3)";
+          statusBadge.style.color = "#22c55e";
+          if (statusLabel) {
+            statusLabel.textContent = "Concluído";
+          }
+          const statusDot = statusBadge.querySelector(".status-dot");
+          if (statusDot) {
+            statusDot.style.background = "#22c55e";
+            statusDot.style.animation = "none";
+          }
+        }
 
         console.log("\n===========================================");
         console.log("JOB DONE RESPONSE:");
@@ -186,40 +307,61 @@ function startPoll(id) {
             audioPreview.src = audioUrl;
             audioPreview.load();
 
-            // Log dos eventos de áudio
             audioPreview.oncanplay = () => console.log("Audio can play");
             audioPreview.onerror = (e) => console.error("Audio error:", e);
             audioPreview.onloadeddata = () => console.log("Audio data loaded");
           }, 300);
 
-          // Mostrar botão de download com nome real
+          // Download
           const downloadName = j.filename || `audio_${id}.mp3`;
           downloadLink.href = audioUrl;
           downloadLink.download = downloadName;
           downloadLink.classList.remove("hidden");
-          downloadLink.textContent = `⬇️ Download ${downloadName}`;
-
-          console.log("Download button set to:", audioUrl);
+          downloadLink.style.display = "inline-flex";
+          downloadLink.innerHTML = `
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <span>Download</span>
+    `;
         }
+
+        // troca barra de processamento -> barra do player
+        switchToPlayerBar();
       }
 
-      // Erro no processamento
+      // ERROR
       if (j.status === "ERROR") {
         clearInterval(pollId);
         const errorText = j.error || "processing failed";
         showError("❌ Erro: " + errorText);
         statusText.textContent = "Erro ao processar";
+
+        if (statusBadge) {
+          statusBadge.style.background = "rgba(239, 68, 68, 0.1)";
+          statusBadge.style.borderColor = "rgba(239, 68, 68, 0.3)";
+          statusBadge.style.color = "#ef4444";
+          if (statusLabel) {
+            statusLabel.textContent = "Erro";
+          }
+          const statusDot = statusBadge.querySelector(".status-dot");
+          if (statusDot) {
+            statusDot.style.background = "#ef4444";
+            statusDot.style.animation = "none";
+          }
+        }
       }
     } catch (err) {
       console.error("Polling error:", err);
-      // Não limpar em erro, tentar novamente
+      // tenta de novo no próximo tick
     }
-  }, 500); // Reduzido de 1000ms para 500ms - mais responsivo
+  }, 500);
 }
 
 function showError(message) {
   errorMsg.textContent = message;
   errorMsg.classList.remove("hidden");
+  errorMsg.style.display = "block";
 }
 
 // Animar volta para home com transição suave
@@ -228,7 +370,6 @@ if (backBtn) {
   backBtn.addEventListener("click", (e) => {
     e.preventDefault();
 
-    // Criar elemento com animação de carregamento
     const loadingScreen = document.createElement("div");
     loadingScreen.className = "transition-loading";
     loadingScreen.innerHTML = `
@@ -239,10 +380,8 @@ if (backBtn) {
     `;
     document.body.appendChild(loadingScreen);
 
-    // Limpar polling antes de sair
     if (pollId) clearInterval(pollId);
 
-    // Aguardar animação e voltar
     setTimeout(() => {
       window.location.href = "/";
     }, 800);
