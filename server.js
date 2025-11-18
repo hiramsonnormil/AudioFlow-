@@ -1,14 +1,18 @@
 /**
  * Main Server Application
  * Arquitetura MVC - Model-View-Controller
+ * Com persistência em MongoDB Atlas
  */
 
 import express from "express";
 import path from "path";
 import fs from "fs";
 import { fileURLToPath } from "url";
+import "dotenv/config";
+
 import { ProcessController } from "./src/controllers/ProcessController.js";
 import { createProcessRoutes } from "./src/routes/processRoutes.js";
+import { databaseService } from "./src/services/DatabaseService.js";
 
 // ===== CONFIGURAÇÃO =====
 const __filename = fileURLToPath(import.meta.url);
@@ -41,6 +45,16 @@ const processController = new ProcessController(STORAGE_BASE);
 const processRoutes = createProcessRoutes(processController);
 
 app.use("/", processRoutes);
+
+// ===== DATABASE HEALTH CHECK ROUTE =====
+app.get("/health/db", (req, res) => {
+  const status = databaseService.getStatus();
+  res.json({
+    database: status,
+    server: "running",
+    timestamp: new Date(),
+  });
+});
 
 // ===== DOCUMENTATION ROUTES =====
 app.get("/api", (req, res) => {
@@ -92,12 +106,30 @@ app.use((req, res) => {
   res.status(404).json({ error: "Not found" });
 });
 
-// ===== START SERVER =====
-app.listen(PORT, () => {
-  console.log("\n");
-  console.log("╔════════════════════════════════════════╗");
-  console.log("║  🎵 Audio FX Processor (MVC)          ║");
-  console.log("╚════════════════════════════════════════╝");
-  console.log(`\n🚀 Server running on http://localhost:${PORT}`);
-  console.log("\n📚 API Documentation: http://localhost:${PORT}/api\n");
-});
+// ===== START SERVER WITH DATABASE CONNECTION =====
+async function startServer() {
+  try {
+    console.log("\n");
+    console.log("╔════════════════════════════════════════╗");
+    console.log("║  🎵 Audio FX Processor (MVC + Atlas)  ║");
+    console.log("╚════════════════════════════════════════╝\n");
+
+    // Conectar ao MongoDB
+    await databaseService.connect();
+
+    // Fazer seed dos dados iniciais
+    await databaseService.seed();
+
+    // Iniciar servidor
+    app.listen(PORT, () => {
+      console.log(`\n🚀 Server running on http://localhost:${PORT}`);
+      console.log(`📚 API Documentation: http://localhost:${PORT}/api`);
+      console.log(`🔗 Database Health: http://localhost:${PORT}/health/db\n`);
+    });
+  } catch (error) {
+    console.error("❌ Falha ao iniciar servidor:", error.message);
+    process.exit(1);
+  }
+}
+
+startServer();
