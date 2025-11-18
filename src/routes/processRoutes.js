@@ -8,6 +8,17 @@ import express from "express";
 export function createProcessRoutes(controller) {
   const router = express.Router();
 
+  // ===== JOBS API (novo padrão) =====
+  // POST /jobs - Iniciar novo processamento
+  router.post("/jobs", (req, res) => controller.startProcess(req, res));
+
+  // GET /jobs/:id - Obter status do job
+  router.get("/jobs/:id", (req, res) => controller.getStatus(req, res));
+
+  // GET /jobs/:id/download - Fazer download do arquivo
+  router.get("/jobs/:id/download", (req, res) => controller.downloadFile(req, res));
+
+  // ===== LEGACY ROUTES (compatibilidade) =====
   // POST /process - Iniciar novo processamento
   router.post("/process", (req, res) => controller.startProcess(req, res));
 
