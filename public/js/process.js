@@ -28,16 +28,113 @@ console.log("Job ID:", jobId);
 if (!jobId) {
   showError("Job ID não encontrado. Retorne ao início.");
 } else {
-  // Tentar usar thumbnail precarregada da sessão anterior
-  const prefetchedThumbUrl = sessionStorage.getItem("prefetchedThumbUrl");
-  if (prefetchedThumbUrl) {
-    thumbnail.src = prefetchedThumbUrl;
-    thumbnail.classList.remove("loading-placeholder");
-    console.log("Using prefetched thumbnail");
+  // ===== LÓGICA ROBUSTA DE CARREGAMENTO DE THUMBNAIL =====
+  // Estratégia em camadas:
+  // 1. Usa URL confirmada no sessionStorage (se existir e ainda não falhou)
+  // 2. Faz uma chamada imediata única ao /status/:id para obter videoId (antes do polling)
+  // 3. Executa uma cadeia de tentativas de thumbnail: maxresdefault -> hqdefault -> mqdefault -> default
+  // 4. Se uma carregar, salva no sessionStorage como "confirmedThumbUrl" para futuras páginas
+  // 5. Polling subsequente só tenta thumbnail se nenhuma estiver aplicada
+
+  const confirmedThumbUrl = sessionStorage.getItem("confirmedThumbUrl");
+  const prefetchedThumbUrl = sessionStorage.getItem("prefetchedThumbUrl"); // pode ter vindo da landing
+  let videoIdFromStatus = null;
+  let thumbResolved = false;
+
+  function attemptImage(url) {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => resolve(url);
+      img.onerror = reject;
+      img.src = url;
+    });
   }
 
-  // Iniciar polling do status
-  startPoll(jobId);
+  async function loadThumbnailChain(videoId, preferred) {
+    if (!videoId) return;
+    if (thumbResolved) return;
+
+    const variants = [];
+    // Se houver uma preferida (ex: maxres já testada na landing), tentar primeiro
+    if (preferred) variants.push(preferred);
+    const base = `https://i.ytimg.com/vi/${videoId}`;
+    const ordered = ["maxresdefault.jpg", "hqdefault.jpg", "mqdefault.jpg", "default.jpg"]
+      .map((f) => `${base}/${f}`);
+    for (const url of ordered) {
+      if (!variants.includes(url)) variants.push(url);
+    }
+
+    console.log("🔁 Thumbnail chain order:", variants);
+
+    for (const url of variants) {
+      try {
+        const okUrl = await attemptImage(url);
+        if (thumbnail && !thumbResolved) {
+          thumbnail.src = okUrl;
+          thumbnail.classList.remove("loading-placeholder");
+          // decode() melhora o paint em alguns browsers
+          if (thumbnail.decode) {
+            try { await thumbnail.decode(); } catch (_) {}
+          }
+          thumbResolved = true;
+          sessionStorage.setItem("confirmedThumbUrl", okUrl);
+          console.log("✅ Thumbnail loaded and confirmed:", okUrl);
+          break;
+        }
+      } catch (err) {
+        console.warn("⚠️ Falhou thumb:", url);
+      }
+    }
+  }
+
+  async function bootstrapVideoIdAndThumb() {
+    // 1. Se já temos uma confirmada, aplica e sai
+    if (confirmedThumbUrl && thumbnail) {
+      thumbnail.src = confirmedThumbUrl;
+      thumbnail.classList.remove("loading-placeholder");
+      thumbResolved = true;
+      console.log("✅ Using confirmedThumbUrl from session:", confirmedThumbUrl);
+      return;
+    }
+
+    // 2. Se temos apenas prefetched (não confirmada), aplica provisoriamente e continua a cadeia para validar
+    if (!thumbResolved && prefetchedThumbUrl && thumbnail) {
+      thumbnail.src = prefetchedThumbUrl;
+      thumbnail.classList.remove("loading-placeholder");
+      console.log("🕒 Applying prefetched thumbnail provisional:", prefetchedThumbUrl);
+      // Não marca como resolvida; cadeia pode substituir se falhar
+      thumbnail.onerror = () => {
+        console.warn("Prefetched thumbnail falhou – continuará cadeia de fallback");
+        thumbnail.classList.add("loading-placeholder");
+      };
+    }
+
+    // 3. Chamada única imediata ao status para antecipar videoId
+    try {
+      const quick = await fetch(`/status/${jobId}`);
+      if (quick.ok) {
+        const data = await quick.json();
+        videoIdFromStatus = data.videoId || (data.metadata ? (function(){
+          try { return new URL(data.metadata.youtubeUrl).searchParams.get("v") || data.metadata.youtubeUrl.split("youtu.be/")[1]?.split("?")[0]; } catch(e){ return null; }
+        })() : null);
+        console.log("🎬 Early status videoId:", videoIdFromStatus);
+        // Dispara cadeia
+        loadThumbnailChain(videoIdFromStatus, prefetchedThumbUrl);
+      } else {
+        console.warn("Status inicial falhou, dependerá do polling para videoId");
+      }
+    } catch (err) {
+      console.warn("Erro ao obter status inicial:", err);
+    }
+  }
+
+  bootstrapVideoIdAndThumb();
+
+  // Iniciar polling normal (também servirá como segunda chance para conseguir videoId se falhou antes)
+  startPoll(jobId, () => {
+    // callback opcional: se videoId ainda não e nem thumbnail confirmada, tentar de novo extração na primeira resposta
+    if (!thumbResolved && videoIdFromStatus) return; // já em andamento
+  });
 }
 
 // ===== PLAY STATE / TOGGLE =====
@@ -174,7 +271,7 @@ function switchToPlayerBar() {
   }
 }
 
-function startPoll(id) {
+function startPoll(id, onFirstStatus) {
   if (pollId) clearInterval(pollId);
 
   function extractVideoId(url) {
@@ -192,7 +289,7 @@ function startPoll(id) {
     return null;
   }
 
-  let thumbPreloaded = false;
+  let thumbPreloaded = !!sessionStorage.getItem("confirmedThumbUrl");
 
   pollId = setInterval(async () => {
     try {
@@ -201,27 +298,22 @@ function startPoll(id) {
       if (!r.ok) throw new Error("status fetch failed");
       const j = await r.json();
 
-      // Thumbnail
+      // Thumbnail (caso cadeia inicial não tenha resolvido e ainda sem src válido)
       if (!thumbPreloaded && !thumbnail.src) {
         let videoId = j.videoId;
         if (!videoId && j.metadata?.youtubeUrl) {
           videoId = extractVideoId(j.metadata.youtubeUrl);
         }
         if (videoId) {
-          const thumbUrl = `https://i.ytimg.com/vi/${videoId}/maxresdefault.jpg`;
-          const img = new Image();
-          img.onload = () => {
-            thumbnail.src = thumbUrl;
-            thumbnail.classList.remove("loading-placeholder");
-          };
-          img.onerror = () => {
-            const fallbackUrl = `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`;
-            thumbnail.src = fallbackUrl;
-            thumbnail.classList.remove("loading-placeholder");
-          };
-          img.src = thumbUrl;
+          console.log("📸 Poll fallback initiating chain for videoId:", videoId);
+          loadThumbnailChain(videoId, sessionStorage.getItem("prefetchedThumbUrl"));
           thumbPreloaded = true;
         }
+      }
+
+      if (onFirstStatus) {
+        onFirstStatus(j);
+        onFirstStatus = null; // dispara só uma vez
       }
 
       // Barra de PROCESSAMENTO (só enquanto não terminou)

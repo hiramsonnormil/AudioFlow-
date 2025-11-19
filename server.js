@@ -21,6 +21,46 @@ const PORT = process.env.PORT || 8080;
 app.use(express.json());
 app.use(express.static(path.join(__dirname, "public")));
 
+// ===== PAGE ROUTES =====
+// Rota principal (index)
+app.get("/", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "html", "index.html"));
+});
+
+// Página de processamento
+app.get("/process", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "html", "process.html"));
+});
+
+// Rota para compatibilidade com URLs antigas (process.html)
+app.get("/process.html", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "html", "process.html"));
+});
+
+// Dashboard
+app.get("/dashboard", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "html", "dashboard.html"));
+});
+
+// Página de processamento em lote
+app.get("/batch", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "html", "batch.html"));
+});
+
+// ===== ROTAS DE COMPATIBILIDADE =====
+// Para manter compatibilidade com URLs antigas (.html)
+app.get("/index.html", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "html", "index.html"));
+});
+
+app.get("/dashboard.html", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "html", "dashboard.html"));
+});
+
+app.get("/batch.html", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "html", "batch.html"));
+});
+
 // ===== STORAGE SETUP =====
 const STORAGE_BASE = path.join(__dirname, "storage");
 const STORAGE_IN = path.join(STORAGE_BASE, "in");
