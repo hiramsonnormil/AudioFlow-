@@ -9,28 +9,18 @@ import path from "path";
 import { jobQueueService } from "../services/JobQueueService.js";
 import { youtubeService } from "../services/YouTubeService.js";
 import { AudioProcessingService } from "../services/AudioProcessingService.js";
-import { AudioFileService } from "../services/AudioFileService.js";
 import { isValidPreset } from "../models/Preset.js";
 import { fileURLToPath } from "url";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Instâncias globais para fila
-let globalQueueService = null;
-
 export class ProcessController {
   constructor(storagePath) {
     this.storagePath = storagePath;
     this.audioService = new AudioProcessingService(storagePath);
-    this.audioFileService = new AudioFileService(storagePath);
     this.activeJobs = 0;
     this.maxConcurrent = 10;
-    
-    // Inicializar fila global se não existe
-    if (!globalQueueService) {
-      globalQueueService = jobQueueService;
-    }
   }
 
   /**
