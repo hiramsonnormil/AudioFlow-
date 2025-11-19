@@ -218,56 +218,103 @@ if (urlEl) {
 (function initLandingButtonsPrefetch() {
   const youtubeUrlInput = document.getElementById("youtubeUrl");
   const processBtn = document.getElementById("processBtn");
+  const presetSelect = document.getElementById("presetSelect");
+
+  console.log("🔍 Prefetch init - Elements found:", {
+    youtubeUrlInput: !!youtubeUrlInput,
+    processBtn: !!processBtn,
+    presetSelect: !!presetSelect
+  });
 
   if (youtubeUrlInput && processBtn) {
+    console.log("✅ Attaching hover event to processBtn");
+    
     const prefetchFromMainForm = () => {
+      console.log("🎯 Prefetch triggered!");
       const url = youtubeUrlInput.value?.trim();
+
+      console.log("📋 Current values:", {
+        url: url,
+        preset: presetSelect?.value,
+        isValidUrl: isValidYouTubeUrl(url)
+      });
+
+      // Validar URL e preset antes de tentar prefetch
       if (!url || !isValidYouTubeUrl(url)) {
+        console.log("❌ Invalid URL, skipping prefetch");
+        // Marcar campo como inválido visualmente (opcional)
+        youtubeUrlInput.classList.add("input-error");
         return;
+      } else {
+        youtubeUrlInput.classList.remove("input-error");
+      }
+
+      if (presetSelect && !presetSelect.value) {
+        console.log("❌ Preset not selected, skipping prefetch");
+        presetSelect.classList.add("input-error");
+        return;
+      } else if (presetSelect) {
+        presetSelect.classList.remove("input-error");
       }
 
       const videoId = extractVideoId(url);
       if (!videoId) {
+        console.log("❌ Could not extract videoId");
         return;
       }
 
-      const cachedVideoId = sessionStorage.getItem("prefetchedVideoId");
-      if (cachedVideoId === videoId) {
-        return;
-      }
+      // REMOVIDO: Verificação de cache para forçar novo prefetch a cada hover
+      // const cachedVideoId = sessionStorage.getItem("prefetchedVideoId");
+      // if (cachedVideoId === videoId) { ... }
 
       console.log(
-        "Prefetching thumbnail from landing page for video:",
+        "🚀 Prefetching thumbnail (validated) from landing page for video:",
         videoId
       );
       const thumbUrl = `https://i.ytimg.com/vi/${videoId}/maxresdefault.jpg`;
 
+      // Salvar OTIMISTICAMENTE para garantir que chegue na próxima página
+      // mesmo se o usuário clicar rápido demais
+      sessionStorage.setItem("prefetchedVideoId", videoId);
+      sessionStorage.setItem("prefetchedThumbUrl", thumbUrl);
+
       const img = new Image();
       img.onload = () => {
-        console.log("Landing page thumbnail prefetched successfully");
-        sessionStorage.setItem("prefetchedVideoId", videoId);
-        sessionStorage.setItem("prefetchedThumbUrl", thumbUrl);
+        console.log("✅ Landing page thumbnail prefetched successfully");
+        // Já salvo otimisticamente
       };
       img.onerror = () => {
+        console.log("⚠️ maxresdefault failed, trying hqdefault");
         const fallbackUrl = `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`;
+        
+        // Atualizar com fallback se falhar
+        sessionStorage.setItem("prefetchedThumbUrl", fallbackUrl);
+        
         const imgFallback = new Image();
         imgFallback.onload = () => {
-          console.log("Landing page fallback thumbnail prefetched");
-          sessionStorage.setItem("prefetchedVideoId", videoId);
-          sessionStorage.setItem("prefetchedThumbUrl", fallbackUrl);
+          console.log("✅ Landing page fallback thumbnail prefetched");
         };
         imgFallback.src = fallbackUrl;
       };
       img.src = thumbUrl;
     };
 
-    // Adicionar eventos ao botão principal
+    // Adicionar eventos ao botão principal (hover/focus)
     processBtn.addEventListener("mouseover", prefetchFromMainForm);
     processBtn.addEventListener("focus", prefetchFromMainForm);
+    console.log("✅ Event listeners attached to processBtn");
 
-    // Adicionar eventos ao input
+    // Adicionar eventos ao input URL
     youtubeUrlInput.addEventListener("blur", prefetchFromMainForm);
     youtubeUrlInput.addEventListener("change", prefetchFromMainForm);
+
+    // Adicionar eventos ao select de preset
+    if (presetSelect) {
+      presetSelect.addEventListener("change", prefetchFromMainForm);
+      presetSelect.addEventListener("blur", prefetchFromMainForm);
+    }
+  } else {
+    console.warn("⚠️ Could not find elements for prefetch initialization");
   }
 })();
 
@@ -281,6 +328,22 @@ if (form && startBtn) {
     if (!url || !preset) {
       showError("URL e Preset são obrigatórios");
       return;
+    }
+
+    // GARANTIA: Salvar thumbnail no sessionStorage ao submeter
+    // Isso cobre casos onde o usuário não passou o mouse ou usou Enter
+    try {
+      if (isValidYouTubeUrl(url)) {
+        const videoId = extractVideoId(url);
+        if (videoId) {
+          const thumbUrl = `https://i.ytimg.com/vi/${videoId}/maxresdefault.jpg`;
+          console.log("💾 Saving thumbnail to session storage on submit:", videoId);
+          sessionStorage.setItem("prefetchedVideoId", videoId);
+          sessionStorage.setItem("prefetchedThumbUrl", thumbUrl);
+        }
+      }
+    } catch (err) {
+      console.error("Error saving thumbnail on submit:", err);
     }
 
     try {
@@ -321,7 +384,7 @@ function transitionToProcessPage(jobId) {
 
   // Aguardar um pouco e então navegar
   setTimeout(() => {
-    window.location.href = `/process.html?id=${jobId}`;
+    window.location.href = `/process?id=${jobId}`;
   }, 800);
 }
 

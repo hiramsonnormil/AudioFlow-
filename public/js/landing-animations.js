@@ -635,7 +635,7 @@ function transitionToProcessPage(jobId) {
 
   // Aguardar um pouco e então navegar
   setTimeout(() => {
-    window.location.href = `/process.html?id=${jobId}`;
+    window.location.href = `/process?id=${jobId}`;
   }, 800);
 }
 
