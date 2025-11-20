@@ -1,11 +1,12 @@
 /**
  * Service: Audio Processing
- * Gerencia o processamento de áudio com FFmpeg
+ * Gerencia o processamento de áudio com FFmpeg e upload para R2
  */
 
 import { spawn } from "child_process";
 import path from "path";
 import fs from "fs";
+import * as r2 from "../../storage/r2.js";
 
 export class AudioProcessingService {
   constructor(storagePath) {
@@ -83,6 +84,7 @@ export class AudioProcessingService {
 
   /**
    * Processa áudio com FFmpeg
+   * IMPORTANTE: Este método agora gera arquivo em /tmp, não na pasta definitiva
    */
   processAudio(inputStream, outputPath, audioFilterStr, durationSec, jobId) {
     return new Promise((resolve, reject) => {
@@ -149,6 +151,75 @@ export class AudioProcessingService {
       // Pipe input para FFmpeg
       inputStream.stream.pipe(ff.stdin);
     });
+  }
+
+  /**
+   * Processa áudio e faz upload para R2 (usuário free)
+   * 
+   * Fluxo completo:
+   * 1. Gera arquivo temporário com FFmpeg em /tmp
+   * 2. Faz upload para R2 no caminho free/<userId>/<jobId>.mp3
+   * 3. Deleta arquivo temporário local
+   * 4. Retorna URL pública do R2
+   * 
+   * @param {object} inputStream - Stream de áudio de entrada
+   * @param {string} jobId - ID único do job
+   * @param {string} userId - ID do usuário (para estrutura de pastas no R2)
+   * @param {string} preset - Nome do preset aplicado
+   * @param {number} durationSec - Duração do áudio em segundos
+   * @param {string} title - Título do arquivo (metadata)
+   * @returns {Promise<{publicUrl: string, key: string, localPath: string}>}
+   */
+  async processAndUploadToR2(inputStream, jobId, userId, preset, durationSec, title = 'audio') {
+    let tempPath = null;
+    
+    try {
+      console.log(`[${jobId}] Iniciando processamento com upload para R2`);
+      
+      // 1. Gera arquivo temporário
+      const filename = `${jobId}.mp3`;
+      tempPath = path.join('/tmp', filename);
+      
+      // 2. Processa áudio com FFmpeg (salva em /tmp)
+      const audioFilterStr = this.buildAudioFilter(preset, durationSec);
+      await this.processAudio(inputStream, tempPath, audioFilterStr, durationSec, jobId);
+      
+      if (!fs.existsSync(tempPath)) {
+        throw new Error('FFmpeg não gerou o arquivo de saída');
+      }
+      
+      console.log(`[${jobId}] Arquivo processado: ${tempPath}`);
+      
+      // 3. Define a chave no R2 (estrutura: free/<userId>/<jobId>.mp3)
+      const r2Key = `free/${userId}/${filename}`;
+      
+      // 4. Faz upload para R2
+      const uploadResult = await r2.uploadFile(tempPath, r2Key, {
+        userId,
+        jobId,
+        preset,
+        title,
+      });
+      
+      console.log(`[${jobId}] Upload concluído: ${uploadResult.publicUrl}`);
+      
+      // 5. Deleta arquivo temporário local
+      await r2.deleteLocalFile(tempPath);
+      
+      return {
+        publicUrl: uploadResult.publicUrl,
+        key: uploadResult.key,
+        localPath: tempPath, // Para compatibilidade, mas arquivo já foi deletado
+      };
+      
+    } catch (error) {
+      // Em caso de erro, tenta limpar o arquivo temporário
+      if (tempPath && fs.existsSync(tempPath)) {
+        console.log(`[${jobId}] Limpando arquivo temporário após erro`);
+        await r2.deleteLocalFile(tempPath).catch(() => {});
+      }
+      throw error;
+    }
   }
 
   /**

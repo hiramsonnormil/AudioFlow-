@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>App — phona</title>
+  
+  <!-- Favicon -->
+  <link rel="icon" type="image/svg+xml" href="/assets/icons/favicon.svg">
+  
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- Styles -->
+  <link rel="stylesheet" href="/css/global.css">
+  <link rel="stylesheet" href="/css/app.css">
+</head>
+<body class="app-page">
+  <!-- Navbar -->
+  <nav class="app-navbar">
+    <div class="container app-navbar-content">
+      <a href="/html/app.html" class="app-logo">
+        <svg class="app-logo-icon" width="32" height="32" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="logoGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#c28c66" />
+              <stop offset="100%" stop-color="#e8b4a0" />
+            </linearGradient>
+          </defs>
+          <circle cx="22" cy="42" r="8" fill="url(#logoGradient)" />
+          <path d="M 29 40 L 29 18 L 42 15 L 42 17 L 30 20 L 30 38 Z" fill="url(#logoGradient)" />
+          <rect x="38" y="20" width="14" height="3" rx="1.5" fill="url(#logoGradient)" />
+          <rect x="38" y="27" width="11" height="3" rx="1.5" fill="url(#logoGradient)" />
+          <rect x="38" y="34" width="8" height="3" rx="1.5" fill="url(#logoGradient)" />
+        </svg>
+        <span>phona</span>
+      </a>
+      
+      <div class="app-nav-actions">
+        <div class="app-user">
+          <div class="app-user-avatar" id="userAvatar">?</div>
+          <span class="app-user-name" id="userName">Usuário</span>
+        </div>
+        <button class="btn btn-ghost btn-sm" id="logoutBtn">Sair</button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Main Content -->
+  <main class="app-main" style="padding: 4rem 0; min-height: 100vh;">
+    <div class="processor-container" style="max-width: 900px; margin: 0 auto; padding: 0 2rem;">
+      <div class="processor-header" style="text-align: center; margin-bottom: 3rem;">
+        <h2 class="processor-title" style="font-size: 2.5rem; font-weight: 700; font-family: var(--font-display); margin-bottom: 1rem; color: var(--text-primary);">
+          Processe seu <span class="text-accent" style="background: linear-gradient(135deg, var(--color-copper), var(--color-peach)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">áudio agora</span>
+        </h2>
+        <p class="processor-subtitle" style="font-size: 1.125rem; color: var(--text-secondary);">
+          Cole o link do YouTube e escolha o efeito desejado
+        </p>
+      </div>
+
+      <div class="processor-card" style="background: var(--bg-card); border: 1px solid var(--border); border-radius: 24px; padding: 2.5rem;">
+        <div class="processor-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 2rem;">
+          <div class="input-group">
+            <label for="audioUrl" class="input-label" style="display: block; margin-bottom: 0.75rem;">
+              <span class="label-text" style="font-weight: 600; color: var(--text-primary); display: block; margin-bottom: 0.25rem;">URL do YouTube</span>
+              <span class="label-hint" style="font-size: 0.875rem; color: var(--text-muted);">Cole o link da música</span>
+            </label>
+            <div class="input-wrapper" style="position: relative;">
+              <span class="input-icon" style="position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); width: 20px; height: 20px; color: var(--text-muted);">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                  <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" stroke-width="2" stroke-linecap="round"></path>
+                  <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" stroke-width="2" stroke-linecap="round"></path>
+                </svg>
+              </span>
+              <input 
+                type="text" 
+                id="audioUrl" 
+                class="input-field" 
+                placeholder="https://www.youtube.com/watch?v=..."
+                style="width: 100%; padding: 1rem 1rem 1rem 3rem; background: var(--bg-input); border: 1px solid var(--border); border-radius: 12px; color: var(--text-primary); font-size: 1rem; transition: all 0.2s;"
+              >
+            </div>
+          </div>
+
+          <div class="input-group">
+            <label for="presetSelect" class="input-label" style="display: block; margin-bottom: 0.75rem;">
+              <span class="label-text" style="font-weight: 600; color: var(--text-primary); display: block; margin-bottom: 0.25rem;">Preset de efeito</span>
+              <span class="label-hint" style="font-size: 0.875rem; color: var(--text-muted);">Escolha o estilo desejado</span>
+            </label>
+            <div class="select-wrapper" style="position: relative;">
+              <select id="presetSelect" class="select-field" style="width: 100%; padding: 1rem; padding-right: 3rem; background: var(--bg-input); border: 1px solid var(--border); border-radius: 12px; color: var(--text-primary); font-size: 1rem; cursor: pointer; appearance: none;">
+                <option value="">Carregando presets...</option>
+              </select>
+              <span class="select-arrow" style="position: absolute; right: 1rem; top: 50%; transform: translateY(-50%); width: 20px; height: 20px; color: var(--text-muted); pointer-events: none;">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                  <path d="m6 9 6 6 6-6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
+                </svg>
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <button id="processBtn" class="btn-process" type="submit" style="width: 100%; padding: 1.25rem 2rem; background: linear-gradient(135deg, var(--color-copper), var(--color-peach)); border: none; border-radius: 16px; color: white; font-weight: 600; font-size: 1.125rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 0.75rem; transition: all 0.3s;">
+          <span class="btn-text">Processar áudio</span>
+          <span class="btn-spinner" style="display: none;"></span>
+          <span class="btn-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" style="width: 20px; height: 20px;">
+              <path d="M5 12h14m-7-7 7 7-7 7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
+            </svg>
+          </span>
+        </button>
+
+        <div id="statusContainer" class="status-container" style="display: none; margin-top: 2rem;">
+          <div class="status-content" style="display: flex; align-items: center; gap: 1rem; padding: 1.5rem; background: rgba(194, 140, 102, 0.05); border: 1px solid rgba(194, 140, 102, 0.15); border-radius: 16px;">
+            <div class="status-icon" style="width: 48px; height: 48px; border-radius: 50%; background: linear-gradient(135deg, var(--color-copper), var(--color-peach)); display: flex; align-items: center; justify-content: center; animation: spin 1s linear infinite;">
+              <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" style="width: 24px; height: 24px;">
+                <path d="M12 2v4m0 12v4M4.93 4.93l2.83 2.83m8.48 8.48 2.83 2.83M2 12h4m12 0h4M4.93 19.07l2.83-2.83m8.48-8.48 2.83-2.83" stroke-linecap="round"></path>
+              </svg>
+            </div>
+            <div class="status-info">
+              <span id="statusText" class="status-text" style="display: block; font-weight: 600; color: var(--text-primary); margin-bottom: 0.25rem;">Processando...</span>
+              <span class="status-subtext" style="font-size: 0.875rem; color: var(--text-muted);">Isso pode levar alguns segundos</span>
+            </div>
+          </div>
+          <div class="progress-bar" style="height: 4px; background: rgba(194, 140, 102, 0.1); border-radius: 4px; overflow: hidden; margin-top: 1rem;">
+            <div id="progressFill" class="progress-fill" style="height: 100%; background: linear-gradient(90deg, var(--color-copper), var(--color-peach)); width: 0%; transition: width 0.3s;"></div>
+          </div>
+        </div>
+
+        <div id="resultContainer" class="result-container" style="display: none; margin-top: 2rem;">
+          <div class="result-header" style="text-align: center; margin-bottom: 1.5rem;">
+            <span class="result-badge" style="display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.5rem 1rem; background: rgba(34, 197, 94, 0.1); border: 1px solid rgba(34, 197, 94, 0.3); border-radius: 24px; color: #22c55e; font-size: 0.875rem; font-weight: 600; margin-bottom: 1rem;">
+              <svg viewBox="0 0 24 24" fill="currentColor" style="width: 16px; height: 16px;">
+                <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+              </svg>
+              Concluído
+            </span>
+            <h3 class="result-title" style="font-size: 1.5rem; font-weight: 700; color: var(--text-primary);">Seu áudio está pronto</h3>
+          </div>
+
+          <div class="result-player" style="margin-bottom: 1.5rem;">
+            <audio id="audioPlayer" class="audio-player" controls style="width: 100%; border-radius: 12px;"></audio>
+          </div>
+
+          <a id="downloadBtn" class="btn-download" download style="display: flex; align-items: center; justify-content: center; gap: 0.75rem; width: 100%; padding: 1.25rem 2rem; background: linear-gradient(135deg, var(--color-copper), var(--color-peach)); border: none; border-radius: 16px; color: white; font-weight: 600; font-size: 1.125rem; text-decoration: none; cursor: pointer; transition: all 0.3s;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" style="width: 20px; height: 20px;">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
+            </svg>
+            <span>Download MP3</span>
+          </a>
+        </div>
+      </div>
+
+      <div class="processor-features" style="display: flex; align-items: center; justify-content: center; gap: 2rem; margin-top: 3rem; padding-top: 2rem; border-top: 1px solid var(--border);">
+        <div class="feature" style="display: flex; align-items: center; gap: 0.5rem; color: var(--text-secondary); font-size: 0.875rem;">
+          <span class="feature-icon" style="color: var(--color-copper);">✦</span>
+          <span>Interface intuitiva</span>
+        </div>
+        <div class="feature" style="display: flex; align-items: center; gap: 0.5rem; color: var(--text-secondary); font-size: 0.875rem;">
+          <span class="feature-icon" style="color: var(--color-copper);">⚡</span>
+          <span>Processamento rápido</span>
+        </div>
+        <div class="feature" style="display: flex; align-items: center; gap: 0.5rem; color: var(--text-secondary); font-size: 0.875rem;">
+          <span class="feature-icon" style="color: var(--color-copper);">🔒</span>
+          <span>Seguro e privado</span>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <style>
+    @keyframes spin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+    
+    .input-field:focus,
+    .select-field:focus {
+      outline: none;
+      border-color: var(--color-copper);
+      box-shadow: 0 0 0 3px rgba(194, 140, 102, 0.1);
+    }
+    
+    .btn-process:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(194, 140, 102, 0.3);
+    }
+    
+    .btn-process:active {
+      transform: translateY(0);
+    }
+    
+    @media (max-width: 768px) {
+      .processor-grid {
+        grid-template-columns: 1fr !important;
+      }
+      
+      .processor-features {
+        flex-direction: column !important;
+        gap: 1rem !important;
+      }
+    }
+  </style>
+
+  <!-- Scripts -->
+              Experimente todos os efeitos sem custo
+            </p>
+          </div>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <!-- Scripts -->
+  <script type="module" src="/js/jobs/app-main.js"></script>
+</body>
+</html>

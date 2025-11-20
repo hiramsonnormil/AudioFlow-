@@ -1,3 +1,35 @@
+// ===== PROTEÇÃO DE AUTENTICAÇÃO =====
+// Verificar se usuário está logado antes de permitir acesso à página
+(function checkAuth() {
+  try {
+    // Verificar token no localStorage (chave usada pelo session.js)
+    const token = localStorage.getItem('phona:token');
+    const userJson = localStorage.getItem('phona:user');
+    
+    if (!token || !userJson) {
+      console.warn('⚠️ Usuário não autenticado - redirecionando para landing page');
+      window.location.href = '/?requireAuth=true';
+      return;
+    }
+    
+    const user = JSON.parse(userJson);
+    
+    if (!user.email) {
+      console.warn('⚠️ Sessão inválida - redirecionando para landing page');
+      localStorage.removeItem('phona:token');
+      localStorage.removeItem('phona:user');
+      window.location.href = '/?requireAuth=true';
+      return;
+    }
+    
+    console.log('✅ Autenticação verificada:', user.email);
+  } catch (error) {
+    console.error('❌ Erro ao verificar autenticação:', error);
+    window.location.href = '/?requireAuth=true';
+    return;
+  }
+})();
+
 const processBarInner = document.getElementById("processBarInner"); // barra do processamento
 const progressBar = document.getElementById("progressBar"); // container barra do player
 const playerBarInner = document.getElementById("playerBarInner"); // barra do player
@@ -41,6 +73,7 @@ if (!jobId) {
   let videoIdFromStatus = null;
   let thumbResolved = false;
 
+  // Helper para testar se uma imagem carrega
   function attemptImage(url) {
     return new Promise((resolve, reject) => {
       const img = new Image();
@@ -50,6 +83,7 @@ if (!jobId) {
     });
   }
 
+  // Função para carregar thumbnail com fallback em cadeia
   async function loadThumbnailChain(videoId, preferred) {
     if (!videoId) return;
     if (thumbResolved) return;
@@ -111,7 +145,12 @@ if (!jobId) {
 
     // 3. Chamada única imediata ao status para antecipar videoId
     try {
-      const quick = await fetch(`/status/${jobId}`);
+      const token = localStorage.getItem('phona:token');
+      const quick = await fetch(`/status/${jobId}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
       if (quick.ok) {
         const data = await quick.json();
         videoIdFromStatus = data.videoId || (data.metadata ? (function(){
@@ -130,11 +169,145 @@ if (!jobId) {
 
   bootstrapVideoIdAndThumb();
 
+  // ===== START POLL =====
+  // Função de polling para status do job
+  function startPoll(id, onFirstStatus) {
+    if (pollId) clearInterval(pollId);
+
+    function extractVideoId(url) {
+      try {
+        const urlObj = new URL(url);
+        if (urlObj.hostname.includes("youtube.com")) {
+          return urlObj.searchParams.get("v");
+        }
+        if (urlObj.hostname.includes("youtu.be")) {
+          return urlObj.pathname.slice(1).split("?")[0];
+        }
+      } catch (e) {
+        return null;
+      }
+      return null;
+    }
+
+    let thumbPreloaded = !!sessionStorage.getItem("confirmedThumbUrl");
+
+    pollId = setInterval(async () => {
+      try {
+        const token = localStorage.getItem('phona:token');
+        const statusUrl = `/status/${id}`;
+        const r = await fetch(statusUrl, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        if (!r.ok) throw new Error("status fetch failed");
+        const j = await r.json();
+
+        // Thumbnail (caso cadeia inicial não tenha resolvido e ainda sem src válido)
+        if (!thumbPreloaded && !thumbnail.src) {
+          let videoId = j.videoId;
+          if (!videoId && j.metadata?.youtubeUrl) {
+            videoId = extractVideoId(j.metadata.youtubeUrl);
+          }
+          if (videoId) {
+            console.log("📸 Poll fallback initiating chain for videoId:", videoId);
+            loadThumbnailChain(videoId, sessionStorage.getItem("prefetchedThumbUrl"));
+            thumbPreloaded = true;
+          }
+        }
+
+        if (onFirstStatus) {
+          onFirstStatus(j);
+          onFirstStatus = null; // dispara só uma vez
+        }
+
+        // Barra de PROCESSAMENTO (só enquanto não terminou)
+        if (j.progress !== lastProgress && j.status !== "DONE") {
+          if (processBarInner) {
+            processBarInner.style.width = j.progress + "%";
+          }
+
+          let statusMessage = "";
+          if (j.progress < 20) statusMessage = "Baixando áudio...";
+          else if (j.progress < 40) statusMessage = "Extraindo faixas...";
+          else if (j.progress < 60) statusMessage = "Aplicando efeitos...";
+          else if (j.progress < 80) statusMessage = "Renderizando...";
+          else statusMessage = "Finalizando...";
+
+          if (statusText) statusText.textContent = statusMessage;
+          lastProgress = j.progress;
+        }
+
+        // Status e label
+        if (statusBadge) statusBadge.textContent = j.status;
+        if (statusLabel) statusLabel.textContent = getStatusLabel(j.status);
+
+        // Título
+        if (j.videoTitle && titleEl) {
+          titleEl.textContent = j.videoTitle;
+        }
+
+        // Finalizado
+        if (j.status === "DONE") {
+          clearInterval(pollId);
+          pollId = null;
+
+          if (processBarInner) processBarInner.style.width = "100%";
+          if (statusText) statusText.textContent = "Processamento concluído!";
+
+          if (j.output) {
+            const downloadUrl = j.output;
+            if (downloadLink) {
+              downloadLink.href = downloadUrl;
+              downloadLink.style.display = "flex";
+            }
+            if (audioPreview) {
+              audioPreview.src = downloadUrl;
+              audioPreview.style.display = "block";
+              showPlayer();
+            }
+          }
+        }
+
+        // Erro
+        if (j.status === "ERROR") {
+          clearInterval(pollId);
+          pollId = null;
+          showError(j.error || "Erro desconhecido durante o processamento.");
+        }
+      } catch (err) {
+        console.error("Polling error:", err);
+      }
+    }, 1500);
+  }
+
   // Iniciar polling normal (também servirá como segunda chance para conseguir videoId se falhou antes)
   startPoll(jobId, () => {
     // callback opcional: se videoId ainda não e nem thumbnail confirmada, tentar de novo extração na primeira resposta
     if (!thumbResolved && videoIdFromStatus) return; // já em andamento
   });
+}
+
+// ===== HELPER FUNCTIONS =====
+
+// Traduzir status para label amigável
+function getStatusLabel(status) {
+  const labels = {
+    'PENDING': 'Aguardando',
+    'PROCESSING': 'Processando',
+    'DONE': 'Concluído',
+    'ERROR': 'Erro'
+  };
+  return labels[status] || status;
+}
+
+// ===== ERROR HANDLER =====
+function showError(message) {
+  if (errorMsg) {
+    errorMsg.textContent = message;
+    errorMsg.classList.remove("hidden");
+    errorMsg.style.display = "block";
+  }
 }
 
 // ===== PLAY STATE / TOGGLE =====
@@ -269,191 +442,6 @@ function switchToPlayerBar() {
   if (progressBar) {
     progressBar.classList.add("fx-show");
   }
-}
-
-function startPoll(id, onFirstStatus) {
-  if (pollId) clearInterval(pollId);
-
-  function extractVideoId(url) {
-    try {
-      const urlObj = new URL(url);
-      if (urlObj.hostname.includes("youtube.com")) {
-        return urlObj.searchParams.get("v");
-      }
-      if (urlObj.hostname.includes("youtu.be")) {
-        return urlObj.pathname.slice(1).split("?")[0];
-      }
-    } catch (e) {
-      return null;
-    }
-    return null;
-  }
-
-  let thumbPreloaded = !!sessionStorage.getItem("confirmedThumbUrl");
-
-  pollId = setInterval(async () => {
-    try {
-      const statusUrl = `/status/${id}`;
-      const r = await fetch(statusUrl);
-      if (!r.ok) throw new Error("status fetch failed");
-      const j = await r.json();
-
-      // Thumbnail (caso cadeia inicial não tenha resolvido e ainda sem src válido)
-      if (!thumbPreloaded && !thumbnail.src) {
-        let videoId = j.videoId;
-        if (!videoId && j.metadata?.youtubeUrl) {
-          videoId = extractVideoId(j.metadata.youtubeUrl);
-        }
-        if (videoId) {
-          console.log("📸 Poll fallback initiating chain for videoId:", videoId);
-          loadThumbnailChain(videoId, sessionStorage.getItem("prefetchedThumbUrl"));
-          thumbPreloaded = true;
-        }
-      }
-
-      if (onFirstStatus) {
-        onFirstStatus(j);
-        onFirstStatus = null; // dispara só uma vez
-      }
-
-      // Barra de PROCESSAMENTO (só enquanto não terminou)
-      if (j.progress !== lastProgress && j.status !== "DONE") {
-        if (processBarInner) {
-          processBarInner.style.width = j.progress + "%";
-        }
-
-        let statusMessage = "";
-        if (j.progress < 20) statusMessage = "Baixando áudio...";
-        else if (j.progress < 40) statusMessage = "Extraindo áudio...";
-        else if (j.progress < 60) statusMessage = "Aplicando efeitos...";
-        else if (j.progress < 80) statusMessage = "Renderizando áudio...";
-        else if (j.progress < 100) statusMessage = "Finalizando...";
-
-        statusText.textContent = `${statusMessage} ${j.progress}%`;
-
-        if (statusLabel) {
-          statusLabel.textContent = `${j.progress}%`;
-        }
-
-        lastProgress = j.progress;
-      }
-
-      // Título
-      if (j.title && titleEl.textContent === "Processando...") {
-        titleEl.textContent = j.title;
-      }
-
-      // DONE
-      // Job concluído
-      if (j.status === "DONE") {
-        clearInterval(pollId);
-
-        // Atualiza o título principal
-        if (j.title && j.title.trim()) {
-          titleEl.textContent = j.title;
-        } else {
-          titleEl.textContent = "Seu áudio está pronto";
-        }
-
-        // Texto de status
-        statusText.textContent = "✅ Pronto para reproduzir!";
-
-        // Badge verde
-        if (statusBadge) {
-          statusBadge.style.background = "rgba(34, 197, 94, 0.1)";
-          statusBadge.style.borderColor = "rgba(34, 197, 94, 0.3)";
-          statusBadge.style.color = "#22c55e";
-          if (statusLabel) {
-            statusLabel.textContent = "Concluído";
-          }
-          const statusDot = statusBadge.querySelector(".status-dot");
-          if (statusDot) {
-            statusDot.style.background = "#22c55e";
-            statusDot.style.animation = "none";
-          }
-        }
-
-        console.log("\n===========================================");
-        console.log("JOB DONE RESPONSE:");
-        console.log("Job ID:", j.id);
-        console.log("Title:", j.title);
-        console.log("Filename:", j.filename);
-        console.log("Output URL:", j.output);
-        console.log("File exists on server:", j.fileExists);
-        console.log("File size:", j.fileSize);
-        console.log("===========================================\n");
-
-        if (j.output) {
-          const audioUrl = `${j.output}?t=${Date.now()}`;
-
-          console.log("Loading audio from:", audioUrl);
-
-          // Limpar áudio anterior
-          audioPreview.pause();
-          audioPreview.src = "";
-          audioPreview.load();
-
-          // Aguardar e carregar novo áudio
-          setTimeout(() => {
-            console.log("Setting audio src to:", audioUrl);
-            audioPreview.src = audioUrl;
-            audioPreview.load();
-
-            audioPreview.oncanplay = () => console.log("Audio can play");
-            audioPreview.onerror = (e) => console.error("Audio error:", e);
-            audioPreview.onloadeddata = () => console.log("Audio data loaded");
-          }, 300);
-
-          // Download
-          const downloadName = j.filename || `audio_${id}.mp3`;
-          downloadLink.href = audioUrl;
-          downloadLink.download = downloadName;
-          downloadLink.classList.remove("hidden");
-          downloadLink.style.display = "inline-flex";
-          downloadLink.innerHTML = `
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3" stroke-linecap="round" stroke-linejoin="round"/>
-      </svg>
-      <span>Download</span>
-    `;
-        }
-
-        // troca barra de processamento -> barra do player
-        switchToPlayerBar();
-      }
-
-      // ERROR
-      if (j.status === "ERROR") {
-        clearInterval(pollId);
-        const errorText = j.error || "processing failed";
-        showError("❌ Erro: " + errorText);
-        statusText.textContent = "Erro ao processar";
-
-        if (statusBadge) {
-          statusBadge.style.background = "rgba(239, 68, 68, 0.1)";
-          statusBadge.style.borderColor = "rgba(239, 68, 68, 0.3)";
-          statusBadge.style.color = "#ef4444";
-          if (statusLabel) {
-            statusLabel.textContent = "Erro";
-          }
-          const statusDot = statusBadge.querySelector(".status-dot");
-          if (statusDot) {
-            statusDot.style.background = "#ef4444";
-            statusDot.style.animation = "none";
-          }
-        }
-      }
-    } catch (err) {
-      console.error("Polling error:", err);
-      // tenta de novo no próximo tick
-    }
-  }, 500);
-}
-
-function showError(message) {
-  errorMsg.textContent = message;
-  errorMsg.classList.remove("hidden");
-  errorMsg.style.display = "block";
 }
 
 // Animar volta para home com transição suave
