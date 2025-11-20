@@ -1,0 +1,332 @@
+/**
+ * Módulo de integração com Cloudflare R2 (compatível com S3)
+ * 
+ * Este módulo gerencia:
+ * - Upload de arquivos processados para o R2
+ * - Geração de URLs públicas
+ * - Limpeza automática de arquivos de usuários free (expiração 1h)
+ * - Deleção de arquivos locais temporários após upload
+ */
+
+import { S3Client, PutObjectCommand, DeleteObjectCommand, ListObjectsV2Command, HeadObjectCommand } from '@aws-sdk/client-s3';
+import fs from 'fs/promises';
+import path from 'path';
+
+// Normaliza valores vindos do .env (remove aspas e spaces acidentais)
+const _norm = (v) => {
+  if (!v && v !== "") return undefined;
+  // trim ends, remove surrounding quotes and strip internal newlines
+  return String(v)
+    .replace(/^\s+|\s+$/g, "")
+    .replace(/^['\"]|['\"]$/g, "")
+    .replace(/\r?\n/g, "")
+    .trim();
+};
+
+// Lazy initialization: cria o cliente S3 apenas quando necessário
+let _s3 = null;
+let _BUCKET = null;
+let _R2_ENDPOINT = null;
+
+function ensureClient() {
+  if (_s3) return _s3;
+
+  const R2_ACCESS_KEY_ID = _norm(process.env.R2_ACCESS_KEY_ID);
+  const R2_SECRET_ACCESS_KEY = _norm(process.env.R2_SECRET_ACCESS_KEY);
+  const R2_ENDPOINT = _norm(process.env.R2_ENDPOINT);
+  const BUCKET_NAME = _norm(process.env.R2_BUCKET_NAME);
+
+  if (!R2_ACCESS_KEY_ID || !R2_SECRET_ACCESS_KEY) {
+    throw new Error(
+      'Cloudflare R2 credentials not found: set R2_ACCESS_KEY_ID and R2_SECRET_ACCESS_KEY in your .env (single-line, no surrounding quotes).'
+    );
+  }
+  if (!R2_ENDPOINT) {
+    throw new Error('Cloudflare R2 endpoint not found: set R2_ENDPOINT in your .env');
+  }
+  if (!BUCKET_NAME) {
+    throw new Error('Cloudflare R2 bucket name not found: set R2_BUCKET_NAME in your .env');
+  }
+
+  _s3 = new S3Client({
+    region: 'auto',
+    endpoint: R2_ENDPOINT,
+    credentials: {
+      accessKeyId: R2_ACCESS_KEY_ID,
+      secretAccessKey: R2_SECRET_ACCESS_KEY,
+    },
+  });
+
+  _BUCKET = BUCKET_NAME;
+  _R2_ENDPOINT = R2_ENDPOINT;
+
+  return _s3;
+}
+
+// Extrai o Account ID do endpoint para montar URLs públicas
+// Formato esperado: https://<ACCOUNT_ID>.r2.cloudflarestorage.com
+const getAccountIdFromEndpoint = () => {
+  const endpoint = process.env.R2_ENDPOINT;
+  const match = endpoint.match(/https:\/\/(.+?)\.r2\.cloudflarestorage\.com/);
+  return match ? match[1] : null;
+};
+
+/**
+ * Faz upload de um arquivo local para o R2
+ * 
+ * @param {string} localPath - Caminho completo do arquivo local
+ * @param {string} key - Chave/caminho do objeto no R2 (ex: free/user123/job456.mp3)
+ * @param {object} options - Opções adicionais (userId, preset, etc)
+ * @returns {Promise<{key: string, publicUrl: string}>}
+ */
+async function uploadFile(localPath, key, options = {}) {
+  try {
+    console.log(`[R2] Iniciando upload: ${localPath} -> ${key}`);
+    
+    // Lê o arquivo local em buffer
+    const fileBuffer = await fs.readFile(localPath);
+    
+    // Prepara metadados para armazenar junto ao objeto
+    const metadata = {
+      'user-id': options.userId || 'unknown',
+      'created-at': new Date().toISOString(),
+      'preset': options.preset || 'default',
+      'job-id': options.jobId || '',
+    };
+    
+    // Detecta o Content-Type baseado na extensão
+    const ext = path.extname(localPath).toLowerCase();
+    const contentTypeMap = {
+      '.mp3': 'audio/mpeg',
+      '.wav': 'audio/wav',
+      '.m4a': 'audio/mp4',
+      '.ogg': 'audio/ogg',
+      '.flac': 'audio/flac',
+    };
+    const contentType = contentTypeMap[ext] || 'application/octet-stream';
+    
+    // Assegura cliente e bucket
+    ensureClient();
+
+    // Comando de upload para o R2
+    const command = new PutObjectCommand({
+      Bucket: _BUCKET,
+      Key: key,
+      Body: fileBuffer,
+      ContentType: contentType,
+      Metadata: metadata,
+    });
+    
+    await _s3.send(command);
+    
+    const publicUrl = getPublicUrl(key);
+    console.log(`[R2] Upload concluído: ${publicUrl}`);
+    
+    return { key, publicUrl };
+  } catch (error) {
+    console.error('[R2] Erro ao fazer upload:', error);
+    throw new Error(`Falha no upload para R2: ${error.message}`);
+  }
+}
+
+/**
+ * Monta a URL pública de um objeto no R2
+ * 
+ * @param {string} key - Chave do objeto no bucket
+ * @returns {string} URL pública completa
+ */
+function getPublicUrl(key) {
+  // garante que o endpoint/bucket foram inicializados
+  if (!_s3) ensureClient();
+  const accountId = getAccountIdFromEndpoint();
+  if (!accountId) {
+    throw new Error('Não foi possível extrair Account ID do endpoint R2');
+  }
+  return `https://${accountId}.r2.cloudflarestorage.com/${_BUCKET}/${key}`;
+}
+
+/**
+ * Deleta um objeto do R2
+ * 
+ * @param {string} key - Chave do objeto a ser deletado
+ * @returns {Promise<void>}
+ */
+async function deleteObject(key) {
+  try {
+    console.log(`[R2] Deletando objeto: ${key}`);
+    
+    ensureClient();
+    const command = new DeleteObjectCommand({
+      Bucket: _BUCKET,
+      Key: key,
+    });
+    
+    await _s3.send(command);
+    console.log(`[R2] Objeto deletado: ${key}`);
+  } catch (error) {
+    console.error(`[R2] Erro ao deletar objeto ${key}:`, error);
+    throw new Error(`Falha ao deletar do R2: ${error.message}`);
+  }
+}
+
+/**
+ * Lista e limpa objetos expirados de um usuário free (mais de 1 hora)
+ * 
+ * @param {string} userId - ID do usuário free
+ * @returns {Promise<{deleted: number, errors: number}>}
+ */
+async function cleanupExpiredFreeObjects(userId) {
+  try {
+    console.log(`[R2] Iniciando limpeza de objetos expirados para usuário: ${userId}`);
+    
+    // Lista objetos do usuário usando prefixo
+    ensureClient();
+    const prefix = `free/${userId}/`;
+    const command = new ListObjectsV2Command({
+      Bucket: _BUCKET,
+      Prefix: prefix,
+    });
+    
+    const response = await _s3.send(command);
+    
+    if (!response.Contents || response.Contents.length === 0) {
+      console.log(`[R2] Nenhum objeto encontrado para o usuário ${userId}`);
+      return { deleted: 0, errors: 0 };
+    }
+    
+    const now = Date.now();
+    const ONE_HOUR = 60 * 60 * 1000; // 1 hora em milissegundos
+    
+    let deleted = 0;
+    let errors = 0;
+    
+    // Para cada objeto, verifica se passou de 1 hora
+    for (const obj of response.Contents) {
+      try {
+        // A data de modificação do objeto é usada como referência
+        const objectAge = now - new Date(obj.LastModified).getTime();
+        
+        if (objectAge > ONE_HOUR) {
+          console.log(`[R2] Objeto expirado detectado: ${obj.Key} (idade: ${Math.round(objectAge / 1000 / 60)} min)`);
+          await deleteObject(obj.Key);
+          deleted++;
+        }
+      } catch (error) {
+        console.error(`[R2] Erro ao processar objeto ${obj.Key}:`, error);
+        errors++;
+      }
+    }
+    
+    console.log(`[R2] Limpeza concluída: ${deleted} deletados, ${errors} erros`);
+    return { deleted, errors };
+  } catch (error) {
+    console.error('[R2] Erro na limpeza de objetos expirados:', error);
+    throw new Error(`Falha na limpeza: ${error.message}`);
+  }
+}
+
+/**
+ * Lista objetos válidos (não expirados) de um usuário free
+ * 
+ * @param {string} userId - ID do usuário free
+ * @returns {Promise<Array>} Lista de objetos com informações e URLs
+ */
+async function listFreeUserObjects(userId) {
+  try {
+    console.log(`[R2] Listando objetos do usuário free: ${userId}`);
+    
+    ensureClient();
+    const prefix = `free/${userId}/`;
+    const command = new ListObjectsV2Command({
+      Bucket: _BUCKET,
+      Prefix: prefix,
+    });
+    
+    const response = await _s3.send(command);
+    
+    if (!response.Contents || response.Contents.length === 0) {
+      return [];
+    }
+    
+    const now = Date.now();
+    const ONE_HOUR = 60 * 60 * 1000;
+    const validObjects = [];
+    
+    // Filtra apenas objetos válidos (menos de 1 hora)
+    for (const obj of response.Contents) {
+      const objectAge = now - new Date(obj.LastModified).getTime();
+      
+      if (objectAge <= ONE_HOUR) {
+        // Extrai informações do nome do arquivo
+        const fileName = path.basename(obj.Key);
+        const jobId = fileName.replace(path.extname(fileName), '');
+        
+        // Busca metadata do objeto
+        let metadata = {};
+        try {
+          const headCommand = new HeadObjectCommand({
+            Bucket: _BUCKET,
+            Key: obj.Key,
+          });
+          const headResponse = await _s3.send(headCommand);
+          metadata = headResponse.Metadata || {};
+        } catch (error) {
+          console.warn(`[R2] Não foi possível obter metadata de ${obj.Key}:`, error.message);
+        }
+        
+        validObjects.push({
+          key: obj.Key,
+          fileName: fileName,
+          jobId: jobId,
+          size: obj.Size,
+          createdAt: obj.LastModified,
+          expiresIn: Math.max(0, ONE_HOUR - objectAge), // Tempo restante em ms
+          publicUrl: getPublicUrl(obj.Key),
+          // Metadata do R2
+          preset: metadata['preset'] || 'CUSTOM',
+          userId: metadata['user-id'] || userId,
+        });
+      } else {
+        // Objeto expirado - deleta silenciosamente
+        console.log(`[R2] Deletando objeto expirado durante listagem: ${obj.Key}`);
+        try {
+          await deleteObject(obj.Key);
+        } catch (error) {
+          console.error(`[R2] Erro ao deletar objeto expirado ${obj.Key}:`, error);
+        }
+      }
+    }
+    
+    console.log(`[R2] ${validObjects.length} objetos válidos encontrados para ${userId}`);
+    return validObjects;
+  } catch (error) {
+    console.error('[R2] Erro ao listar objetos do usuário:', error);
+    throw new Error(`Falha ao listar objetos: ${error.message}`);
+  }
+}
+
+/**
+ * Deleta um arquivo local após upload bem-sucedido
+ * 
+ * @param {string} localPath - Caminho do arquivo a ser deletado
+ * @returns {Promise<void>}
+ */
+async function deleteLocalFile(localPath) {
+  try {
+    console.log(`[R2] Deletando arquivo local: ${localPath}`);
+    await fs.unlink(localPath);
+    console.log(`[R2] Arquivo local deletado: ${localPath}`);
+  } catch (error) {
+    // Não lança erro, apenas loga - a falha em deletar local não deve quebrar o fluxo
+    console.warn(`[R2] Falha ao deletar arquivo local ${localPath}:`, error.message);
+  }
+}
+
+export {
+  uploadFile,
+  getPublicUrl,
+  deleteObject,
+  cleanupExpiredFreeObjects,
+  listFreeUserObjects,
+  deleteLocalFile,
+};

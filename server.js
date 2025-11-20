@@ -6,19 +6,31 @@
 import express from "express";
 import path from "path";
 import fs from "fs";
+import cookieParser from "cookie-parser";
+import dotenv from "dotenv";
 import { fileURLToPath } from "url";
 import { ProcessController } from "./src/controllers/ProcessController.js";
 import { createProcessRoutes } from "./src/routes/processRoutes.js";
+import authRoutes from "./src/routes/auth.js";
+import jobsRoutes from "./src/routes/jobs.js";
+import r2TestRoutes from "./src/routes/r2Test.js";
+import freeRoutes from "./src/routes/free.js";
+import recentsRoutes from "./src/routes/recents.js";
+import downloadRoutes from "./src/routes/download.js";
+import { connectDB } from "./src/config/db.js";
+import { initStorage } from "./src/utils/storage.js";
 
 // ===== CONFIGURAÇÃO =====
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 8080;
 
 // ===== MIDDLEWARE =====
 app.use(express.json());
+app.use(cookieParser());
 app.use(express.static(path.join(__dirname, "public")));
 
 // ===== PAGE ROUTES =====
@@ -76,11 +88,27 @@ console.log(`  - Input: ${STORAGE_IN}`);
 console.log(`  - Output: ${STORAGE_OUT}`);
 console.log(`  - Metadata: ${STORAGE_META}`);
 
+// Initialize storage util
+initStorage(STORAGE_BASE);
+
+// Connect database (users, presets)
+connectDB().catch(() => {
+  console.warn("⚠️  Continuing without DB connection. Check MONGODB_URI.");
+});
+
 // ===== CONTROLLERS & ROUTES =====
 const processController = new ProcessController(STORAGE_BASE);
 const processRoutes = createProcessRoutes(processController);
 
 app.use("/", processRoutes);
+
+// ===== NEW API ROUTES =====
+app.use("/api/auth", authRoutes);
+app.use("/api/jobs", jobsRoutes);
+app.use("/api/r2-test", r2TestRoutes);
+app.use("/api/free", freeRoutes);
+app.use("/api", recentsRoutes); // Recent processings endpoint
+app.use("/api", downloadRoutes); // Download proxy for R2 files
 
 // ===== DOCUMENTATION ROUTES =====
 app.get("/api", (req, res) => {

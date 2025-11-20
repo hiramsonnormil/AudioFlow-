@@ -11,6 +11,7 @@ import { youtubeService } from "../services/YouTubeService.js";
 import { AudioProcessingService } from "../services/AudioProcessingService.js";
 import { isValidPreset } from "../models/Preset.js";
 import { fileURLToPath } from "url";
+import * as r2 from "../../storage/r2.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -47,6 +48,10 @@ export class ProcessController {
     const job = jobQueueService.createJob(jobId);
     job.in = url;
     job.metadata.preset = preset;
+    
+    // Salvar userId se houver autenticação (usa email como identificador)
+    job.userId = req.user?.email || req.user?._id || 'anonymous';
+    job.metadata.userId = job.userId;
 
     // Enfileirar
     jobQueueService.enqueueJob(jobId);
@@ -100,6 +105,7 @@ export class ProcessController {
 
   /**
    * GET /file/:id - Fazer download do arquivo processado
+   * ATUALIZADO: Redireciona para URL pública do R2
    */
   downloadFile(req, res) {
     const { id } = req.params;
@@ -117,6 +123,13 @@ export class ProcessController {
       return res.status(400).send("not ready");
     }
 
+    // Se o job já tem URL do R2, redireciona direto
+    if (job.out && job.out.startsWith('http')) {
+      console.log(`[DEBUG] Redirecting to R2: ${job.out}`);
+      return res.redirect(job.out);
+    }
+
+    // Fallback: Se ainda tiver arquivo local (jobs antigos)
     const filePath = job.out;
 
     if (!fs.existsSync(filePath)) {
@@ -128,7 +141,7 @@ export class ProcessController {
     const downloadName = job.filename || path.basename(filePath);
 
     console.log(
-      `[DEBUG] Serving file: ${filePath} (${fileSize} bytes) as ${downloadName}`
+      `[DEBUG] Serving local file: ${filePath} (${fileSize} bytes) as ${downloadName}`
     );
 
     res.set("Cache-Control", "no-cache, no-store, must-revalidate");
@@ -198,53 +211,42 @@ export class ProcessController {
           : parseFloat(metadata.duration) || 0;
       job.progress = 10;
 
-      // Step 2: Gerar nome de arquivo único
-      const filename = this.audioService.generateUniqueFilename(
-        metadata.title,
-        preset,
-        outputDir
-      );
-      const outPath = path.join(outputDir, filename);
-      job.out = outPath;
-      job.filename = filename;
-
-      console.log(`[${jobId}] Output: ${filename}`);
-
-      // Step 3: Construir filtro de áudio
-      const audioFilterStr = this.audioService.buildAudioFilter(
-        preset,
-        duration
-      );
-      console.log(
-        `[${jobId}] Audio filter: ${audioFilterStr.substring(0, 80)}...`
-      );
-
-      // Step 4: Processar com FFmpeg
+      // Step 2: Processar e fazer upload para R2 (novo fluxo)
       job.status = "PROCESSING";
       job.progress = 15;
 
+      console.log(`[${jobId}] Iniciando processamento com upload para R2`);
+
       const audioStream = youtubeService.getAudioStream(url, jobId);
-      await this.audioService.processAudio(
+      
+      // Obter userId do job (se foi definido ao criar) ou usar 'anonymous'
+      // Usar email como identificador principal
+      const userId = job.userId || job.metadata?.userId || 'anonymous';
+      
+      console.log(`[${jobId}] Processing for user: ${userId}`);
+      
+      // Usar o novo método que faz tudo: processa + upload R2 + deleta local
+      const r2Result = await this.audioService.processAndUploadToR2(
         audioStream,
-        outPath,
-        audioFilterStr,
+        jobId,
+        userId,
+        preset,
         duration,
-        jobId
+        metadata.title
       );
 
       job.progress = 95;
 
-      // Verificar se arquivo foi criado
-      if (!fs.existsSync(outPath)) {
-        throw new Error("Output file was not created");
-      }
+      // Atualizar job com informações do R2
+      job.out = r2Result.publicUrl; // URL pública do R2
+      job.r2Key = r2Result.key; // Chave no R2
+      job.filename = path.basename(r2Result.key); // Nome do arquivo
 
-      const fileSize = fs.statSync(outPath).size;
-      console.log(`[${jobId}] File created: ${filename} (${fileSize} bytes)`);
+      console.log(`[${jobId}] Arquivo disponível em: ${r2Result.publicUrl}`);
 
       // Step 5: Completar job
       jobQueueService.completeJob(jobId);
-      console.log(`[${jobId}] Job completed successfully`);
+      console.log(`[${jobId}] Job completed successfully - Uploaded to R2`);
     } catch (err) {
       console.error(`[${jobId}] Error:`, err.message);
       jobQueueService.failJob(jobId, err.message);
