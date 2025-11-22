@@ -105,9 +105,9 @@ export class ProcessController {
 
   /**
    * GET /file/:id - Fazer download do arquivo processado
-   * ATUALIZADO: Redireciona para URL pública do R2
+   * ATUALIZADO: Baixa do R2 usando autenticação S3
    */
-  downloadFile(req, res) {
+  async downloadFile(req, res) {
     const { id } = req.params;
     const job = jobQueueService.getJob(id);
 
@@ -123,10 +123,46 @@ export class ProcessController {
       return res.status(400).send("not ready");
     }
 
-    // Se o job já tem URL do R2, redireciona direto
+    // Se o job tem URL do R2, baixar com autenticação S3
     if (job.out && job.out.startsWith('http')) {
-      console.log(`[DEBUG] Redirecting to R2: ${job.out}`);
-      return res.redirect(job.out);
+      console.log(`[DEBUG] Downloading from R2: ${job.out}`);
+      
+      try {
+        // Extrair a key do R2 da URL
+        const key = r2.extractKeyFromUrl(job.out);
+        
+        if (!key) {
+          console.error(`[DEBUG] Failed to extract key from URL: ${job.out}`);
+          return res.status(500).send("Invalid R2 URL");
+        }
+        
+        console.log(`[DEBUG] Extracted R2 key: ${key}`);
+        
+        // Baixar arquivo do R2 com autenticação
+        const stream = await r2.downloadFile(key);
+        
+        const downloadName = job.filename || `audio_${id}.mp3`;
+        
+        res.set("Content-Type", "audio/mpeg");
+        res.set("Content-Disposition", `inline; filename="${downloadName}"`);
+        res.set("Cache-Control", "public, max-age=3600");
+        res.set("Accept-Ranges", "bytes");
+        
+        // Pipe do stream do R2 direto para o response
+        stream.pipe(res);
+        
+        stream.on('error', (err) => {
+          console.error(`[DEBUG] Stream error:`, err);
+          if (!res.headersSent) {
+            res.status(500).send("Error streaming file");
+          }
+        });
+        
+        return;
+      } catch (err) {
+        console.error(`[DEBUG] Error downloading from R2:`, err);
+        return res.status(500).send("Error loading file from storage");
+      }
     }
 
     // Fallback: Se ainda tiver arquivo local (jobs antigos)
