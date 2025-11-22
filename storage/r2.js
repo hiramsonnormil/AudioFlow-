@@ -8,9 +8,10 @@
  * - Deleção de arquivos locais temporários após upload
  */
 
-import { S3Client, PutObjectCommand, DeleteObjectCommand, ListObjectsV2Command, HeadObjectCommand } from '@aws-sdk/client-s3';
+import { S3Client, PutObjectCommand, DeleteObjectCommand, ListObjectsV2Command, HeadObjectCommand, GetObjectCommand } from '@aws-sdk/client-s3';
 import fs from 'fs/promises';
 import path from 'path';
+import { Readable } from 'stream';
 
 // Normaliza valores vindos do .env (remove aspas e spaces acidentais)
 const _norm = (v) => {
@@ -322,6 +323,67 @@ async function deleteLocalFile(localPath) {
   }
 }
 
+/**
+ * Baixa um arquivo do R2 usando autenticação S3
+ * Retorna um stream que pode ser usado diretamente com res.pipe()
+ * 
+ * @param {string} key - Chave do objeto no R2 (ex: free/user@email.com/job123.mp3)
+ * @returns {Promise<Readable>} Stream do arquivo
+ */
+async function downloadFile(key) {
+  try {
+    const s3 = ensureClient();
+    const bucket = _BUCKET;
+    
+    console.log(`[R2] Baixando arquivo: ${key} do bucket ${bucket}`);
+    
+    const command = new GetObjectCommand({
+      Bucket: bucket,
+      Key: key,
+    });
+    
+    const response = await s3.send(command);
+    
+    // response.Body é um stream ReadableStream (Web API)
+    // Precisa converter para Node.js Readable stream
+    if (response.Body) {
+      console.log(`[R2] Arquivo baixado com sucesso: ${key}`);
+      return response.Body;
+    }
+    
+    throw new Error('No body in R2 response');
+  } catch (error) {
+    console.error(`[R2] Erro ao baixar arquivo ${key}:`, error);
+    throw error;
+  }
+}
+
+/**
+ * Extrai a key do R2 a partir de uma URL pública
+ * Ex: https://account.r2.cloudflarestorage.com/phona/free/user@email.com/file.mp3
+ * Retorna: free/user@email.com/file.mp3
+ */
+function extractKeyFromUrl(url) {
+  try {
+    const urlObj = new URL(url);
+    const pathname = urlObj.pathname;
+    
+    // Remove o bucket name do início do path
+    // Formato: /bucket-name/key -> key
+    const parts = pathname.split('/').filter(p => p);
+    
+    if (parts.length > 1 && parts[0] === _BUCKET) {
+      return parts.slice(1).join('/');
+    }
+    
+    // Se não encontrar o bucket, assume que todo o path é a key
+    return parts.join('/');
+  } catch (error) {
+    console.error('[R2] Erro ao extrair key da URL:', error);
+    return null;
+  }
+}
+
 export {
   uploadFile,
   getPublicUrl,
@@ -329,4 +391,6 @@ export {
   cleanupExpiredFreeObjects,
   listFreeUserObjects,
   deleteLocalFile,
+  downloadFile,
+  extractKeyFromUrl,
 };

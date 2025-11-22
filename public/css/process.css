@@ -1,376 +1,537 @@
-/* Process Page - Fresh standalone styles (no reuse from main site) */
+/* ==========================================
+   PHONA - PROCESS PAGE
+   Design analógico moderno com vinil interativo
+   ========================================== */
 
-/* Theme tokens (match index page) */
+/* Theme tokens matching project identity */
 :root {
-  color-scheme: dark light;
-  --bg: 222 40% 4%;
-  --panel: 222 40% 8%;
-  --surface: 222 40% 11%;
-  --txt: 220 15% 92%;
-  --muted: 220 10% 65%;
-  --primary: 190 90% 52%;
-  --accent: 270 95% 65%;
-  --ok: 150 70% 45%;
-  --warn: 40 95% 55%;
-  --danger: 0 85% 60%;
-  --ring: 190 90% 52%;
-  --border: 1px solid hsl(var(--txt) / 0.08);
-}
-[data-theme="light"] {
-  --bg: 222 28% 96%;
-  --panel: 222 24% 98%;
-  --surface: 222 20% 96.5%;
-  --txt: 222 24% 12%;
-  --muted: 222 8% 44%;
-}
-
-/* Reset */
-* {
-  box-sizing: border-box;
-}
-html,
-body {
-  height: 100%;
-}
-body {
-  margin: 0;
-  font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Ubuntu,
-    Cantarell, Arial, "Apple Color Emoji", "Segoe UI Emoji";
-  color: hsl(var(--txt));
-  background: radial-gradient(
-      1200px 600px at 20% -10%,
-      hsl(var(--accent) / 0.15),
-      transparent 40%
-    ),
-    radial-gradient(
-      1000px 700px at 110% 10%,
-      hsl(var(--primary) / 0.18),
-      transparent 45%
-    ),
-    hsl(var(--bg));
+  --copper: #c28c66;
+  --copper-light: #d4a378;
+  --copper-dark: #a67351;
+  --peach: #e8b4a0;
+  --sage: #8a9a8e;
+  --charcoal: #1a1a1a;
+  --charcoal-light: #2a2a2a;
+  --cream: #f5f1ed;
+  --warm-white: #fafaf8;
+  
+  --bg-primary: #0d0d0d;
+  --bg-secondary: #161616;
+  --bg-card: #1f1f1f;
+  --text-primary: #f5f1ed;
+  --text-secondary: #a8a29e;
+  --text-muted: #6b6763;
+  --border: rgba(194, 140, 102, 0.15);
+  --success: #20c978;
+  --error: #ff4d4d;
+  
+  --shadow-copper: 0 8px 32px rgba(194, 140, 102, 0.25);
+  --shadow-strong: 0 12px 48px rgba(194, 140, 102, 0.35);
 }
 
-/* Layout */
-.fxproc-main {
-  min-height: 100svh;
-  display: grid;
-  place-items: center;
-}
-.fxproc-wrap {
-  width: min(92vw, 960px);
-  padding: 12px;
-  display: grid;
-  gap: 12px;
-  justify-items: center; /* center children horizontally */
-}
+/* ==========================================
+   LAYOUT
+   ========================================== */
 
-/* Back button */
-.fxproc-back {
-  justify-self: start;
-}
-.fxproc-btn-back {
+/* Back Button */
+.process-back-btn {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  height: 38px;
-  padding: 0 12px;
-  color: hsl(var(--accent));
-  background: hsl(var(--accent) / 0.15);
-  border: 1px solid hsl(var(--accent));
-  border-radius: 10px;
+  gap: 0.5rem;
+  padding: 0.75rem 1.25rem;
+  color: var(--text-secondary);
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
   text-decoration: none;
   font-weight: 600;
-  transition: transform 0.15s ease, background 0.15s ease, box-shadow 0.15s ease;
-}
-.fxproc-btn-back:hover {
-  transform: translateY(-1px);
-  background: hsl(var(--accent) / 0.25);
-  box-shadow: 0 6px 18px hsl(var(--accent) / 0.25);
+  font-size: 0.95rem;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* Card */
-.fxproc-card {
-  width: min(92vw, 640px);
-  display: grid;
-  gap: 12px;
-  padding: 12px;
-  border-radius: 16px;
-  background: hsl(var(--panel) / 0.66);
-  backdrop-filter: blur(8px);
-  border: var(--border);
-  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.35);
-  margin-inline: auto; /* ensure centering in flow contexts */
+.process-back-btn:hover {
+  color: var(--copper);
+  border-color: var(--copper);
+  transform: translateX(-4px);
+  background: var(--charcoal-light);
 }
 
-/* Album Art */
-.fxproc-art {
-  width: min(100%, 48vh, 420px);
-  aspect-ratio: 1 / 1;
+/* Main Container - Side by Side Layout */
+.process-container {
   display: grid;
-  place-items: center;
-  margin-inline: auto;
-  border-radius: 50%;
-  background: hsl(var(--surface));
-  border: var(--border);
-  overflow: hidden;
+  grid-template-columns: 1fr;
+  gap: 3rem;
+  align-items: center;
+  padding: 2rem;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 24px;
+  box-shadow: var(--shadow-copper);
+}
+
+@media (min-width: 1024px) {
+  .process-container {
+    grid-template-columns: 1fr 1.2fr;
+    gap: 4rem;
+    padding: 3rem;
+  }
+}
+
+/* ==========================================
+   VINYL SECTION - Innovative Spinning Disc
+   ========================================== */
+
+.vinyl-section {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 1rem;
+}
+
+.vinyl-wrapper {
   position: relative;
-  isolation: isolate; /* contains pseudo-elements and z-index */
-  box-shadow: 0 16px 40px hsl(var(--accent) / 0.18);
+  width: min(100%, 420px);
+  aspect-ratio: 1;
 }
-.fxproc-thumb {
+
+.vinyl-disc {
+  position: relative;
   width: 100%;
   height: 100%;
-  object-fit: cover; /* fill the circular disc */
-  object-position: center;
-  display: block;
-  position: relative;
-  z-index: 1; /* above decorative layers */
-  will-change: transform;
-  transform-origin: 50% 50%;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #1a1a1a 0%, #0d0d0d 100%);
+  box-shadow: 
+    0 0 0 8px rgba(194, 140, 102, 0.1),
+    0 0 0 16px rgba(194, 140, 102, 0.05),
+    0 20px 60px rgba(0, 0, 0, 0.6),
+    inset 0 2px 8px rgba(255, 255, 255, 0.05);
+  overflow: hidden;
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* Premium gradient ring border */
-.fxproc-art::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  padding: 2px; /* ring thickness */
-  border-radius: inherit;
-  background: conic-gradient(
-    from var(--fx-angle, 0deg),
-    hsl(var(--accent)),
-    hsl(var(--primary)),
-    hsl(var(--accent))
-  );
-  /* Cut the center so only the ring shows */
-  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
-  mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
-  -webkit-mask-composite: xor;
-  mask-composite: exclude;
-  z-index: 0;
-  pointer-events: none;
-  /* animation applied only when playing */
+.vinyl-disc:hover {
+  transform: scale(1.02);
 }
 
-/* Soft highlight overlay beneath the image */
-.fxproc-art::after {
-  content: "";
+/* Vinyl spinning animation - controlled by JS */
+.vinyl-disc.spinning {
+  animation: vinyl-spin 3s linear infinite;
+}
+
+@keyframes vinyl-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* Vinyl Cover Image */
+.vinyl-cover {
+  position: absolute;
+  inset: 15%;
+  width: 70%;
+  height: 70%;
+  border-radius: 50%;
+  object-fit: cover;
+  z-index: 2;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+}
+
+/* Center Hole */
+.vinyl-center {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 48px;
+  height: 48px;
+  transform: translate(-50%, -50%);
+  background: radial-gradient(circle, #0d0d0d 0%, #1a1a1a 100%);
+  border-radius: 50%;
+  box-shadow: 
+    0 0 0 2px rgba(194, 140, 102, 0.3),
+    inset 0 2px 8px rgba(0, 0, 0, 0.8);
+  z-index: 3;
+}
+
+/* Vinyl Grooves Effect */
+.vinyl-disc::before {
+  content: '';
   position: absolute;
   inset: 0;
-  border-radius: inherit;
-  background:
-    /* spindle hole */ radial-gradient(
+  border-radius: 50%;
+  background: 
+    repeating-radial-gradient(
       circle at 50% 50%,
-      hsl(var(--txt) / 0.25) 0 2px,
-      transparent 3px
-    ),
-    /* label */
-      radial-gradient(
-        circle at 50% 50%,
-        hsl(var(--accent) / 0.12) 0 22%,
-        transparent 22%
-      ),
-    /* subtle grooves */
-      repeating-radial-gradient(
-        circle at 50% 50%,
-        hsl(var(--txt) / 0.05) 0 1px,
-        transparent 1.5px 4px
-      ),
-    /* soft highlight */
-      radial-gradient(
-        120% 60% at 10% 0%,
-        hsl(var(--accent) / 0.18),
-        transparent 40%
-      ),
-    linear-gradient(
-      to bottom right,
-      hsl(var(--txt) / 0.06),
-      transparent 30% 70%,
-      hsl(var(--txt) / 0.08)
+      transparent 0,
+      transparent 2px,
+      rgba(255, 255, 255, 0.02) 2px,
+      rgba(255, 255, 255, 0.02) 4px
     );
-  mix-blend-mode: screen;
-  z-index: 0; /* stays behind the image */
+  z-index: 1;
+}
+
+/* Vinyl Shine Effect */
+.vinyl-shine {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: linear-gradient(
+    135deg,
+    rgba(194, 140, 102, 0.15) 0%,
+    transparent 30%,
+    transparent 70%,
+    rgba(194, 140, 102, 0.08) 100%
+  );
+  z-index: 4;
   pointer-events: none;
 }
 
-/* Gentle hover lift */
-/* Removed hover lift; disc spins only during playback */
-
-@property --fx-angle {
-  syntax: "<angle>";
-  inherits: false;
-  initial-value: 0deg;
-}
-@keyframes fxproc-rotate {
-  to {
-    --fx-angle: 360deg;
-  }
+/* Loading placeholder for thumbnail */
+.loading-placeholder {
+  background: linear-gradient(
+    90deg,
+    #1a1a1a 25%,
+    #2a2a2a 50%,
+    #1a1a1a 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
 }
 
-/* Spin control handled via JS by updating --fx-angle and img transform */
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
 
-/* Respect reduced motion preferences: JS will slow the spin speed */
 @media (prefers-reduced-motion: reduce) {
-  .fxproc-art {
-    transform: none !important;
+  .vinyl-disc.spinning {
+    animation: none;
   }
 }
 
-/* Info */
-.fxproc-info {
-  display: grid;
-  gap: 10px;
-}
-.fxproc-title {
-  margin: 0;
-  font-size: clamp(1.2rem, 2.4vw, 1.6rem);
-  font-weight: 800;
-  letter-spacing: 0.2px;
+/* ==========================================
+   INFO SECTION
+   ========================================== */
+
+.info-section {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  min-width: 0;
 }
 
-.fxproc-status {
+/* Music Header */
+.music-header {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.music-title {
+  font-size: clamp(1.5rem, 3vw, 2.25rem);
+  font-weight: 800;
+  color: var(--text-primary);
+  line-height: 1.2;
   margin: 0;
+  background: linear-gradient(135deg, var(--cream) 0%, var(--copper-light) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Status Badge */
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1.25rem;
+  background: rgba(194, 140, 102, 0.1);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  width: fit-content;
+}
+
+.status-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--copper);
+  box-shadow: 0 0 12px var(--copper);
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+.status-text {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+/* ==========================================
+   PROGRESS BAR
+   ========================================== */
+
+.progress-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.progress-bar {
+  height: 12px;
+  background: rgba(194, 140, 102, 0.1);
+  border-radius: 9999px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  position: relative;
+}
+
+.progress-fill {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, var(--copper) 0%, var(--peach) 100%);
+  border-radius: 9999px;
+  transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.progress-fill::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.3),
+    transparent
+  );
+  animation: progress-shine 2s infinite;
+}
+
+@keyframes progress-shine {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+.progress-info {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  color: hsl(var(--muted));
-  font-size: 0.95rem;
-}
-.fxproc-status-label {
-  font-weight: 700;
-  color: hsl(var(--muted));
-}
-.fxproc-status-value {
-  color: hsl(var(--accent));
-  font-weight: 700;
+  font-size: 0.875rem;
 }
 
-/* Progress bar */
-.fxproc-bar {
-  height: 10px;
-  background: hsl(var(--txt) / 0.1);
+.progress-label {
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+.progress-percent {
+  color: var(--copper);
+  font-weight: 700;
+  font-size: 1rem;
+}
+
+/* ==========================================
+   CUSTOM AUDIO PLAYER
+   ========================================== */
+
+.player-container {
+  margin-top: 1rem;
+}
+
+.player-container audio {
+  display: none; /* Hide native audio element */
+}
+
+.custom-player {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.25rem;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.custom-player:hover {
+  border-color: var(--copper);
+  box-shadow: 0 4px 16px rgba(194, 140, 102, 0.2);
+}
+
+.play-btn {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--copper) 0%, var(--copper-light) 100%);
+  border: none;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  flex-shrink: 0;
+}
+
+.play-btn:hover {
+  transform: scale(1.1);
+  box-shadow: 0 8px 24px rgba(194, 140, 102, 0.4);
+}
+
+.play-btn:active {
+  transform: scale(0.95);
+}
+
+.play-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.pause-icon.hidden,
+.play-icon.hidden {
+  display: none;
+}
+
+.player-timeline {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  min-width: 0;
+}
+
+.time-current,
+.time-duration {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  flex-shrink: 0;
+}
+
+.player-progress {
+  flex: 1;
+  height: 6px;
+  background: rgba(194, 140, 102, 0.2);
   border-radius: 9999px;
   overflow: hidden;
+  cursor: pointer;
+  position: relative;
 }
-.fxproc-bar-inner {
+
+.player-progress-bar {
   height: 100%;
-  width: 0;
-  background: linear-gradient(90deg, hsl(var(--accent)), hsl(var(--primary)));
-  transition: width 180ms ease;
+  width: 0%;
+  background: linear-gradient(90deg, var(--copper) 0%, var(--peach) 100%);
+  border-radius: 9999px;
+  transition: width 0.1s linear;
 }
 
-/* Controls */
-.fxproc-controls {
-  display: grid;
-  gap: 10px;
+.volume-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  flex-shrink: 0;
 }
 
-/* Compact adjustments for shorter screens */
-@media (max-height: 740px) {
-  .fxproc-art {
-    width: min(100%, 40vh, 380px);
-  }
+.volume-btn:hover {
+  background: rgba(194, 140, 102, 0.1);
+  border-color: var(--copper);
+  color: var(--copper);
 }
-@media (max-height: 640px) {
-  .fxproc-art {
-    width: min(100%, 36vh, 340px);
-  }
-  .fxproc-title {
-    font-size: clamp(1.1rem, 2.1vw, 1.4rem);
-  }
-}
-.fxproc-btn-download {
+
+/* ==========================================
+   DOWNLOAD BUTTON
+   ========================================== */
+
+.download-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 10px;
-  height: 44px;
-  padding: 0 14px;
-  border-radius: 12px;
-  background: linear-gradient(135deg, hsl(var(--accent)), hsl(var(--primary)));
+  gap: 0.75rem;
+  padding: 1rem 2rem;
+  background: linear-gradient(135deg, var(--copper) 0%, var(--copper-light) 100%);
   color: white;
-  text-decoration: none;
-  font-weight: 800;
-  letter-spacing: 0.2px;
   border: none;
-  box-shadow: 0 10px 26px hsl(var(--accent) / 0.35);
-  transition: transform 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease;
-}
-.fxproc-btn-download:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 14px 32px hsl(var(--accent) / 0.45);
-  filter: brightness(1.03);
-}
-
-audio {
-  width: 100%;
-  border-radius: 10px;
-  outline: none;
-}
-
-/* Alerts */
-.fxproc-alert {
-  padding: 12px 14px;
   border-radius: 12px;
-  font-size: 0.95rem;
+  font-weight: 700;
+  font-size: 1rem;
+  text-decoration: none;
+  box-shadow: var(--shadow-copper);
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: pointer;
+  width: 100%;
 }
-.fxproc-alert-error {
-  background: hsl(var(--danger) / 0.12);
-  border: 1px solid hsl(var(--danger) / 0.5);
-  color: hsl(var(--danger));
+
+.download-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-strong);
 }
+
+.download-btn:active {
+  transform: translateY(0);
+}
+
+/* ==========================================
+   ALERTS
+   ========================================== */
+
+.process-alert {
+  padding: 1rem 1.25rem;
+  background: rgba(255, 77, 77, 0.1);
+  border: 1px solid var(--error);
+  border-radius: 12px;
+  color: var(--error);
+  font-weight: 600;
+  margin-bottom: 1.5rem;
+}
+
+/* ==========================================
+   UTILITIES
+   ========================================== */
+
 .hidden {
   display: none !important;
 }
 
-/* Loading placeholder shimmer for thumbnail (optional) */
-.loading-placeholder {
-  background: linear-gradient(
-    90deg,
-    hsl(var(--surface)) 25%,
-    hsl(var(--panel)) 50%,
-    hsl(var(--surface)) 75%
-  );
-  background-size: 200% 100%;
-  animation: fxproc-loading 1.2s infinite;
-}
-@keyframes fxproc-loading {
-  0% {
-    background-position: 200% 0;
+/* ==========================================
+   RESPONSIVE
+   ========================================== */
+
+@media (max-width: 1023px) {
+  .process-container {
+    grid-template-columns: 1fr;
   }
-  100% {
-    background-position: -200% 0;
+  
+  .vinyl-wrapper {
+    max-width: 340px;
   }
 }
 
-/* Back navigation transition overlay */
-.transition-loading {
-  position: fixed;
-  inset: 0;
-  z-index: 9999;
-  display: grid;
-  place-content: center;
-  gap: 16px;
-  background: hsl(var(--bg));
-}
-.vinyl {
-  width: 64px;
-  height: 64px;
-  border-radius: 50%;
-  border: 4px solid hsl(var(--txt) / 0.14);
-  border-top-color: hsl(var(--accent));
-  animation: fxproc-spin 1s linear infinite;
-}
-.loading-text {
-  color: hsl(var(--muted));
-  font-size: 0.95rem;
-  text-align: center;
-}
-@keyframes fxproc-spin {
-  from {
-    transform: rotate(0);
+@media (max-width: 640px) {
+  .custom-player {
+    flex-wrap: wrap;
   }
-  to {
-    transform: rotate(360deg);
+  
+  .player-timeline {
+    order: 3;
+    width: 100%;
+  }
+  
+  .music-title {
+    font-size: 1.5rem;
   }
 }
