@@ -1,30 +1,11 @@
 /* ==========================================
    PHONA - PROCESS PAGE
    Design analógico moderno com vinil interativo
+   Usa variáveis do sistema global
    ========================================== */
 
-/* Theme tokens matching project identity */
+/* Sombras específicas da página */
 :root {
-  --copper: #c28c66;
-  --copper-light: #d4a378;
-  --copper-dark: #a67351;
-  --peach: #e8b4a0;
-  --sage: #8a9a8e;
-  --charcoal: #1a1a1a;
-  --charcoal-light: #2a2a2a;
-  --cream: #f5f1ed;
-  --warm-white: #fafaf8;
-  
-  --bg-primary: #0d0d0d;
-  --bg-secondary: #161616;
-  --bg-card: #1f1f1f;
-  --text-primary: #f5f1ed;
-  --text-secondary: #a8a29e;
-  --text-muted: #6b6763;
-  --border: rgba(194, 140, 102, 0.15);
-  --success: #20c978;
-  --error: #ff4d4d;
-  
   --shadow-copper: 0 8px 32px rgba(194, 140, 102, 0.25);
   --shadow-strong: 0 12px 48px rgba(194, 140, 102, 0.35);
 }
@@ -65,8 +46,38 @@
   padding: 2rem;
   background: var(--bg-card);
   border: 1px solid var(--border);
-  border-radius: 24px;
-  box-shadow: var(--shadow-copper);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-lg);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  animation: fadeInUp 0.5s ease-out;
+  position: relative;
+  overflow: hidden;
+}
+
+.process-container::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 50% 0%, rgba(194, 140, 102, 0.05) 0%, transparent 50%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.process-container > * {
+  position: relative;
+  z-index: 1;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 @media (min-width: 1024px) {
@@ -256,6 +267,28 @@
   background: var(--copper);
   box-shadow: 0 0 12px var(--copper);
   animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  position: relative;
+}
+
+.status-dot::after {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  border-radius: 50%;
+  border: 2px solid var(--copper);
+  opacity: 0;
+  animation: ripple 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes ripple {
+  0% {
+    transform: scale(0.8);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1.5);
+    opacity: 0;
+  }
 }
 
 @keyframes pulse {
@@ -485,6 +518,93 @@
   transform: translateY(0);
 }
 
+.download-btn.expired {
+  background: linear-gradient(135deg, #4a4a4a 0%, #2a2a2a 100%);
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.download-btn.expired:hover {
+  transform: none;
+  box-shadow: var(--shadow-copper);
+}
+
+/* ==========================================
+   EXPIRATION WARNING
+   ========================================== */
+
+.expiration-warning {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1.25rem;
+  background: rgba(194, 140, 102, 0.1);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  margin-bottom: 1rem;
+  animation: fadeIn 0.3s ease;
+}
+
+.expiration-warning svg {
+  flex-shrink: 0;
+  color: var(--copper);
+}
+
+.expiration-warning.warning {
+  background: rgba(255, 193, 58, 0.1);
+  border-color: rgba(255, 193, 58, 0.3);
+  color: #ffc13a;
+}
+
+.expiration-warning.warning svg {
+  color: #ffc13a;
+}
+
+.expiration-warning.danger {
+  background: rgba(255, 77, 77, 0.1);
+  border-color: rgba(255, 77, 77, 0.3);
+  color: var(--error);
+  animation: pulse-warning 2s ease-in-out infinite;
+}
+
+.expiration-warning.danger svg {
+  color: var(--error);
+}
+
+.expiration-warning.expired-alert {
+  background: rgba(255, 77, 77, 0.15);
+  border-color: var(--error);
+  color: var(--error);
+  font-weight: 600;
+}
+
+.expiration-warning.expired-alert svg {
+  color: var(--error);
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pulse-warning {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
 /* ==========================================
    ALERTS
    ========================================== */
@@ -514,6 +634,8 @@
 @media (max-width: 1023px) {
   .process-container {
     grid-template-columns: 1fr;
+    gap: 2rem;
+    padding: 2rem 1.5rem;
   }
   
   .vinyl-wrapper {
@@ -521,17 +643,122 @@
   }
 }
 
-@media (max-width: 640px) {
+@media (max-width: 768px) {
+  main {
+    padding-left: 1rem !important;
+    padding-right: 1rem !important;
+    padding-top: 5rem !important;
+  }
+  
+  .process-container {
+    padding: 1.5rem 1rem;
+    gap: 1.5rem;
+  }
+  
+  .vinyl-section {
+    padding: 0.5rem;
+  }
+  
+  .vinyl-wrapper {
+    max-width: 280px;
+  }
+  
+  .info-section {
+    gap: 1.5rem;
+  }
+  
+  .music-title {
+    font-size: 1.5rem;
+  }
+  
   .custom-player {
     flex-wrap: wrap;
+    padding: 1rem;
+    gap: 0.75rem;
   }
   
   .player-timeline {
     order: 3;
     width: 100%;
+    gap: 0.5rem;
+  }
+  
+  .play-btn {
+    width: 44px;
+    height: 44px;
+  }
+  
+  .volume-btn {
+    width: 36px;
+    height: 36px;
+  }
+}
+
+@media (max-width: 640px) {
+  .process-back-btn {
+    padding: 0.625rem 1rem;
+    font-size: 0.875rem;
+  }
+  
+  .expiration-warning {
+    padding: 0.625rem 1rem;
+    font-size: 0.8rem;
+    flex-wrap: wrap;
+  }
+  
+  .download-btn {
+    padding: 0.875rem 1.5rem;
+    font-size: 0.95rem;
+  }
+  
+  .status-badge {
+    padding: 0.5rem 1rem;
+    font-size: 0.875rem;
+  }
+  
+  .progress-wrapper {
+    gap: 0.5rem;
+  }
+  
+  .progress-info {
+    font-size: 0.8rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .process-container {
+    border-radius: 16px;
+    padding: 1.25rem 0.75rem;
+  }
+  
+  .vinyl-wrapper {
+    max-width: 240px;
   }
   
   .music-title {
-    font-size: 1.5rem;
+    font-size: 1.25rem;
+    line-height: 1.3;
+  }
+  
+  .custom-player {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .play-btn {
+    width: 100%;
+    height: 48px;
+    border-radius: 12px;
+  }
+  
+  .player-timeline {
+    order: 2;
+  }
+  
+  .volume-btn {
+    order: 3;
+    width: 100%;
+    height: 40px;
+    border-radius: 8px;
   }
 }

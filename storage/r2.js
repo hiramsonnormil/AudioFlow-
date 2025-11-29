@@ -93,6 +93,7 @@ async function uploadFile(localPath, key, options = {}) {
       'created-at': new Date().toISOString(),
       'preset': options.preset || 'default',
       'job-id': options.jobId || '',
+      'title': options.title || '', // Adicionar título para geração de nome de arquivo
     };
     
     // Detecta o Content-Type baseado na extensão
@@ -286,6 +287,7 @@ async function listFreeUserObjects(userId) {
           // Metadata do R2
           preset: metadata['preset'] || 'CUSTOM',
           userId: metadata['user-id'] || userId,
+          title: metadata['title'] || null, // Título do áudio
         });
       } else {
         // Objeto expirado - deleta silenciosamente

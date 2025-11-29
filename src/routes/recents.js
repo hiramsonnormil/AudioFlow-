@@ -34,7 +34,6 @@ router.get('/recent-processings', authRequired, async (req, res) => {
 
     // Retorna os objetos com informações adicionais
     const processings = objects.map(obj => {
-      // Tenta extrair informações do metadata (futuramente podemos buscar do DB)
       return {
         key: obj.key,
         fileName: obj.fileName,
@@ -44,8 +43,8 @@ router.get('/recent-processings', authRequired, async (req, res) => {
         expiresIn: obj.expiresIn,
         publicUrl: obj.publicUrl,
         userId: userId,
-        // Tenta extrair preset do nome do arquivo ou usa padrão
-        preset: extractPresetFromKey(obj.key) || 'CUSTOM'
+        preset: obj.preset || 'CUSTOM',
+        title: obj.title || null, // Título do áudio se disponível nos metadados
       };
     });
 
@@ -65,14 +64,5 @@ router.get('/recent-processings', authRequired, async (req, res) => {
   }
 });
 
-/**
- * Helper: Extrai o preset do caminho do arquivo no R2
- * Exemplo: free/user@email.com/jobId.mp3 -> tenta identificar preset do metadata
- */
-function extractPresetFromKey(key) {
-  // Por enquanto retorna null - o metadata do S3 tem essa info
-  // Podemos melhorar isso buscando do metadata do objeto
-  return null;
-}
 
 export default router;
