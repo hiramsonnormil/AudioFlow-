@@ -20,33 +20,19 @@
       }
     </style>
 
+    <!-- Global styles -->
+    <link rel="stylesheet" href="/css/global.css" />
+    <!-- Landing page styles (includes navbar) -->
+    <link rel="stylesheet" href="/css/styles-landing.css" />
     <!-- Process page styles -->
     <link rel="stylesheet" href="/css/process.css" />
   </head>
-  <body style="background: #0d0d0d; color: #f5f1ed; min-height: 100vh;">
-    <!-- Header -->
-    <nav style="position: fixed; top: 0; left: 0; right: 0; z-index: 50; background: rgba(26, 26, 26, 0.8); backdrop-filter: blur(20px); border-bottom: 1px solid rgba(194, 140, 102, 0.15);">
-      <div style="max-width: 1280px; margin: 0 auto; padding: 0 1.5rem;">
-        <div style="display: flex; justify-content: space-between; align-items: center; height: 64px;">
-          <a href="/" style="display: flex; align-items: center; gap: 0.75rem; text-decoration: none; color: #f5f1ed;">
-            <div style="width: 48px; height: 48px; display: flex; align-items: center; justify-content: center; border-radius: 16px; background: rgba(194, 140, 102, 0.1); border: 1px solid rgba(194, 140, 102, 0.2);">
-              <svg style="width: 20px; height: 20px; color: #c28c66;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"/>
-              </svg>
-            </div>
-            <span style="font-size: 1.25rem; font-weight: 600; letter-spacing: -0.025em;">phona</span>
-          </a>
-          <div style="display: none; align-items: center; gap: 2rem;">
-            <a href="/" style="font-size: 0.875rem; color: #a8a29e; text-decoration: none; transition: color 0.25s;">Início</a>
-            <a href="/#pricing" style="font-size: 0.875rem; color: #a8a29e; text-decoration: none; transition: color 0.25s;">Preços</a>
-            <a href="/#how-it-works" style="font-size: 0.875rem; color: #a8a29e; text-decoration: none; transition: color 0.25s;">Como funciona</a>
-          </div>
-        </div>
-      </div>
-    </nav>
+  <body style="background: var(--bg-primary); color: var(--text-primary); min-height: 100vh;">
+    <!-- Navbar placeholder -->
+    <div id="navbar-placeholder"></div>
 
-    <main class="pt-24 pb-16 px-6">
-      <div class="max-w-5xl mx-auto">
+    <main style="padding-top: 6rem; padding-bottom: 4rem; padding-left: 1.5rem; padding-right: 1.5rem;">
+      <div class="container" style="max-width: 1200px; margin: 0 auto;">
         <!-- Back link -->
         <div class="mb-8">
           <a
@@ -156,6 +142,8 @@
       </div>
     </main>
 
+    <script type="module" src="/js/navbar.js"></script>
+    <script type="module" src="/js/navbar-auth.js"></script>
     <script src="/js/process.js"></script>
   </body>
 </html>

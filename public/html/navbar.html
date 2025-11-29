@@ -1,0 +1,33 @@
+<nav class="nav">
+    <div class="nav-logo">
+        <a href="/" style="display: flex; align-items: center; gap: 0.5rem; text-decoration: none; color: inherit;">
+            <svg class="logo-icon" width="32" height="32" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                    <linearGradient id="navGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" stop-color="#7B61FF" />
+                        <stop offset="100%" stop-color="#00E0FF" />
+                    </linearGradient>
+                </defs>
+                <circle cx="22" cy="42" r="8" fill="url(#navGradient)" />
+                <path d="M 29 40 L 29 18 L 42 15 L 42 17 L 30 20 L 30 38 Z" fill="url(#navGradient)" />
+                <rect x="38" y="20" width="14" height="3" rx="1.5" fill="url(#navGradient)" />
+                <rect x="38" y="27" width="11" height="3" rx="1.5" fill="url(#navGradient)" />
+                <rect x="38" y="34" width="8" height="3" rx="1.5" fill="url(#navGradient)" />
+            </svg>
+            <span class="logo-text">phona</span>
+        </a>
+    </div>
+    <div class="nav-links">
+        <a href="/#effects" class="nav-link">Efeitos</a>
+        <a href="/#how" class="nav-link">Como funciona</a>
+        <a href="/html/recents.html" class="nav-link" id="nav-recents" style="display: none;">Meus Processamentos</a>
+        <a href="#" class="nav-link" id="openLoginBtn">Entrar</a>
+        <a href="#" class="nav-link nav-link-cta" id="openSignupBtn">Criar conta</a>
+        <div id="nav-user-menu" style="display: none; align-items: center; gap: 1rem; flex-direction: row;">
+            <span class="user-initial"
+                style="width: 32px; height: 32px; background: linear-gradient(135deg, #c28c66, #a67351); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; flex-shrink: 0;">?</span>
+            <button id="logoutBtn" class="nav-link"
+                style="background: none; border: none; cursor: pointer; padding: 0;">Sair</button>
+        </div>
+    </div>
+</nav>

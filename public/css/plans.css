@@ -1,0 +1,463 @@
+/* ==========================================
+   PHONA PLANS PAGE
+   Estilos específicos para página de planos
+   Reutiliza identidade visual do site
+   ========================================== */
+
+/* ==========================================
+   PLANS HERO
+   ========================================== */
+.plans-hero {
+  padding: var(--space-3xl) 2rem var(--space-2xl);
+  background: var(--bg-primary);
+  text-align: center;
+}
+
+/* ==========================================
+   PLANS SECTION
+   ========================================== */
+.plans-section {
+  padding: var(--space-2xl) 2rem var(--space-3xl);
+  background: var(--bg-secondary);
+}
+
+.plans-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 2rem;
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+/* ==========================================
+   PLAN CARD
+   ========================================== */
+.plan-card {
+  position: relative;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 2.5rem 2rem;
+  cursor: pointer;
+  transition: transform var(--animation-duration) var(--ease-smooth),
+    border-color var(--animation-duration) var(--ease-smooth),
+    box-shadow var(--animation-duration) var(--ease-smooth);
+  overflow: hidden;
+  transform: translateZ(0);
+}
+
+.plan-texture {
+  position: absolute;
+  inset: 0;
+  background-image: repeating-linear-gradient(
+    90deg,
+    transparent,
+    transparent 2px,
+    rgba(194, 140, 102, 0.02) 2px,
+    rgba(194, 140, 102, 0.02) 4px
+  );
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity var(--animation-duration) var(--ease-smooth);
+  transform: translateZ(0);
+}
+
+.plan-card:hover {
+  transform: translateY(-4px);
+  border-color: var(--border-hover);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.3),
+    0 0 0 1px rgba(194, 140, 102, 0.2) inset;
+}
+
+.plan-card:hover .plan-texture {
+  opacity: 1;
+}
+
+.plan-card-premium {
+  border-color: var(--border-hover);
+  box-shadow: 0 8px 24px rgba(194, 140, 102, 0.2);
+}
+
+.plan-card-premium:hover {
+  box-shadow: 0 16px 40px rgba(194, 140, 102, 0.3),
+    0 0 0 1px rgba(194, 140, 102, 0.3) inset;
+}
+
+.plan-badge {
+  position: absolute;
+  top: 1.5rem;
+  right: 1.5rem;
+  padding: 0.375rem 0.875rem;
+  background: linear-gradient(135deg, var(--copper), var(--copper-dark));
+  color: white;
+  border-radius: 100px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  z-index: 1;
+}
+
+.plan-header {
+  margin-bottom: 2rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.plan-name {
+  font-family: var(--font-display);
+  font-size: 2rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  margin-bottom: 1rem;
+  color: var(--text-primary);
+  text-transform: uppercase;
+}
+
+.plan-price {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+}
+
+.plan-amount {
+  font-family: var(--font-display);
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: var(--copper-light);
+  line-height: 1;
+}
+
+.plan-period {
+  font-size: 1rem;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+/* ==========================================
+   PLAN FEATURES
+   ========================================== */
+.plan-features {
+  margin-bottom: 2rem;
+  min-height: 280px;
+}
+
+.feature-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.feature-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  color: var(--text-primary);
+  font-size: 0.95rem;
+  line-height: 1.6;
+}
+
+.feature-item.feature-sublist {
+  padding-left: 1.5rem;
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+}
+
+.feature-icon {
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(194, 140, 102, 0.1);
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  color: var(--copper);
+  font-weight: 700;
+  font-size: 0.75rem;
+  margin-top: 0.125rem;
+}
+
+.feature-item.feature-sublist .feature-icon {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  font-size: 0.5rem;
+  width: auto;
+  height: auto;
+}
+
+/* ==========================================
+   PLAN BUTTON
+   ========================================== */
+.plan-button {
+  width: 100%;
+  padding: 1rem 2rem;
+  font-size: 1rem;
+  font-weight: 600;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all var(--animation-duration) var(--ease-smooth);
+  border: none;
+  font-family: inherit;
+  transform: translateZ(0);
+}
+
+.plan-button:hover {
+  transform: translateY(-2px);
+}
+
+.plan-button:active {
+  transform: translateY(0);
+}
+
+/* ==========================================
+   FAQ SECTION
+   ========================================== */
+.faq-section {
+  padding: var(--space-3xl) 2rem;
+  background: var(--bg-primary);
+}
+
+.faq-list {
+  max-width: 800px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.faq-item {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 2rem;
+  transition: border-color var(--animation-duration) var(--ease-smooth);
+}
+
+.faq-item:hover {
+  border-color: var(--border-hover);
+}
+
+.faq-question {
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+  font-weight: 700;
+  margin-bottom: 0.75rem;
+  color: var(--text-primary);
+}
+
+.faq-answer {
+  color: var(--text-secondary);
+  line-height: 1.7;
+  margin: 0;
+}
+
+/* ==========================================
+   NAV ACTIVE STATE
+   ========================================== */
+.nav-link-active {
+  color: var(--copper-light) !important;
+}
+
+.nav-link-active::after {
+  width: calc(100% - 2.5rem) !important;
+}
+
+/* ==========================================
+   RESPONSIVE
+   ========================================== */
+@media (max-width: 768px) {
+  .plans-hero {
+    padding: var(--space-2xl) 1rem var(--space-lg);
+  }
+
+  .plans-section {
+    padding: var(--space-xl) 1rem var(--space-2xl);
+  }
+
+  .plans-grid {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+
+  .plan-card {
+    padding: 2rem 1.5rem;
+  }
+
+  .plan-name {
+    font-size: 1.75rem;
+  }
+
+  .plan-amount {
+    font-size: 2rem;
+  }
+
+  .plan-features {
+    min-height: auto;
+  }
+
+  .faq-section {
+    padding: var(--space-2xl) 1rem;
+  }
+
+  .faq-item {
+    padding: 1.5rem;
+  }
+
+  .faq-question {
+    font-size: 1.125rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .plan-card {
+    padding: 1.5rem 1rem;
+  }
+
+  .plan-badge {
+    top: 1rem;
+    right: 1rem;
+    font-size: 0.625rem;
+    padding: 0.25rem 0.625rem;
+  }
+
+  .plan-name {
+    font-size: 1.5rem;
+  }
+
+  .plan-amount {
+    font-size: 1.75rem;
+  }
+
+  .feature-item {
+    font-size: 0.875rem;
+  }
+}
+
+/* ==========================================
+   PAYMENT MODAL
+   ========================================== */
+.payment-modal-content {
+  max-width: 520px;
+}
+
+.payment-form {
+  margin-top: var(--space-lg);
+}
+
+.payment-description {
+  color: var(--text-secondary);
+  font-size: 0.95rem;
+  line-height: 1.6;
+  margin-bottom: var(--space-md);
+  text-align: center;
+}
+
+.payment-success {
+  text-align: center;
+  padding: var(--space-xl) 0;
+}
+
+.payment-success-icon {
+  width: 64px;
+  height: 64px;
+  margin: 0 auto var(--space-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, var(--copper), var(--copper-dark));
+  color: white;
+  border-radius: 50%;
+  font-size: 2rem;
+  font-weight: 700;
+}
+
+.payment-success-title {
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-bottom: var(--space-sm);
+  color: var(--text-primary);
+}
+
+.payment-success-message {
+  color: var(--text-secondary);
+  margin-bottom: var(--space-lg);
+  line-height: 1.6;
+}
+
+.payment-wait-message {
+  color: var(--text-muted);
+  font-size: 0.875rem;
+  margin-top: var(--space-md);
+  font-style: italic;
+}
+
+.pix-qr-container {
+  margin: var(--space-lg) 0;
+  padding: var(--space-md);
+  background: white;
+  border-radius: var(--radius);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.pix-copy-container {
+  margin-top: var(--space-lg);
+}
+
+.pix-copy-label {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  margin-bottom: var(--space-xs);
+  text-align: left;
+}
+
+.pix-copy-box {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: var(--space-md);
+  text-align: left;
+}
+
+.pix-copy-box code {
+  display: block;
+  font-family: 'Courier New', monospace;
+  font-size: 0.75rem;
+  color: var(--text-primary);
+  line-height: 1.6;
+  margin-bottom: var(--space-sm);
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr 80px;
+  gap: var(--space-md);
+}
+
+@media (max-width: 640px) {
+  .payment-modal-content {
+    padding: var(--space-lg);
+  }
+
+  .form-row {
+    grid-template-columns: 1fr;
+    gap: var(--space-sm);
+  }
+
+  .pix-qr-container {
+    padding: var(--space-sm);
+  }
+
+  .pix-copy-box code {
+    font-size: 0.7rem;
+  }
+}
+

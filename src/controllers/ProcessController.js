@@ -76,10 +76,38 @@ export class ProcessController {
     }
 
     const result = job.toJSON();
+    
+    // Incluir nome formatado para download no resultado
+    if (job.status === "DONE") {
+      result.downloadFilename = job.getFormattedDownloadFilename();
+      result.preset = job.metadata?.preset || null;
+    }
 
-    if (job.status === "DONE" && job.out && fs.existsSync(job.out)) {
-      result.output = `/file/${job.id}`;
-      result.fileSize = fs.statSync(job.out).size;
+    if (job.status === "DONE" && job.out) {
+      // Se o arquivo está no R2 (URL começa com http), não precisa verificar filesystem
+      if (job.out.startsWith('http')) {
+        result.output = `/file/${job.id}`;
+        result.fileExists = true; // Assumimos que existe, o R2 gerencia a expiração
+        result.r2Key = job.r2Key || null;
+        
+        // Calcular tempo de expiração (1 hora a partir da conclusão)
+        if (job.completedAt) {
+          const ONE_HOUR = 60 * 60 * 1000; // 1 hora em ms
+          const now = new Date();
+          const completedTime = new Date(job.completedAt).getTime();
+          const expiresAt = completedTime + ONE_HOUR;
+          const expiresIn = Math.max(0, expiresAt - now.getTime());
+          
+          result.expiresAt = new Date(expiresAt).toISOString();
+          result.expiresIn = expiresIn; // Tempo restante em ms
+          result.isExpired = expiresIn <= 0;
+        }
+      } else if (fs.existsSync(job.out)) {
+        // Fallback para arquivos locais (jobs antigos)
+        result.output = `/file/${job.id}`;
+        result.fileSize = fs.statSync(job.out).size;
+        result.fileExists = true;
+      }
     }
 
     res.set("Cache-Control", "no-cache, no-store, must-revalidate");
@@ -141,10 +169,11 @@ export class ProcessController {
         // Baixar arquivo do R2 com autenticação
         const stream = await r2.downloadFile(key);
         
-        const downloadName = job.filename || `audio_${id}.mp3`;
+        // Usar nome formatado: nomedamusica-presetaplicado-diadoprocessamento.mp3
+        const downloadName = job.getFormattedDownloadFilename();
         
         res.set("Content-Type", "audio/mpeg");
-        res.set("Content-Disposition", `inline; filename="${downloadName}"`);
+        res.set("Content-Disposition", `attachment; filename="${downloadName}"`);
         res.set("Cache-Control", "public, max-age=3600");
         res.set("Accept-Ranges", "bytes");
         
@@ -174,7 +203,8 @@ export class ProcessController {
     }
 
     const fileSize = fs.statSync(filePath).size;
-    const downloadName = job.filename || path.basename(filePath);
+    // Usar nome formatado: nomedamusica-presetaplicado-diadoprocessamento.mp3
+    const downloadName = job.getFormattedDownloadFilename();
 
     console.log(
       `[DEBUG] Serving local file: ${filePath} (${fileSize} bytes) as ${downloadName}`
@@ -184,7 +214,7 @@ export class ProcessController {
     res.set("Pragma", "no-cache");
     res.set("Expires", "0");
     res.set("Content-Type", "audio/mpeg");
-    res.set("Content-Disposition", `inline; filename="${downloadName}"`);
+    res.set("Content-Disposition", `attachment; filename="${downloadName}"`);
     res.set("Content-Length", fileSize);
 
     res.sendFile(filePath, (err) => {

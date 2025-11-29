@@ -5,277 +5,64 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Meus Processamentos - Phona</title>
   <link rel="stylesheet" href="/css/global.css">
-  <link rel="stylesheet" href="/css/app.css">
-  <style>
-    .recents-container {
-      max-width: 1200px;
-      margin: 2rem auto;
-      padding: 0 1rem;
-    }
-
-    .recents-header {
-      text-align: center;
-      margin-bottom: 2rem;
-    }
-
-    .recents-header h1 {
-      font-size: 2rem;
-      margin-bottom: 0.5rem;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-    }
-
-    .recents-header p {
-      color: #666;
-      font-size: 0.9rem;
-    }
-
-    .processing-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-      gap: 1.5rem;
-      margin-top: 2rem;
-    }
-
-    .processing-card {
-      background: white;
-      border-radius: 12px;
-      padding: 1.5rem;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-      transition: transform 0.2s, box-shadow 0.2s;
-    }
-
-    .processing-card:hover {
-      transform: translateY(-4px);
-      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
-    }
-
-    .card-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 1rem;
-      padding-bottom: 1rem;
-      border-bottom: 1px solid #eee;
-    }
-
-    .card-title {
-      font-size: 1rem;
-      font-weight: 600;
-      color: #333;
-      word-break: break-word;
-    }
-
-    .card-preset {
-      display: inline-block;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      color: white;
-      padding: 0.25rem 0.75rem;
-      border-radius: 20px;
-      font-size: 0.75rem;
-      font-weight: 600;
-      text-transform: uppercase;
-    }
-
-    .card-info {
-      margin: 1rem 0;
-      font-size: 0.85rem;
-      color: #666;
-    }
-
-    .info-row {
-      display: flex;
-      justify-content: space-between;
-      margin-bottom: 0.5rem;
-    }
-
-    .info-label {
-      font-weight: 500;
-      color: #888;
-    }
-
-    .info-value {
-      color: #333;
-      font-weight: 600;
-    }
-
-    .expiration-bar {
-      width: 100%;
-      height: 6px;
-      background: #eee;
-      border-radius: 3px;
-      overflow: hidden;
-      margin: 1rem 0;
-    }
-
-    .expiration-progress {
-      height: 100%;
-      background: linear-gradient(90deg, #10b981 0%, #f59e0b 50%, #ef4444 100%);
-      transition: width 1s linear;
-    }
-
-    .expiration-time {
-      text-align: center;
-      font-size: 0.85rem;
-      color: #666;
-      font-weight: 600;
-      margin-bottom: 1rem;
-    }
-
-    .expiration-time.warning {
-      color: #f59e0b;
-    }
-
-    .expiration-time.danger {
-      color: #ef4444;
-    }
-
-    .card-actions {
-      display: flex;
-      gap: 0.5rem;
-    }
-
-    .btn-download {
-      flex: 1;
-      padding: 0.75rem;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      color: white;
-      border: none;
-      border-radius: 8px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: opacity 0.2s;
-      text-decoration: none;
-      text-align: center;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 0.5rem;
-    }
-
-    .btn-download:hover {
-      opacity: 0.9;
-    }
-
-    .btn-delete {
-      padding: 0.75rem 1rem;
-      background: #ef4444;
-      color: white;
-      border: none;
-      border-radius: 8px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: opacity 0.2s;
-    }
-
-    .btn-delete:hover {
-      opacity: 0.9;
-    }
-
-    .empty-state {
-      text-align: center;
-      padding: 4rem 2rem;
-      color: #999;
-    }
-
-    .empty-state-icon {
-      font-size: 4rem;
-      margin-bottom: 1rem;
-    }
-
-    .empty-state h2 {
-      font-size: 1.5rem;
-      margin-bottom: 0.5rem;
-      color: #666;
-    }
-
-    .empty-state p {
-      margin-bottom: 2rem;
-    }
-
-    .btn-primary {
-      display: inline-block;
-      padding: 1rem 2rem;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      color: white;
-      text-decoration: none;
-      border-radius: 8px;
-      font-weight: 600;
-      transition: opacity 0.2s;
-    }
-
-    .btn-primary:hover {
-      opacity: 0.9;
-    }
-
-    .loading {
-      text-align: center;
-      padding: 4rem 2rem;
-    }
-
-    .spinner {
-      width: 50px;
-      height: 50px;
-      margin: 0 auto 1rem;
-      border: 4px solid #eee;
-      border-top: 4px solid #667eea;
-      border-radius: 50%;
-      animation: spin 1s linear infinite;
-    }
-
-    @keyframes spin {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
-    }
-
-    .user-info {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      color: white;
-      padding: 1rem;
-      border-radius: 8px;
-      margin-bottom: 2rem;
-      text-align: center;
-    }
-
-    .user-info strong {
-      font-size: 1.1rem;
-    }
-  </style>
+  <link rel="stylesheet" href="/css/styles-landing.css">
+  <link rel="stylesheet" href="/css/recents.css">
 </head>
-<body>
+<body style="background: var(--bg-primary);">
   <!-- Navbar será injetada pelo JS -->
   <div id="navbar-placeholder"></div>
 
-  <div class="recents-container">
-    <div class="recents-header">
-      <h1>🎵 Meus Processamentos Recentes</h1>
-      <p>Seus áudios processados ficam disponíveis por 1 hora após o processamento</p>
+  <div class="recents-hero">
+    <div class="recents-hero-content">
+      <div class="recents-badge">
+        <span class="badge-dot"></span>
+        <span>Seus Processamentos</span>
+      </div>
+      <h1 class="recents-title">🎵 Meus Processamentos Recentes</h1>
+      <p class="recents-subtitle">Seus áudios processados ficam disponíveis por 1 hora após o processamento</p>
     </div>
-
-    <!-- Info do usuário -->
-    <div class="user-info" id="user-info" style="display: none;">
-      <p>👤 Logado como: <strong id="user-email">-</strong></p>
-    </div>
-
-    <!-- Loading -->
-    <div class="loading" id="loading">
-      <div class="spinner"></div>
-      <p>Carregando seus processamentos...</p>
-    </div>
-
-    <!-- Empty state -->
-    <div class="empty-state" id="empty-state" style="display: none;">
-      <div class="empty-state-icon">📭</div>
-      <h2>Nenhum processamento encontrado</h2>
-      <p>Você ainda não processou nenhum áudio ou seus arquivos já expiraram.</p>
-      <a href="/html/process.html" class="btn-primary">Processar Agora</a>
-    </div>
-
-    <!-- Grid de processamentos -->
-    <div class="processing-grid" id="processing-grid"></div>
   </div>
 
+  <div class="recents-section">
+    <div class="recents-container">
+
+      <!-- Info do usuário -->
+      <div class="user-info-card" id="user-info" style="display: none;">
+        <div class="user-info-content">
+          <div class="user-avatar" id="user-avatar">👤</div>
+          <div class="user-details">
+            <div class="user-label">Logado como</div>
+            <div class="user-email" id="user-email">-</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Loading -->
+      <div class="recents-loading" id="loading">
+        <div class="loading-spinner"></div>
+        <p class="loading-text">Carregando seus processamentos...</p>
+      </div>
+
+      <!-- Empty state -->
+      <div class="recents-empty" id="empty-state" style="display: none;">
+        <div class="empty-icon">📭</div>
+        <h2 class="empty-title">Nenhum processamento encontrado</h2>
+        <p class="empty-description">Você ainda não processou nenhum áudio ou seus arquivos já expiraram.</p>
+        <a href="/" class="btn-primary empty-action">
+          Processar Agora
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M5 12h14M12 5l7 7-7 7"/>
+          </svg>
+        </a>
+      </div>
+
+      <!-- Grid de processamentos -->
+      <div class="recents-grid" id="processing-grid" style="display: none;"></div>
+    </div>
+  </div>
+
+  <script type="module" src="/js/navbar.js"></script>
+  <script type="module" src="/js/navbar-auth.js"></script>
   <script type="module" src="/js/recents.js"></script>
 </body>
 </html>
