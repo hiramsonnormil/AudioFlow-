@@ -20,49 +20,73 @@ const PRESETS = {
     id: 'SLOWED',
     name: 'Slowed',
     icon: '🕐',
-    description: 'Tempo 0.88× preservando o pitch',
+    description: 'Tempo 0.75× preservando o pitch',
   },
   SPEED_125: {
     id: 'SPEED_125',
     name: 'Speed Up',
     icon: '⚡',
-    description: '1.25× velocidade com pitch preservado',
+    description: '1.5× velocidade com pitch preservado',
   },
-  ULTRA_SLOWED: {
-    id: 'ULTRA_SLOWED',
-    name: 'Ultra Slowed',
-    icon: '🔄',
-    description: 'Drone etéreo com tempo 0.12×, reverb amplo',
-  },
-  MUFFLED_SLOWED: {
-    id: 'MUFFLED_SLOWED',
-    name: 'Muffled Slowed',
-    icon: '🔇',
-    description: '80% + passa-baixa 300Hz',
-  },
-  MUFFLED_SPEED: {
-    id: 'MUFFLED_SPEED',
-    name: 'Muffled Speed',
-    icon: '🔊',
-    description: '125% + passa-baixa 500Hz',
+  NIGHTCORE: {
+    id: 'NIGHTCORE',
+    name: 'Nightcore',
+    icon: '🌟',
+    description: 'Rápido + pitch agudo (1.25×) energético',
   },
   DAYCORE: {
     id: 'DAYCORE',
     name: 'Daycore',
     icon: '☀️',
-    description: '80% + pitch -4 semitons com reverb leve',
+    description: 'Lento + pitch grave (0.80×) melancólico',
   },
-  NIGHTCORE: {
-    id: 'NIGHTCORE',
-    name: 'Nightcore',
-    icon: '🌙',
-    description: '135% + pitch +5-6 semitons',
+  MUFFLED_SLOWED: {
+    id: 'MUFFLED_SLOWED',
+    name: 'Muffled Slowed',
+    icon: '🔇',
+    description: 'Lento abafado com lowpass 3000Hz',
+  },
+  MUFFLED_SPEED: {
+    id: 'MUFFLED_SPEED',
+    name: 'Muffled Speed',
+    icon: '🔊',
+    description: 'Rápido abafado com lowpass 3000Hz',
+  },
+  PHONA: {
+    id: 'PHONA',
+    name: 'Phona',
+    icon: '📞',
+    description: 'Efeito telefone (300Hz-3400Hz)',
+  },
+  ECHO: {
+    id: 'ECHO',
+    name: 'Echo',
+    icon: '🔉',
+    description: 'Eco clássico com delay 800ms',
+  },
+  REVERB: {
+    id: 'REVERB',
+    name: 'Reverb',
+    icon: '🎵',
+    description: 'Reverberação atmosférica espacial',
+  },
+  BASS_BOOST: {
+    id: 'BASS_BOOST',
+    name: 'Bass Boost',
+    icon: '🎸',
+    description: 'Graves potentes +8dB sem distorção',
+  },
+  ROBOT_VOICE: {
+    id: 'ROBOT_VOICE',
+    name: 'Robot Voice',
+    icon: '🤖',
+    description: 'Voz robótica metálica sintética',
   },
   '8D': {
     id: '8D',
     name: '8D',
     icon: '🎧',
-    description: 'Pan automático lento + reverb suave',
+    description: 'Som girando 360° na cabeça',
   },
 };
 
@@ -97,7 +121,7 @@ let currentJobId = null;
  */
 function renderPresets() {
   if (!presetGrid) return;
-  
+
   const presetsHtml = Object.values(PRESETS).map(preset => `
     <label class="preset-card">
       <input 
@@ -111,15 +135,15 @@ function renderPresets() {
       <div class="preset-description">${preset.description}</div>
     </label>
   `).join('');
-  
+
   presetGrid.innerHTML = presetsHtml;
-  
+
   // Event listeners para seleção
   const presetInputs = presetGrid.querySelectorAll('input[type="radio"]');
   presetInputs.forEach(input => {
     input.addEventListener('change', (e) => {
       selectedPreset = e.target.value;
-      
+
       // Atualizar visual
       presetGrid.querySelectorAll('.preset-card').forEach(card => {
         removeClass(card, 'selected');
@@ -135,11 +159,11 @@ function renderPresets() {
 function updateUserInfo() {
   const user = getUser();
   if (!user) return;
-  
+
   if (userAvatar) {
     userAvatar.textContent = getUserInitial();
   }
-  
+
   if (userName) {
     userName.textContent = user.username;
   }
@@ -163,18 +187,18 @@ function validateForm(url, preset) {
     audioUrlInput.focus();
     return false;
   }
-  
+
   if (!url.includes('youtube.com') && !url.includes('youtu.be')) {
     alert('Por favor, insira um link válido do YouTube');
     audioUrlInput.focus();
     return false;
   }
-  
+
   if (!preset) {
     alert('Por favor, selecione um efeito');
     return false;
   }
-  
+
   return true;
 }
 
@@ -200,32 +224,32 @@ function updateStatus(config) {
     showProgress = true,
     actions = null,
   } = config;
-  
+
   if (statusIcon) {
     statusIcon.textContent = icon;
     statusIcon.className = 'status-icon ' + iconClass;
   }
-  
+
   if (statusTitle) {
     statusTitle.textContent = title;
   }
-  
+
   if (statusMessage) {
     statusMessage.textContent = message;
   }
-  
+
   if (progressBar) {
     progressBar.style.display = showProgress ? 'block' : 'none';
   }
-  
+
   if (progressFill && showProgress) {
     progressFill.style.width = `${progress}%`;
   }
-  
+
   if (progressText && showProgress) {
     progressText.textContent = `${progress}%`;
   }
-  
+
   if (statusActions) {
     if (actions) {
       statusActions.innerHTML = actions;
@@ -244,20 +268,20 @@ function updateStatus(config) {
  */
 async function handleProcess(e) {
   e.preventDefault();
-  
+
   const url = getValue(audioUrlInput);
   const preset = selectedPreset;
-  
+
   if (!validateForm(url, preset)) {
     return;
   }
-  
+
   // Desabilitar form
   disable(processBtn);
   processBtnText.style.display = 'none';
   processBtnIcon.style.display = 'none';
   processBtnSpinner.style.display = 'inline-block';
-  
+
   try {
     // Criar job
     updateStatus({
@@ -267,16 +291,16 @@ async function handleProcess(e) {
       message: 'Criando job de processamento',
       progress: 10,
     });
-    
+
     showStatus();
-    
+
     const response = await apiCreateJob({
       inputUrl: url,
       preset: preset,
     });
-    
+
     currentJobId = response.jobId;
-    
+
     // Iniciar polling
     updateStatus({
       icon: '⚙️',
@@ -285,12 +309,12 @@ async function handleProcess(e) {
       message: 'Seu áudio está sendo processado',
       progress: 20,
     });
-    
+
     await pollJobStatus(currentJobId, (status) => {
       // Atualizar progresso baseado no status
       let progress = status.progress || 20;
       let message = 'Processando áudio...';
-      
+
       if (status.status === 'WAITING') {
         progress = 25;
         message = 'Aguardando na fila...';
@@ -298,7 +322,7 @@ async function handleProcess(e) {
         progress = Math.min(progress, 90);
         message = 'Aplicando efeitos de áudio...';
       }
-      
+
       updateStatus({
         icon: '⚙️',
         iconClass: 'loading',
@@ -307,10 +331,10 @@ async function handleProcess(e) {
         progress: progress,
       });
     });
-    
+
     // Job concluído
     const presetName = PRESETS[preset]?.name || preset;
-    
+
     updateStatus({
       icon: '✅',
       iconClass: 'success',
@@ -332,13 +356,13 @@ async function handleProcess(e) {
         </button>
       `,
     });
-    
+
     // Salvar job no localStorage para plano Free
     saveJobForDownload(currentJobId, url, preset, presetName);
-    
+
   } catch (error) {
     console.error('Process error:', error);
-    
+
     updateStatus({
       icon: '❌',
       iconClass: 'error',
@@ -367,47 +391,47 @@ function saveJobForDownload(jobId, url, preset, presetName) {
     downloadUrl: `/api/jobs/${jobId}/download`,
     createdAt: new Date().toISOString(),
   };
-  
+
   setLocal('phona:free:downloadJob', downloadJob);
 }
 
 /**
  * Ir para download
  */
-window.handleDownload = function() {
+window.handleDownload = function () {
   redirectToDownload();
 };
 
 /**
  * Novo processamento
  */
-window.handleNewProcess = function() {
+window.handleNewProcess = function () {
   // Limpar form
   audioUrlInput.value = '';
   selectedPreset = null;
   currentJobId = null;
-  
+
   // Remover seleção de presets
   presetGrid.querySelectorAll('.preset-card').forEach(card => {
     removeClass(card, 'selected');
   });
-  
+
   presetGrid.querySelectorAll('input[type="radio"]').forEach(input => {
     input.checked = false;
   });
-  
+
   // Esconder status
   removeClass(statusArea, 'active');
-  
+
   // Habilitar form
   enable(processBtn);
   processBtnText.style.display = 'inline';
   processBtnIcon.style.display = 'inline';
   processBtnSpinner.style.display = 'none';
-  
+
   // Focar no input
   audioUrlInput.focus();
-  
+
   // Scroll para o topo
   window.scrollTo({ top: 0, behavior: 'smooth' });
 };
@@ -418,16 +442,16 @@ window.handleNewProcess = function() {
 function init() {
   updateUserInfo();
   renderPresets();
-  
+
   // Event listeners
   if (form) {
     form.addEventListener('submit', handleProcess);
   }
-  
+
   if (logoutBtn) {
     logoutBtn.addEventListener('click', handleLogout);
   }
-  
+
   // Focus no input
   audioUrlInput?.focus();
 }

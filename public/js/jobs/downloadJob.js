@@ -37,11 +37,15 @@ let currentJob = null;
 const PRESET_ICONS = {
   'SLOWED': '🕐',
   'SPEED_125': '⚡',
-  'ULTRA_SLOWED': '🔄',
+  'NIGHTCORE': '🌟',
+  'DAYCORE': '☀️',
   'MUFFLED_SLOWED': '🔇',
   'MUFFLED_SPEED': '🔊',
-  'DAYCORE': '☀️',
-  'NIGHTCORE': '🌙',
+  'PHONA': '📞',
+  'ECHO': '🔉',
+  'REVERB': '🎵',
+  'BASS_BOOST': '🎸',
+  'ROBOT_VOICE': '🤖',
   '8D': '🎧',
 };
 
@@ -51,11 +55,11 @@ const PRESET_ICONS = {
 function updateUserInfo() {
   const user = getUser();
   if (!user) return;
-  
+
   if (userAvatar) {
     userAvatar.textContent = getUserInitial();
   }
-  
+
   if (userName) {
     userName.textContent = user.username;
   }
@@ -79,16 +83,16 @@ function loadJob() {
   show(loadingState);
   hide(downloadReadyState);
   hide(emptyState);
-  
+
   // Pequeno delay para efeito visual
   setTimeout(() => {
     const job = getLocal('phona:free:downloadJob');
-    
+
     if (!job || !job.jobId) {
       showEmptyState();
       return;
     }
-    
+
     currentJob = job;
     showDownloadReady();
   }, 500);
@@ -110,20 +114,20 @@ function showDownloadReady() {
   hide(loadingState);
   hide(emptyState);
   show(downloadReadyState);
-  
+
   // Preencher informações
   if (presetIcon && currentJob.preset) {
     presetIcon.textContent = PRESET_ICONS[currentJob.preset] || '🎵';
   }
-  
+
   if (presetName && currentJob.presetName) {
     presetName.textContent = currentJob.presetName;
   }
-  
+
   if (fileName && currentJob.fileName) {
     fileName.textContent = currentJob.fileName;
   }
-  
+
   if (downloadBtn && currentJob.downloadUrl) {
     downloadBtn.href = currentJob.downloadUrl;
     downloadBtn.download = currentJob.fileName || 'phona_audio.mp3';
@@ -137,10 +141,10 @@ async function cleanupJob() {
   if (!currentJob) {
     return;
   }
-  
+
   // Remover do localStorage
   removeLocal('phona:free:downloadJob');
-  
+
   // Tentar remover do servidor (opcional, sem bloquear)
   try {
     if (currentJob.jobId) {
@@ -150,7 +154,7 @@ async function cleanupJob() {
     console.warn('Failed to delete temp job:', error);
     // Não bloquear se falhar
   }
-  
+
   currentJob = null;
 }
 
@@ -173,7 +177,7 @@ function setupNavigationCleanup() {
       removeLocal('phona:free:downloadJob');
     }
   });
-  
+
   // Cleanup ao navegar via history
   window.addEventListener('popstate', async () => {
     await cleanupJob();
@@ -187,27 +191,27 @@ function init() {
   updateUserInfo();
   loadJob();
   setupNavigationCleanup();
-  
+
   // Event listeners
   if (logoutBtn) {
     logoutBtn.addEventListener('click', handleLogout);
   }
-  
+
   if (backToAppBtn) {
     backToAppBtn.addEventListener('click', handleBackToApp);
   }
-  
+
   if (goToAppBtn) {
     goToAppBtn.addEventListener('click', () => {
       redirectToApp();
     });
   }
-  
+
   // Tracking de download
   if (downloadBtn) {
     downloadBtn.addEventListener('click', () => {
       console.log('Download iniciado:', currentJob?.fileName);
-      
+
       // Opcional: mostrar feedback de sucesso
       setTimeout(() => {
         const icon = downloadBtn.querySelector('svg');
