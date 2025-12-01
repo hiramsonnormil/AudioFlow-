@@ -1,0 +1,447 @@
+/* ==========================================
+   PHONA - MODAL STYLES
+   Modais de Login e Signup na Landing
+   ========================================== */
+
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 9999;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-lg);
+  animation: modalFadeIn 0.3s var(--ease-smooth);
+}
+
+.modal.active {
+  display: flex;
+}
+
+@keyframes modalFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.modal-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.85);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  cursor: pointer;
+}
+
+.modal-content {
+  position: relative;
+  z-index: 1;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  padding: var(--space-2xl);
+  max-width: 480px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5), 
+              0 0 0 1px rgba(194, 140, 102, 0.1);
+  animation: modalSlideUp 0.4s var(--ease-smooth);
+}
+
+@keyframes modalSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.modal-close {
+  position: absolute;
+  top: var(--space-md);
+  right: var(--space-md);
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  font-size: 28px;
+  line-height: 1;
+  cursor: pointer;
+  transition: all var(--transition-base);
+  border-radius: 50%;
+  z-index: 2;
+}
+
+.modal-close:hover {
+  background: rgba(194, 140, 102, 0.1);
+  color: var(--text-primary);
+  transform: rotate(90deg);
+}
+
+/* Tabs */
+.modal-tabs {
+  display: flex;
+  position: relative;
+  margin-bottom: var(--space-2xl);
+  border-bottom: 2px solid rgba(255, 255, 255, 0.05);
+  gap: 0;
+}
+
+.modal-tab {
+  flex: 1;
+  padding: var(--space-md) 0;
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  font-size: var(--fs-base);
+  font-weight: 600;
+  font-family: var(--font-display);
+  cursor: pointer;
+  transition: all var(--transition-base);
+  position: relative;
+  z-index: 1;
+}
+
+.modal-tab:hover {
+  color: var(--text-secondary);
+}
+
+.modal-tab.active {
+  color: var(--color-copper);
+}
+
+.modal-tab-indicator {
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  width: 50%;
+  height: 2px;
+  background: linear-gradient(90deg, var(--color-copper), var(--color-peach));
+  transition: transform 0.3s var(--ease-smooth);
+  border-radius: 2px 2px 0 0;
+}
+
+.modal-tabs[data-active="signup"] .modal-tab-indicator {
+  transform: translateX(100%);
+}
+
+.modal-header {
+  text-align: center;
+  margin-bottom: var(--space-xl);
+  position: relative;
+}
+
+.modal-top-link {
+  position: absolute;
+  top: 0;
+  right: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  font-size: 14px;
+  margin-bottom: var(--space-lg);
+}
+
+.modal-top-link span {
+  color: var(--text-muted);
+}
+
+.modal-top-link a {
+  color: var(--color-copper);
+  text-decoration: none;
+  font-weight: 600;
+  transition: all var(--transition-base);
+  position: relative;
+}
+
+.modal-top-link a::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  width: 0;
+  height: 2px;
+  background: var(--color-copper);
+  transition: width var(--transition-base);
+}
+
+.modal-top-link a:hover {
+  color: var(--color-peach);
+}
+
+.modal-top-link a:hover::after {
+  width: 100%;
+}
+
+.modal-logo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-sm);
+  margin-bottom: var(--space-lg);
+  font-family: var(--font-display);
+  font-size: var(--fs-2xl);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--text-primary);
+}
+
+.modal-logo svg {
+  width: 40px;
+  height: 40px;
+}
+
+.modal-title {
+  font-size: var(--fs-2xl);
+  font-weight: 700;
+  margin-bottom: var(--space-xs);
+  color: var(--text-primary);
+  font-family: var(--font-display);
+}
+
+.modal-subtitle {
+  font-size: var(--fs-base);
+  color: var(--text-secondary);
+}
+
+.modal-error {
+  padding: var(--space-md);
+  background: rgba(255, 77, 77, 0.1);
+  border: 1px solid rgba(255, 77, 77, 0.3);
+  border-radius: var(--radius);
+  color: var(--error);
+  font-size: var(--fs-sm);
+  margin-bottom: var(--space-md);
+  animation: slideDown 0.3s var(--ease-smooth);
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.modal-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.modal-form .form-group {
+  margin-bottom: 0;
+}
+
+.modal-form .form-label {
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.modal-form .form-input {
+  background: var(--bg-input);
+}
+
+/* Auth Forms Toggle */
+.auth-form {
+  display: none;
+  animation: fadeIn 0.3s var(--ease-smooth);
+}
+
+.auth-form.active {
+  display: block;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.modal-form .form-hint {
+  margin-top: var(--space-xs);
+  font-size: var(--fs-sm);
+  color: var(--text-muted);
+}
+
+.modal-submit {
+  margin-top: var(--space-sm);
+  width: 100%;
+}
+
+.modal-submit .btn-text,
+.modal-submit .spinner {
+  transition: opacity 0.2s;
+}
+
+.modal-form.loading .btn-text {
+  display: none;
+}
+
+.modal-form.loading .spinner {
+  display: inline-block !important;
+}
+
+.modal-footer {
+  margin-top: var(--space-lg);
+  text-align: center;
+  font-size: var(--fs-sm);
+  color: var(--text-secondary);
+}
+
+.modal-footer a {
+  color: var(--copper-light);
+  font-weight: 600;
+  text-decoration: none;
+  transition: color var(--transition-fast);
+}
+
+.modal-footer a:hover {
+  color: var(--copper);
+  text-decoration: underline;
+}
+
+/* Password field específico do modal */
+.modal-form .password-field {
+  position: relative;
+}
+
+.modal-form .password-toggle {
+  position: absolute;
+  right: var(--space-sm);
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: var(--space-xs);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color var(--transition-fast);
+  width: 32px;
+  height: 32px;
+}
+
+.modal-form .password-toggle:hover {
+  color: var(--text-primary);
+}
+
+.modal-form .password-toggle svg {
+  width: 20px;
+  height: 20px;
+}
+
+.modal-form .password-toggle .eye-icon,
+.modal-form .password-toggle .eye-off-icon {
+  position: absolute;
+  transition: opacity 0.2s;
+}
+
+/* Responsive */
+@media (max-width: 640px) {
+  .modal {
+    padding: var(--space-sm);
+  }
+
+  .modal-content {
+    padding: var(--space-lg);
+    max-height: 95vh;
+  }
+
+  .modal-title {
+    font-size: var(--fs-xl);
+  }
+
+  .modal-logo {
+    font-size: var(--fs-xl);
+  }
+
+  .modal-logo svg {
+    width: 32px;
+    height: 32px;
+  }
+
+  .modal-top-link {
+    position: static;
+    justify-content: center;
+    margin-bottom: var(--space-md);
+    font-size: 13px;
+  }
+}
+
+/* Prevenir scroll do body quando modal está aberto */
+body.modal-open {
+  overflow: hidden;
+}
+
+/* Animação de saída */
+.modal.closing {
+  animation: modalFadeOut 0.3s var(--ease-smooth) forwards;
+}
+
+.modal.closing .modal-content {
+  animation: modalSlideDown 0.3s var(--ease-smooth) forwards;
+}
+
+@keyframes modalFadeOut {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes modalSlideDown {
+  from {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(20px) scale(0.95);
+  }
+}
+
+/* Customização do scrollbar no modal */
+.modal-content::-webkit-scrollbar {
+  width: 8px;
+}
+
+.modal-content::-webkit-scrollbar-track {
+  background: var(--bg-secondary);
+  border-radius: var(--radius);
+}
+
+.modal-content::-webkit-scrollbar-thumb {
+  background: var(--border-hover);
+  border-radius: var(--radius);
+}
+
+.modal-content::-webkit-scrollbar-thumb:hover {
+  background: var(--copper);
+}

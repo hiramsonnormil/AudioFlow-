@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Meus Processamentos - Phona</title>
+  <link rel="stylesheet" href="/css/global.css">
+  <link rel="stylesheet" href="/css/styles-landing.css">
+  <link rel="stylesheet" href="/css/recents.css">
+</head>
+<body style="background: var(--bg-primary);">
+  <!-- Navbar será injetada pelo JS -->
+  <div id="navbar-placeholder"></div>
+
+  <div class="recents-hero">
+    <div class="recents-hero-content">
+      <div class="recents-badge">
+        <span class="badge-dot"></span>
+        <span>Seus Processamentos</span>
+      </div>
+      <h1 class="recents-title">🎵 Meus Processamentos Recentes</h1>
+      <p class="recents-subtitle">Seus áudios processados ficam disponíveis por 1 hora após o processamento</p>
+    </div>
+  </div>
+
+  <div class="recents-section">
+    <div class="recents-container">
+
+      <!-- Info do usuário -->
+      <div class="user-info-card" id="user-info" style="display: none;">
+        <div class="user-info-content">
+          <div class="user-avatar" id="user-avatar">👤</div>
+          <div class="user-details">
+            <div class="user-label">Logado como</div>
+            <div class="user-email" id="user-email">-</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Loading -->
+      <div class="recents-loading" id="loading">
+        <div class="loading-spinner"></div>
+        <p class="loading-text">Carregando seus processamentos...</p>
+      </div>
+
+      <!-- Empty state -->
+      <div class="recents-empty" id="empty-state" style="display: none;">
+        <div class="empty-icon">📭</div>
+        <h2 class="empty-title">Nenhum processamento encontrado</h2>
+        <p class="empty-description">Você ainda não processou nenhum áudio ou seus arquivos já expiraram.</p>
+        <a href="/" class="btn-primary empty-action">
+          Processar Agora
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M5 12h14M12 5l7 7-7 7"/>
+          </svg>
+        </a>
+      </div>
+
+      <!-- Grid de processamentos -->
+      <div class="recents-grid" id="processing-grid" style="display: none;"></div>
+    </div>
+  </div>
+
+  <script type="module" src="/js/navbar.js"></script>
+  <script type="module" src="/js/navbar-auth.js"></script>
+  <script type="module" src="/js/recents.js"></script>
+</body>
+</html>

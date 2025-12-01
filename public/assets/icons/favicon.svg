@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="phona icon">
+  <title>phona</title>
+  <defs>
+    <linearGradient id="faviconGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#7B61FF"/>
+      <stop offset="100%" stop-color="#00E0FF"/>
+    </linearGradient>
+  </defs>
+  
+  <!-- Simplified musical note optimized for small sizes -->
+  <g>
+    <!-- Note circle (bottom) -->
+    <circle cx="11" cy="21" r="4.5" fill="url(#faviconGradient)"/>
+    
+    <!-- Note stem -->
+    <rect x="14" y="9" width="2.5" height="13" rx="1.25" fill="url(#faviconGradient)"/>
+    
+    <!-- Note flag -->
+    <path d="M 16.5 9 L 16.5 7 Q 16.5 6, 17.5 6 L 22 5 Q 23 4.8, 23 6 L 23 8 Q 23 9, 22 9.2 L 17.5 10.5 Q 16.5 10.8, 16.5 9.8 Z" 
+          fill="url(#faviconGradient)"/>
+    
+    <!-- Sound waves (simplified to 2 lines for clarity at small size) -->
+    <line x1="20" y1="14" x2="27" y2="14" stroke="url(#faviconGradient)" stroke-width="2" stroke-linecap="round"/>
+    <line x1="20" y1="19" x2="25" y2="19" stroke="url(#faviconGradient)" stroke-width="2" stroke-linecap="round"/>
+  </g>
+</svg>
