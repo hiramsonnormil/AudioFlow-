@@ -85,7 +85,7 @@ Acesse: `http://localhost:3000`
 - [ ] Link "Criar conta" funciona
 - [ ] Link "Voltar para home" funciona
 
-### 4. Página de App (`/html/app.html`)
+### 4. Página de App (`/html/index.html`)
 
 **Proteção:**
 - [ ] Sem autenticação → redireciona para `/login`
@@ -186,7 +186,7 @@ Acesse: `http://localhost:3000`
 // No console, limpe sessão:
 sessionStorage.clear()
 ```
-- [ ] `/html/app.html` → redireciona para `/login`
+- [ ] `/html/index.html` → redireciona para `/login`
 - [ ] `/html/download.html` → redireciona para `/login`
 
 **Rotas Auth (com auth):**

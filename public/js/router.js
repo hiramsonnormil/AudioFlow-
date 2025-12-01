@@ -6,7 +6,7 @@
 import { isAuthenticated } from './auth/session.js';
 
 // Rotas protegidas que requerem autenticação
-const PROTECTED_ROUTES = ['/app', '/app.html', '/download', '/download.html'];
+const PROTECTED_ROUTES = ['/app', '/download', '/download.html'];
 
 // Rotas públicas de autenticação
 const AUTH_ROUTES = ['/login', '/login.html', '/signup', '/signup.html'];
@@ -15,7 +15,7 @@ const AUTH_ROUTES = ['/login', '/login.html', '/signup', '/signup.html'];
  * Verificar se rota atual precisa de autenticação
  */
 export function isProtectedRoute(path = window.location.pathname) {
-  return PROTECTED_ROUTES.some(route => 
+  return PROTECTED_ROUTES.some(route =>
     path === route || path.endsWith(route)
   );
 }
@@ -24,7 +24,7 @@ export function isProtectedRoute(path = window.location.pathname) {
  * Verificar se rota atual é de autenticação
  */
 export function isAuthRoute(path = window.location.pathname) {
-  return AUTH_ROUTES.some(route => 
+  return AUTH_ROUTES.some(route =>
     path === route || path.endsWith(route)
   );
 }
@@ -41,12 +41,12 @@ export function navigate(path) {
  */
 export function redirectToLogin() {
   const currentPath = window.location.pathname;
-  
+
   // Não redirecionar se já estiver em rota de auth
   if (isAuthRoute(currentPath)) {
     return;
   }
-  
+
   // Redirecionar para landing page com parâmetro para abrir modal de login
   navigate('/?requireAuth=true');
 }
@@ -55,7 +55,7 @@ export function redirectToLogin() {
  * Redirecionar para app
  */
 export function redirectToApp() {
-  navigate('/html/app.html');
+  navigate('/html/index.html');
 }
 
 /**
@@ -100,13 +100,13 @@ export function redirectIfAuthenticated() {
  */
 export function initRouteGuard() {
   const currentPath = window.location.pathname;
-  
+
   // Se rota protegida e não autenticado → login
   if (isProtectedRoute(currentPath) && !isAuthenticated()) {
     redirectToLogin();
     return;
   }
-  
+
   // Se rota de auth e já autenticado → app
   if (isAuthRoute(currentPath) && isAuthenticated()) {
     redirectToApp();

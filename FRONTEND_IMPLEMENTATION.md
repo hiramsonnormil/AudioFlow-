@@ -10,7 +10,7 @@ Toda a implementação foi organizada conforme solicitado:
     index.html       ✅ Landing pública (atualizada com links auth)
     login.html       ✅ Tela de login
     signup.html      ✅ Tela de criar conta
-    app.html         ✅ Interface de processamento
+    index.html       ✅ Landing pública + Interface de processamento
     download.html    ✅ Tela de download
   
   /css
