@@ -389,7 +389,7 @@ curl http://localhost:3000/api/jobs/JOB_ID/download \
 Landing:   /html/index.html  (pública)
 Login:     /html/login.html  (pública)
 Signup:    /html/signup.html (pública)
-App:       /html/app.html    (protegida)
+App:       /html/index.html    (protegida)
 Download:  /html/download.html (protegida)
 ```
 

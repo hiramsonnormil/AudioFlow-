@@ -14,7 +14,7 @@
 │   ├── index.html        → Landing pública (✨ atualizada)
 │   ├── login.html        → ✅ Tela de login
 │   ├── signup.html       → ✅ Tela de criar conta
-│   ├── app.html          → ✅ Interface de processamento
+│   ├── index.html        → ✅ Landing pública + Interface de processamento
 │   └── download.html     → ✅ Tela de download
 │
 ├── /css
@@ -284,7 +284,7 @@ Estados:
 3. Navegue:
    / → Landing
    /html/signup.html → Criar conta
-   /html/app.html → Processar (após login)
+   /html/index.html → Processar (após login)
 
 
 💡 PRÓXIMOS PASSOS (OPCIONAL)

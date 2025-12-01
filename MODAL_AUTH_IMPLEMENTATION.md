@@ -65,7 +65,7 @@ Landing Page (index.html)
     |       ├─> Validação
     |       ├─> POST /api/auth/login
     |       ├─> Salva token e user no sessionStorage
-    |       └─> Redireciona para /html/app.html
+    |       └─> Redireciona para /html/index.html
     |
     └─> Clica "Criar conta" → Abre #signupModal
             |
@@ -73,7 +73,7 @@ Landing Page (index.html)
             ├─> Validação (incluindo match de senhas)
             ├─> POST /api/auth/signup
             ├─> Salva token e user no sessionStorage (login automático)
-            └─> Redireciona para /html/app.html
+            └─> Redireciona para /html/index.html
 ```
 
 ## 🎨 Animações

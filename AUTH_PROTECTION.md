@@ -17,12 +17,12 @@ Quando usuário **NÃO logado** clica em processar:
 1. ❌ Processamento bloqueado
 2. 🔔 Toast notification aparece: "Login necessário"
 3. 🚪 Modal de login abre automaticamente
-4. ✨ Após login → redireciona para `/html/app.html`
+4. ✨ Após login → redireciona para `/html/index.html`
 
 ### 3. Fluxo com Usuário Logado
 Quando usuário **JÁ está logado**:
 1. ✅ Validação de URL e preset
-2. ✅ Redireciona para `/html/app.html` com parâmetros
+2. ✅ Redireciona para `/html/index.html` com parâmetros
 3. ✅ Parâmetros incluem: `url`, `preset`, `autostart=true`
 4. 🎵 Processamento inicia automaticamente
 
@@ -54,13 +54,13 @@ Landing Page (/)
     |       ├─> Verifica isAuthenticated() → false
     |       ├─> Mostra toast "Login necessário"
     |       ├─> Abre modal de login
-    |       └─> Após login → redireciona para /html/app.html
+    |       └─> Após login → redireciona para /html/index.html
     |
     └─> Usuário JÁ logado clica "Processar"
             |
             ├─> Verifica isAuthenticated() → true
             ├─> Valida URL e preset
-            └─> Redireciona para /html/app.html?url=...&preset=...&autostart=true
+            └─> Redireciona para /html/index.html?url=...&preset=...&autostart=true
 ```
 
 ## 🎨 UI/UX Implementado
@@ -169,7 +169,7 @@ Landing Page (/)
 3. Cole URL do YouTube
 4. Selecione preset
 5. Clique "Processar áudio"
-6. ✅ Deve redirecionar para /html/app.html com params
+6. ✅ Deve redirecionar para /html/index.html com params
 7. ✅ Processamento inicia automaticamente
 ```
 
@@ -216,8 +216,8 @@ Landing Page (/)
 
 ### Redirect não funciona
 - ✅ Verificar parâmetros da URL no console
-- ✅ Confirmar que `/html/app.html` existe
-- ✅ Verificar se app.html consome parâmetros `url`, `preset`, `autostart`
+- ✅ Confirmar que `/html/index.html` existe
+- ✅ Verificar se index.html consome parâmetros `url`, `preset`, `autostart`
 
 ## 🚀 Próximos Passos (Opcional)
 
