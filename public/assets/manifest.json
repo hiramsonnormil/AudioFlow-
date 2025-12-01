@@ -1,0 +1,27 @@
+{
+  "name": "phona - Transforme o som do seu jeito",
+  "short_name": "phona",
+  "description": "Aplique efeitos profissionais em músicas do YouTube. Slowed, reverb, daycore, nightcore e muito mais.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#06070A",
+  "theme_color": "#7B61FF",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/logo.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ],
+  "categories": ["music", "entertainment", "utilities"],
+  "lang": "pt-BR",
+  "dir": "ltr"
+}

@@ -68,6 +68,37 @@ export class Job {
   }
 
   /**
+   * Gera nome de arquivo formatado para download: nomedamusica-presetaplicado-diadoprocessamento.mp3
+   */
+  getFormattedDownloadFilename() {
+    // Sanitiza o título da música
+    let musicName = 'audio';
+    if (this.metadata?.title) {
+      musicName = this.metadata.title
+        .replace(/[^\w\s-]/g, '') // Remove caracteres especiais
+        .replace(/\s+/g, '-') // Substitui espaços por hífen
+        .toLowerCase()
+        .substring(0, 50) // Limita tamanho
+        .trim();
+      
+      if (!musicName || musicName === '') {
+        musicName = 'audio';
+      }
+    }
+    
+    // Preset aplicado
+    const preset = this.metadata?.preset || 'custom';
+    const presetFormatted = preset.toLowerCase().replace(/\s+/g, '-');
+    
+    // Data do processamento (formato: YYYYMMDD)
+    const processDate = this.completedAt 
+      ? new Date(this.completedAt).toISOString().split('T')[0].replace(/-/g, '')
+      : new Date().toISOString().split('T')[0].replace(/-/g, '');
+    
+    return `${musicName}-${presetFormatted}-${processDate}.mp3`;
+  }
+
+  /**
    * Converte o job para JSON para resposta da API
    */
   toJSON() {
@@ -77,9 +108,11 @@ export class Job {
       progress: this.progress,
       title: this.metadata.title,
       filename: this.filename,
+      downloadFilename: this.getFormattedDownloadFilename(), // Nome formatado para download
       filePath: this.out,
       thumbnail: this.metadata.thumbnail,
       videoId: this.metadata.videoId,
+      preset: this.metadata.preset,
       error: this.error,
       createdAt: this.createdAt,
       startedAt: this.startedAt,

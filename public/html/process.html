@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#0A0A0A" />
+    <meta
+      name="description"
+      content="Seu áudio está sendo processado • phona"
+    />
+    <title>phona • Processando</title>
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+
+    <style>
+      @import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap");
+      @import url("https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700;800&display=swap");
+      
+      body {
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      }
+    </style>
+
+    <!-- Global styles -->
+    <link rel="stylesheet" href="/css/global.css" />
+    <!-- Landing page styles (includes navbar) -->
+    <link rel="stylesheet" href="/css/styles-landing.css" />
+    <!-- Process page styles -->
+    <link rel="stylesheet" href="/css/process.css" />
+  </head>
+  <body style="background: var(--bg-primary); color: var(--text-primary); min-height: 100vh;">
+    <!-- Navbar placeholder -->
+    <div id="navbar-placeholder"></div>
+
+    <main style="padding-top: 6rem; padding-bottom: 4rem; padding-left: 1.5rem; padding-right: 1.5rem;">
+      <div class="container" style="max-width: 1200px; margin: 0 auto;">
+        <!-- Back link -->
+        <div class="mb-8">
+          <a
+            href="/"
+            id="backBtn"
+            aria-label="Voltar para início"
+            class="process-back-btn"
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M19 12H5M12 19l-7-7 7-7"/>
+            </svg>
+            Voltar
+          </a>
+        </div>
+
+        <!-- Error Message (top) -->
+        <div
+          id="errorMsg"
+          class="process-alert hidden"
+          role="alert"
+          aria-live="polite"
+        ></div>
+
+        <!-- Innovative Layout: Vinyl + Info Side by Side on Desktop -->
+        <div class="process-container">
+          <!-- Vinyl Disc with Spinning Animation -->
+          <div class="vinyl-section">
+            <div class="vinyl-wrapper">
+              <div class="vinyl-disc">
+                <img
+                  id="thumbnail"
+                  alt="Capa do áudio"
+                  class="vinyl-cover loading-placeholder"
+                  loading="lazy"
+                />
+                <div class="vinyl-center"></div>
+                <div class="vinyl-shine"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Music Info & Player Section -->
+          <div class="info-section">
+            <div class="music-header">
+              <h1 id="title" class="music-title">Processando seu áudio...</h1>
+              <div class="status-badge">
+                <span class="status-dot"></span>
+                <span id="statusText" class="status-text">Aguardando...</span>
+              </div>
+            </div>
+
+            <!-- Progress Bar with Percentage -->
+            <div class="progress-wrapper">
+              <div class="progress-bar">
+                <div id="barInner" class="progress-fill"></div>
+              </div>
+              <div class="progress-info">
+                <span class="progress-label">Progresso</span>
+                <span id="progressPercent" class="progress-percent">0%</span>
+              </div>
+            </div>
+
+            <!-- Audio Player (Modern Custom Design) -->
+            <div class="player-container">
+              <audio
+                id="audioPreview"
+                aria-label="Pré-visualização de áudio"
+              ></audio>
+              <div class="custom-player">
+                <button class="play-btn" id="playBtn" aria-label="Play/Pause">
+                  <svg class="play-icon" width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M8 5v14l11-7z"/>
+                  </svg>
+                  <svg class="pause-icon hidden" width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z"/>
+                  </svg>
+                </button>
+                <div class="player-timeline">
+                  <span class="time-current" id="currentTime">0:00</span>
+                  <div class="player-progress">
+                    <div class="player-progress-bar" id="playerProgressBar"></div>
+                  </div>
+                  <span class="time-duration" id="duration">0:00</span>
+                </div>
+                <button class="volume-btn" id="volumeBtn" aria-label="Volume">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M11 5L6 9H2v6h4l5 4V5zM19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/>
+                  </svg>
+                </button>
+              </div>
+            </div>
+
+            <!-- Download Button -->
+            <a
+              id="downloadLink"
+              class="download-btn hidden"
+              download
+              aria-label="Download do áudio processado"
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/>
+              </svg>
+              Baixar Áudio
+            </a>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <script type="module" src="/js/navbar.js"></script>
+    <script type="module" src="/js/navbar-auth.js"></script>
+    <script src="/js/process.js"></script>
+  </body>
+</html>
