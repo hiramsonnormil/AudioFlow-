@@ -53,7 +53,7 @@ if (!jobId) {
 window.addEventListener("beforeunload", () => {
   if (pollId) clearInterval(pollId);
   if (expirationCountdownInterval) clearInterval(expirationCountdownInterval);
-  
+
   // Limpar blob URLs para liberar memória
   if (audioPreview.src && audioPreview.src.startsWith('blob:')) {
     URL.revokeObjectURL(audioPreview.src);
@@ -86,13 +86,13 @@ function startPoll(id) {
     try {
       // Obter token do localStorage
       const token = localStorage.getItem('phona:token');
-      
+
       const statusUrl = `/status/${id}`;
       const headers = {};
       if (token) {
         headers['Authorization'] = `Bearer ${token}`;
       }
-      
+
       const r = await fetch(statusUrl, { headers });
       if (!r.ok) {
         if (r.status === 401) {
@@ -172,7 +172,7 @@ function startPoll(id) {
 
         // Carregar áudio com autenticação via fetch e criar blob URL
         loadAudioWithAuth(id, downloadName, j.expiresIn, j.isExpired);
-        
+
         // Iniciar countdown de expiração se houver tempo restante
         if (j.expiresIn !== undefined) {
           startExpirationCountdown(j.expiresIn, j.isExpired);
@@ -208,18 +208,18 @@ function generateDownloadFilename(title, preset) {
       .toLowerCase()
       .substring(0, 50) // Limita tamanho
       .trim();
-    
+
     if (!musicName || musicName === '') {
       musicName = 'audio';
     }
   }
-  
+
   // Preset aplicado
   const presetFormatted = (preset || 'custom').toLowerCase().replace(/\s+/g, '-');
-  
+
   // Data do processamento (formato: YYYYMMDD)
   const processDate = new Date().toISOString().split('T')[0].replace(/-/g, '');
-  
+
   return `${musicName}-${presetFormatted}-${processDate}.mp3`;
 }
 
@@ -227,39 +227,39 @@ function startExpirationCountdown(expiresInMs, isExpired) {
   if (expirationCountdownInterval) {
     clearInterval(expirationCountdownInterval);
   }
-  
+
   if (isExpired) {
     handleExpiration();
     return;
   }
-  
+
   let remainingMs = expiresInMs;
-  
+
   expirationCountdownInterval = setInterval(() => {
     remainingMs -= 1000;
-    
+
     if (remainingMs <= 0) {
       clearInterval(expirationCountdownInterval);
       handleExpiration();
       return;
     }
-    
+
     // Atualizar visual do tempo restante (opcional - pode adicionar elemento para mostrar)
     updateExpirationDisplay(remainingMs);
   }, 1000);
-  
+
   // Atualizar inicialmente
   updateExpirationDisplay(remainingMs);
 }
 
 function formatTimeRemaining(ms) {
   if (ms <= 0) return 'Expirado';
-  
+
   const totalSeconds = Math.floor(ms / 1000);
   const hours = Math.floor(totalSeconds / 3600);
   const minutes = Math.floor((totalSeconds % 3600) / 60);
   const seconds = totalSeconds % 60;
-  
+
   if (hours > 0) {
     return `${hours}h ${minutes}m ${seconds}s`;
   } else if (minutes > 0) {
@@ -276,19 +276,19 @@ function updateExpirationDisplay(remainingMs) {
     expirationWarning = document.createElement('div');
     expirationWarning.id = 'expiration-warning';
     expirationWarning.className = 'expiration-warning';
-    
+
     const infoSection = document.querySelector('.info-section');
     if (infoSection) {
       infoSection.insertBefore(expirationWarning, infoSection.firstChild.nextSibling);
     }
   }
-  
+
   if (expirationWarning) {
     const timeStr = formatTimeRemaining(remainingMs);
     const isWarning = remainingMs < 20 * 60 * 1000; // menos de 20 min
     const isDanger = remainingMs < 5 * 60 * 1000; // menos de 5 min
-    
-    expirationWarning.className = 'expiration-warning' + 
+
+    expirationWarning.className = 'expiration-warning' +
       (isDanger ? ' danger' : isWarning ? ' warning' : '');
     expirationWarning.innerHTML = `
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -310,20 +310,20 @@ function handleExpiration() {
     downloadLink.style.opacity = '0.5';
     downloadLink.textContent = '⏰ Download Expirado';
   }
-  
+
   // Mostrar aviso de expiração
   let expirationWarning = document.getElementById('expiration-warning');
   if (!expirationWarning) {
     expirationWarning = document.createElement('div');
     expirationWarning.id = 'expiration-warning';
     expirationWarning.className = 'expiration-warning expired-alert';
-    
+
     const infoSection = document.querySelector('.info-section');
     if (infoSection) {
       infoSection.insertBefore(expirationWarning, infoSection.firstChild.nextSibling);
     }
   }
-  
+
   expirationWarning.className = 'expiration-warning expired-alert';
   expirationWarning.innerHTML = `
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -333,13 +333,13 @@ function handleExpiration() {
     </svg>
     <span><strong>⚠️ Download Expirado</strong> - O arquivo não está mais disponível</span>
   `;
-  
+
   // Atualizar status
   const statusText = document.getElementById('statusText');
   if (statusText) {
     statusText.textContent = 'Expirado';
   }
-  
+
   // Pausar áudio se estiver tocando
   const audioPreview = document.getElementById('audioPreview');
   if (audioPreview) {
@@ -351,56 +351,56 @@ async function loadAudioWithAuth(jobId, downloadName, expiresInMs, isExpired) {
   try {
     const token = localStorage.getItem('phona:token');
     const audioUrl = `/file/${jobId}`;
-    
+
     console.log("Fetching audio from:", audioUrl);
-    
+
     // Fetch com autenticação
     const response = await fetch(audioUrl, {
       headers: {
         'Authorization': `Bearer ${token}`
       }
     });
-    
+
     if (!response.ok) {
       throw new Error(`HTTP ${response.status}`);
     }
-    
+
     console.log("Audio fetched successfully, creating blob...");
-    
+
     // Criar blob do áudio
     const blob = await response.blob();
     const blobUrl = URL.createObjectURL(blob);
-    
+
     console.log("Blob URL created:", blobUrl);
-    
+
     // Limpar áudio anterior e suas URLs
     if (audioPreview.src && audioPreview.src.startsWith('blob:')) {
       URL.revokeObjectURL(audioPreview.src);
     }
-    
+
     audioPreview.pause();
     audioPreview.src = "";
     audioPreview.load();
-    
+
     // Configurar novo áudio
     setTimeout(() => {
       audioPreview.src = blobUrl;
       audioPreview.load();
-      
+
       audioPreview.oncanplay = () => {
         console.log("Audio ready to play");
       };
-      
+
       audioPreview.onerror = (e) => {
         console.error("Audio error:", e);
         showError("Erro ao reproduzir áudio.");
       };
-      
+
       audioPreview.onloadeddata = () => {
         console.log("Audio data loaded successfully");
       };
     }, 100);
-    
+
     // Configurar botão de download (só se não estiver expirado)
     if (!isExpired && expiresInMs > 0) {
       downloadLink.href = blobUrl;
@@ -421,9 +421,9 @@ async function loadAudioWithAuth(jobId, downloadName, expiresInMs, isExpired) {
     } else {
       handleExpiration();
     }
-    
+
     console.log("Audio and download configured");
-    
+
   } catch (err) {
     console.error("Error loading audio:", err);
     showError("Erro ao carregar áudio: " + err.message);
