@@ -699,6 +699,134 @@ document.addEventListener("DOMContentLoaded", () => {
     document.body.style.transition = "opacity 0.4s ease";
     document.body.style.opacity = "1";
   });
+
+  // Setup mobile menu
+  setupMobileMenu();
 });
+
+// Mobile Menu Setup
+function setupMobileMenu() {
+  const hamburgerBtn = document.getElementById('hamburgerBtn');
+  const mobileMenu = document.getElementById('mobileMenu');
+  const mobileMenuOverlay = document.getElementById('mobileMenuOverlay');
+  const mobileNavLinks = document.querySelectorAll('.mobile-nav-link');
+
+  if (!hamburgerBtn || !mobileMenu || !mobileMenuOverlay) return;
+
+  // Update mobile menu auth state
+  updateMobileMenuAuth();
+
+  // Toggle menu function
+  function toggleMobileMenu() {
+    const isActive = mobileMenu.classList.contains('active');
+
+    if (isActive) {
+      closeMobileMenu();
+    } else {
+      openMobileMenu();
+    }
+  }
+
+  function openMobileMenu() {
+    hamburgerBtn.classList.add('active');
+    mobileMenu.classList.add('active');
+    mobileMenuOverlay.classList.add('active');
+    hamburgerBtn.setAttribute('aria-expanded', 'true');
+    document.body.style.overflow = 'hidden'; // Prevent body scroll
+  }
+
+  function closeMobileMenu() {
+    hamburgerBtn.classList.remove('active');
+    mobileMenu.classList.remove('active');
+    mobileMenuOverlay.classList.remove('active');
+    hamburgerBtn.setAttribute('aria-expanded', 'false');
+    document.body.style.overflow = ''; // Restore body scroll
+  }
+
+  // Hamburger button click
+  hamburgerBtn.addEventListener('click', toggleMobileMenu);
+
+  // Overlay click to close
+  mobileMenuOverlay.addEventListener('click', closeMobileMenu);
+
+  // Close menu when clicking on a link
+  mobileNavLinks.forEach(link => {
+    link.addEventListener('click', () => {
+      closeMobileMenu();
+    });
+  });
+
+  // Close menu on ESC key
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && mobileMenu.classList.contains('active')) {
+      closeMobileMenu();
+    }
+  });
+
+  // Close menu on window resize to desktop size
+  window.addEventListener('resize', () => {
+    if (window.innerWidth > 768 && mobileMenu.classList.contains('active')) {
+      closeMobileMenu();
+    }
+  });
+}
+
+// Update mobile menu authentication state
+function updateMobileMenuAuth() {
+  // Check if user is authenticated (check localStorage)
+  const token = localStorage.getItem('phona:token');
+  const user = localStorage.getItem('phona:user');
+
+  const mobileLoginBtn = document.getElementById('mobile-openLoginBtn');
+  const mobileSignupBtn = document.getElementById('mobile-openSignupBtn');
+  const mobileMenuNav = document.querySelector('.mobile-menu-nav');
+
+  if (!mobileMenuNav) return;
+
+  if (token && user) {
+    // User is logged in
+    const userData = JSON.parse(user);
+    const userName = userData?.username || userData?.email?.split('@')[0] || 'Usuário';
+
+    // Hide login/signup buttons
+    if (mobileLoginBtn) mobileLoginBtn.style.display = 'none';
+    if (mobileSignupBtn) mobileSignupBtn.style.display = 'none';
+
+    // Add user info and logout button if not already present
+    let userSection = mobileMenuNav.querySelector('.mobile-user-section');
+    if (!userSection) {
+      userSection = document.createElement('div');
+      userSection.className = 'mobile-user-section';
+      userSection.innerHTML = `
+        <div class="mobile-user-info">
+          <span class="mobile-user-initial">${userName.charAt(0).toUpperCase()}</span>
+          <span class="mobile-user-label">${userName}</span>
+        </div>
+        <button class="mobile-nav-link mobile-logout-btn" id="mobile-logoutBtn">Sair</button>
+      `;
+      mobileMenuNav.appendChild(userSection);
+
+      // Add logout handler
+      const logoutBtn = document.getElementById('mobile-logoutBtn');
+      if (logoutBtn) {
+        logoutBtn.addEventListener('click', () => {
+          localStorage.removeItem('phona:token');
+          localStorage.removeItem('phona:user');
+          window.location.reload();
+        });
+      }
+    }
+  } else {
+    // User is not logged in
+    if (mobileLoginBtn) mobileLoginBtn.style.display = 'flex';
+    if (mobileSignupBtn) mobileSignupBtn.style.display = 'flex';
+
+    // Remove user section if exists
+    const userSection = mobileMenuNav.querySelector('.mobile-user-section');
+    if (userSection) {
+      userSection.remove();
+    }
+  }
+}
 
 console.log("🎵 phona Landing - Initialized (Otimizado)");
