@@ -2,6 +2,8 @@
    PHONA LANDING ANIMATIONS
    ========================================== */
 
+import { confirmLogout } from './confirm-modal.js';
+
 // Smooth scroll
 function scrollToSection(id) {
   const element = document.getElementById(id);
@@ -17,7 +19,11 @@ function scrollToProcessor() {
   }
 }
 
-// Sticky CTA visibility (otimizado com throttle)
+// Exportar funções para uso global no HTML
+window.scrollToSection = scrollToSection;
+window.scrollToProcessor = scrollToProcessor;
+
+// Sticky CTA visibility on scroll (otimizado com throttle)
 const stickyCta = document.querySelector(".sticky-cta");
 const processorSection = document.getElementById("processor");
 
@@ -420,37 +426,12 @@ examplePlays.forEach((btn) => {
                         <svg viewBox="0 0 24 24" fill="currentColor">
                             <path d="M8 5v14l11-7z"/>
                         </svg>
-                    `;
+            `;
         }
       });
     }
   });
 });
-
-// Load presets dynamically
-async function loadPresets() {
-  try {
-    const response = await fetch("/api/presets");
-    const presets = await response.json();
-
-    const select = document.getElementById("presetSelect");
-    if (select) {
-      select.innerHTML = '<option value="">Selecione um preset</option>';
-      presets.forEach((preset) => {
-        const option = document.createElement("option");
-        option.value = preset.name;
-        option.textContent = preset.name.toUpperCase();
-        select.appendChild(option);
-      });
-    }
-  } catch (error) {
-    console.error("Error loading presets:", error);
-    const select = document.getElementById("presetSelect");
-    if (select) {
-      select.innerHTML = '<option value="">Erro ao carregar presets</option>';
-    }
-  }
-}
 
 // Load presets function
 async function loadPresets() {
@@ -476,7 +457,7 @@ async function loadPresets() {
     presets.forEach((preset) => {
       const option = document.createElement("option");
       option.value = preset.id;
-      option.textContent = `${preset.name} - ${preset.description}`;
+      option.textContent = `${preset.name} - ${preset.description} `;
       option.dataset.icon = preset.icon;
       presetSelect.appendChild(option);
     });
@@ -544,7 +525,7 @@ function createCustomSelect(nativeSelect, presets) {
 
     const optionText = document.createElement("span");
     optionText.className = "custom-select-option-text";
-    optionText.textContent = `${preset.name} - ${preset.description}`;
+    optionText.textContent = `${preset.name} - ${preset.description} `;
 
     option.appendChild(optionIcon);
     option.appendChild(optionText);
@@ -605,7 +586,7 @@ function selectOption(
   // Update trigger
   if (preset) {
     iconSpan.innerHTML = preset.icon;
-    textSpan.textContent = `${preset.name} - ${preset.description}`;
+    textSpan.textContent = `${preset.name} - ${preset.description} `;
     nativeSelect.value = preset.id;
   } else {
     iconSpan.innerHTML = "";
@@ -626,16 +607,16 @@ function transitionToProcessPage(jobId) {
   const loadingScreen = document.createElement("div");
   loadingScreen.className = "transition-loading";
   loadingScreen.innerHTML = `
-    <div class="vinyl"></div>
-    <div class="loading-text">
-      Carregando<span class="loading-dots"></span>
-    </div>
-  `;
+            < div class="vinyl" ></div >
+              <div class="loading-text">
+                Carregando<span class="loading-dots"></span>
+              </div>
+          `;
   document.body.appendChild(loadingScreen);
 
   // Aguardar um pouco e então navegar
   setTimeout(() => {
-    window.location.href = `/process?id=${jobId}`;
+    window.location.href = `/ process ? id = ${jobId} `;
   }, 800);
 }
 
@@ -689,7 +670,7 @@ if (processBtn) {
 }
 
 // Initialize
-document.addEventListener("DOMContentLoaded", () => {
+function init() {
   loadPresets();
 
   // Add smooth reveal on page load (otimizado)
@@ -702,7 +683,15 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Setup mobile menu
   setupMobileMenu();
-});
+}
+
+// Run init when DOM is ready (handles both cases: before and after DOMContentLoaded)
+if (document.readyState === 'loading') {
+  document.addEventListener("DOMContentLoaded", init);
+} else {
+  // DOM already loaded, run init immediately
+  init();
+}
 
 // Mobile Menu Setup
 function setupMobileMenu() {
@@ -806,10 +795,17 @@ function updateMobileMenuAuth() {
       `;
       mobileMenuNav.appendChild(userSection);
 
+
+
+
       // Add logout handler
       const logoutBtn = document.getElementById('mobile-logoutBtn');
       if (logoutBtn) {
-        logoutBtn.addEventListener('click', () => {
+        logoutBtn.addEventListener('click', async () => {
+          // Mostrar modal de confirmação bonito
+          const confirmed = await confirmLogout();
+          if (!confirmed) return;
+
           localStorage.removeItem('phona:token');
           localStorage.removeItem('phona:user');
           window.location.reload();
