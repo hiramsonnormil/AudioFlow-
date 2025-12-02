@@ -144,13 +144,14 @@ function extractVideoId(url) {
   return null;
 }
 
-// Função para validar URL do YouTube
+// Função para validar URL do YouTube e YouTube Music
 function isValidYouTubeUrl(url) {
   try {
     const urlObj = new URL(url);
     return (
       urlObj.hostname.includes("youtube.com") ||
-      urlObj.hostname.includes("youtu.be")
+      urlObj.hostname.includes("youtu.be") ||
+      urlObj.hostname.includes("music.youtube.com")
     );
   } catch (e) {
     return false;
@@ -228,7 +229,7 @@ if (urlEl) {
 
   if (youtubeUrlInput && processBtn) {
     console.log("✅ Attaching hover event to processBtn");
-    
+
     const prefetchFromMainForm = () => {
       console.log("🎯 Prefetch triggered!");
       const url = youtubeUrlInput.value?.trim();
@@ -286,10 +287,10 @@ if (urlEl) {
       img.onerror = () => {
         console.log("⚠️ maxresdefault failed, trying hqdefault");
         const fallbackUrl = `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`;
-        
+
         // Atualizar com fallback se falhar
         sessionStorage.setItem("prefetchedThumbUrl", fallbackUrl);
-        
+
         const imgFallback = new Image();
         imgFallback.onload = () => {
           console.log("✅ Landing page fallback thumbnail prefetched");
