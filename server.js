@@ -49,10 +49,6 @@ app.get("/process.html", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "html", "process.html"));
 });
 
-// Dashboard
-app.get("/dashboard", (req, res) => {
-  res.sendFile(path.join(__dirname, "public", "html", "dashboard.html"));
-});
 
 // Página de processamento em lote
 app.get("/batch", (req, res) => {
@@ -65,9 +61,6 @@ app.get("/index.html", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "html", "index.html"));
 });
 
-app.get("/dashboard.html", (req, res) => {
-  res.sendFile(path.join(__dirname, "public", "html", "dashboard.html"));
-});
 
 app.get("/batch.html", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "html", "batch.html"));
