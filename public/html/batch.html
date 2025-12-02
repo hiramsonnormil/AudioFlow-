@@ -1,408 +1,366 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#0A0A0A" />
-    <meta
-      name="description"
-      content="Processamento em massa de links YouTube • phona"
-    />
-    <title>phona • Processamento em Massa</title>
-    <link rel="icon" href="/assets/icons/favicon.svg" type="image/svg+xml" />
 
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-      tailwind.config = {
-        theme: {
-          extend: {
-            colors: {
-              primary: "#7B61FF",
-              secondary: "#00E0FF",
-              dark: "#0A0A0A",
-              "dark-lighter": "#141414",
-              "dark-card": "#1A1A1A",
-              "gray-text": "#A0A0A0",
-            },
-            borderRadius: { xl: "20px", "2xl": "30px" },
-            fontFamily: {
-              sans: ["Inter", "system-ui", "sans-serif"],
-              display: ["Satoshi", "Inter", "sans-serif"],
-            },
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#0A0A0A" />
+  <meta name="description" content="Processamento em massa de links YouTube • phona" />
+  <title>phona • Processamento em Massa</title>
+  <link rel="icon" href="/assets/icons/favicon.svg" type="image/svg+xml" />
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: "#7B61FF",
+            secondary: "#00E0FF",
+            dark: "#0A0A0A",
+            "dark-lighter": "#141414",
+            "dark-card": "#1A1A1A",
+            "gray-text": "#A0A0A0",
+          },
+          borderRadius: { xl: "20px", "2xl": "30px" },
+          fontFamily: {
+            sans: ["Inter", "system-ui", "sans-serif"],
+            display: ["Satoshi", "Inter", "sans-serif"],
           },
         },
-      };
-    </script>
-    <style>
-      @import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap");
-      @import url("https://api.fontshare.com/v2/css?f[]=satoshi@700,500,400&display=swap");
+      },
+    };
+  </script>
+  <style>
+    @import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap");
+    @import url("https://api.fontshare.com/v2/css?f[]=satoshi@700,500,400&display=swap");
 
-      body {
-        background: #0a0a0a;
-        color: #e5e5e5;
-      }
-      .glass-card {
-        background: rgba(26, 26, 26, 0.6);
-        backdrop-filter: blur(20px);
-        border: 1px solid rgba(255, 255, 255, 0.06);
-      }
-      .glass-hover {
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-      }
-      .glass-hover:hover {
-        background: rgba(26, 26, 26, 0.8);
-        border-color: rgba(123, 97, 255, 0.3);
-        transform: translateY(-2px);
-      }
-      .btn-primary {
-        background: linear-gradient(135deg, #7b61ff 0%, #9d7fff 100%);
-        box-shadow: 0 4px 24px rgba(123, 97, 255, 0.3);
-        transition: all 0.3s ease;
-      }
-      .btn-primary:hover {
-        box-shadow: 0 8px 32px rgba(123, 97, 255, 0.5);
-        transform: translateY(-1px);
-      }
-      .btn-secondary {
-        background: rgba(26, 26, 26, 0.8);
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        transition: all 0.3s ease;
-      }
-      .btn-secondary:hover {
-        background: rgba(36, 36, 36, 0.9);
-        border-color: rgba(255, 255, 255, 0.2);
-      }
-      input,
-      select,
-      textarea {
-        background: rgba(26, 26, 26, 0.8);
-        border: 1px solid rgba(255, 255, 255, 0.08);
-        transition: all 0.3s ease;
-      }
-      input:focus,
-      select:focus,
-      textarea:focus {
-        background: rgba(26, 26, 26, 1);
-        border-color: rgba(123, 97, 255, 0.5);
-        outline: none;
-        box-shadow: 0 0 0 3px rgba(123, 97, 255, 0.1);
-      }
+    body {
+      background: #0a0a0a;
+      color: #e5e5e5;
+    }
 
-      /* Styles for job cards created by batch.js */
-      .jobs-queue {
-        display: grid;
-        gap: 12px;
-      }
-      .job-card {
-        padding: 14px;
-        border-radius: 16px;
-        border: 1px solid rgba(255, 255, 255, 0.08);
-        background: rgba(26, 26, 26, 0.7);
-      }
-      .job-card.processing {
-        box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.03);
-        border-left: 4px solid #f5c84b;
-      }
-      .job-card.done {
-        border-left: 4px solid #22c55e;
-      }
-      .job-card.error {
-        border-left: 4px solid #ef4444;
-      }
-      .job-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: flex-start;
-        margin-bottom: 8px;
-      }
-      .job-title {
-        font-weight: 600;
-        margin: 0;
-        font-size: 0.95rem;
-      }
-      .job-status {
-        font-size: 0.75rem;
-        padding: 4px 8px;
-        border-radius: 999px;
-        background: rgba(123, 97, 255, 0.15);
-        border: 1px solid rgba(255, 255, 255, 0.08);
-      }
-      .job-status.processing {
-        background: rgba(245, 200, 75, 0.12);
-        border-color: rgba(245, 200, 75, 0.35);
-        color: #f5d36b;
-      }
-      .job-status.done {
-        background: rgba(34, 197, 94, 0.12);
-        border-color: rgba(34, 197, 94, 0.35);
-        color: #86efac;
-      }
-      .job-status.error {
-        background: rgba(239, 68, 68, 0.12);
-        border-color: rgba(239, 68, 68, 0.35);
-        color: #fda4af;
-      }
-      .job-progress {
-        width: 100%;
-        height: 8px;
-        background: rgba(255, 255, 255, 0.06);
-        border-radius: 9999px;
-        overflow: hidden;
-        margin-bottom: 8px;
-      }
-      .job-progress-bar {
-        height: 100%;
-        background: linear-gradient(90deg, #7b61ff, #00e0ff);
-        width: 0%;
-        transition: width 0.3s ease;
-      }
-      .job-info {
-        font-size: 0.85rem;
-        color: #a0a0a0;
-        display: flex;
-        gap: 12px;
-        flex-wrap: wrap;
-      }
-      .job-footer {
-        margin-top: 8px;
-        display: flex;
-        gap: 8px;
-      }
-      .job-footer button {
-        padding: 8px 12px;
-        font-size: 0.85rem;
-        border-radius: 12px;
-        background: rgba(26, 26, 26, 0.8);
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        color: #e5e5e5;
-      }
-      .job-footer button:hover {
-        background: rgba(36, 36, 36, 0.9);
-        border-color: rgba(255, 255, 255, 0.2);
-      }
-      .empty-state {
-        text-align: center;
-        padding: 32px 12px;
-        color: #8a8a8a;
-        border: 1px dashed rgba(255, 255, 255, 0.08);
-        border-radius: 16px;
-      }
-      .empty-state-icon {
-        font-size: 2rem;
-        margin-bottom: 8px;
-      }
-    </style>
-  </head>
-  <body class="min-h-screen">
-    <!-- Header: Tailwind Audyn -->
-    <nav
-      class="fixed top-0 left-0 right-0 z-50 glass-card border-b border-white/5"
-    >
-      <div class="max-w-7xl mx-auto px-6 lg:px-8">
-        <div class="flex justify-between items-center h-16">
-          <a href="/" class="flex items-center gap-3 group">
-            <div
-              class="w-12 h-12 flex items-center justify-center rounded-2xl bg-primary/10 border border-primary/20"
-            >
-              <svg
-                class="w-5 h-5 text-primary"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"
-                />
-              </svg>
-            </div>
-            <span class="text-xl font-semibold tracking-tight">phona</span>
-          </a>
-          <div class="hidden md:flex items-center gap-8">
-            <a
-              href="/"
-              class="text-sm text-gray-text hover:text-white transition-colors"
-              >Início</a
-            >
-            <a
-              href="/#pricing"
-              class="text-sm text-gray-text hover:text-white transition-colors"
-              >Preços</a
-            >
-            <a
-              href="/#how-it-works"
-              class="text-sm text-gray-text hover:text-white transition-colors"
-              >Como funciona</a
-            >
+    .glass-card {
+      background: rgba(26, 26, 26, 0.6);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .glass-hover {
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .glass-hover:hover {
+      background: rgba(26, 26, 26, 0.8);
+      border-color: rgba(123, 97, 255, 0.3);
+      transform: translateY(-2px);
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #7b61ff 0%, #9d7fff 100%);
+      box-shadow: 0 4px 24px rgba(123, 97, 255, 0.3);
+      transition: all 0.3s ease;
+    }
+
+    .btn-primary:hover {
+      box-shadow: 0 8px 32px rgba(123, 97, 255, 0.5);
+      transform: translateY(-1px);
+    }
+
+    .btn-secondary {
+      background: rgba(26, 26, 26, 0.8);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      transition: all 0.3s ease;
+    }
+
+    .btn-secondary:hover {
+      background: rgba(36, 36, 36, 0.9);
+      border-color: rgba(255, 255, 255, 0.2);
+    }
+
+    input,
+    select,
+    textarea {
+      background: rgba(26, 26, 26, 0.8);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      transition: all 0.3s ease;
+    }
+
+    input:focus,
+    select:focus,
+    textarea:focus {
+      background: rgba(26, 26, 26, 1);
+      border-color: rgba(123, 97, 255, 0.5);
+      outline: none;
+      box-shadow: 0 0 0 3px rgba(123, 97, 255, 0.1);
+    }
+
+    /* Styles for job cards created by batch.js */
+    .jobs-queue {
+      display: grid;
+      gap: 12px;
+    }
+
+    .job-card {
+      padding: 14px;
+      border-radius: 16px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      background: rgba(26, 26, 26, 0.7);
+    }
+
+    .job-card.processing {
+      box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.03);
+      border-left: 4px solid #f5c84b;
+    }
+
+    .job-card.done {
+      border-left: 4px solid #22c55e;
+    }
+
+    .job-card.error {
+      border-left: 4px solid #ef4444;
+    }
+
+    .job-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 8px;
+    }
+
+    .job-title {
+      font-weight: 600;
+      margin: 0;
+      font-size: 0.95rem;
+    }
+
+    .job-status {
+      font-size: 0.75rem;
+      padding: 4px 8px;
+      border-radius: 999px;
+      background: rgba(123, 97, 255, 0.15);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .job-status.processing {
+      background: rgba(245, 200, 75, 0.12);
+      border-color: rgba(245, 200, 75, 0.35);
+      color: #f5d36b;
+    }
+
+    .job-status.done {
+      background: rgba(34, 197, 94, 0.12);
+      border-color: rgba(34, 197, 94, 0.35);
+      color: #86efac;
+    }
+
+    .job-status.error {
+      background: rgba(239, 68, 68, 0.12);
+      border-color: rgba(239, 68, 68, 0.35);
+      color: #fda4af;
+    }
+
+    .job-progress {
+      width: 100%;
+      height: 8px;
+      background: rgba(255, 255, 255, 0.06);
+      border-radius: 9999px;
+      overflow: hidden;
+      margin-bottom: 8px;
+    }
+
+    .job-progress-bar {
+      height: 100%;
+      background: linear-gradient(90deg, #7b61ff, #00e0ff);
+      width: 0%;
+      transition: width 0.3s ease;
+    }
+
+    .job-info {
+      font-size: 0.85rem;
+      color: #a0a0a0;
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .job-footer {
+      margin-top: 8px;
+      display: flex;
+      gap: 8px;
+    }
+
+    .job-footer button {
+      padding: 8px 12px;
+      font-size: 0.85rem;
+      border-radius: 12px;
+      background: rgba(26, 26, 26, 0.8);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: #e5e5e5;
+    }
+
+    .job-footer button:hover {
+      background: rgba(36, 36, 36, 0.9);
+      border-color: rgba(255, 255, 255, 0.2);
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 32px 12px;
+      color: #8a8a8a;
+      border: 1px dashed rgba(255, 255, 255, 0.08);
+      border-radius: 16px;
+    }
+
+    .empty-state-icon {
+      font-size: 2rem;
+      margin-bottom: 8px;
+    }
+  </style>
+</head>
+
+<body class="min-h-screen">
+  <!-- Header: Tailwind Audyn -->
+  <nav class="fixed top-0 left-0 right-0 z-50 glass-card border-b border-white/5">
+    <div class="max-w-7xl mx-auto px-6 lg:px-8">
+      <div class="flex justify-between items-center h-16">
+        <a href="/" class="flex items-center gap-3 group">
+          <div class="w-12 h-12 flex items-center justify-center rounded-2xl bg-primary/10 border border-primary/20">
+            <svg class="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
+            </svg>
           </div>
+          <span class="text-xl font-semibold tracking-tight">phona</span>
+        </a>
+        <div class="hidden md:flex items-center gap-8">
+          <a href="/" class="text-sm text-gray-text hover:text-white transition-colors">Início</a>
+          <a href="/#pricing" class="text-sm text-gray-text hover:text-white transition-colors">Preços</a>
+          <a href="/#how-it-works" class="text-sm text-gray-text hover:text-white transition-colors">Como funciona</a>
         </div>
       </div>
-    </nav>
+    </div>
+  </nav>
 
-    <main class="pt-24 pb-16 px-6">
-      <div class="max-w-7xl mx-auto">
-        <!-- Heading -->
-        <div class="mb-8">
-          <a
-            href="/"
-            class="inline-flex items-center gap-2 text-gray-text hover:text-white transition-colors"
-          >
-            ← Voltar
-          </a>
-          <h1 class="mt-4 text-3xl md:text-5xl font-bold tracking-tight">
-            Processamento em massa
-          </h1>
-          <p class="text-gray-text mt-2">
-            Adicione até 10 links do YouTube e processe tudo em paralelo com
-            fila inteligente.
-          </p>
-        </div>
+  <main class="pt-24 pb-16 px-6">
+    <div class="max-w-7xl mx-auto">
+      <!-- Heading -->
+      <div class="mb-8">
+        <a href="/" class="inline-flex items-center gap-2 text-gray-text hover:text-white transition-colors">
+          ← Voltar
+        </a>
+        <h1 class="mt-4 text-3xl md:text-5xl font-bold tracking-tight">
+          Processamento em massa
+        </h1>
+        <p class="text-gray-text mt-2">
+          Adicione até 10 links do YouTube e processe tudo em paralelo com
+          fila inteligente.
+        </p>
+      </div>
 
-        <!-- Grid -->
-        <div class="grid md:grid-cols-2 gap-6">
-          <!-- Left: Form card -->
-          <div class="glass-card rounded-2xl p-6 md:p-8">
-            <div class="grid gap-5">
-              <div>
-                <label
-                  for="batchPreset"
-                  class="block text-sm text-gray-text mb-2"
-                  >Efeito (Preset)</label
-                >
-                <select id="batchPreset" class="w-full px-4 py-3 rounded-xl">
-                  <option value="SLOWED">Slowed (0.88×)</option>
-                  <option value="SPEED_125">Speed Up (1.25×)</option>
-                  <option value="ULTRA_SLOWED">
-                    Ultra Slowed (10% + reverb)
-                  </option>
-                  <option value="MUFFLED_SLOWED">
-                    Muffled Slowed (80% + LP 300Hz)
-                  </option>
-                  <option value="MUFFLED_SPEED">
-                    Muffled Speed (125% + LP 500Hz)
-                  </option>
-                  <option value="DAYCORE">Daycore (80% + pitch ↓)</option>
-                  <option value="NIGHTCORE">Nightcore (135% + pitch ↑)</option>
-                  <option value="8D">8D (reverb + panorama)</option>
-                </select>
+      <!-- Grid -->
+      <div class="grid md:grid-cols-2 gap-6">
+        <!-- Left: Form card -->
+        <div class="glass-card rounded-2xl p-6 md:p-8">
+          <div class="grid gap-5">
+            <div>
+              <label for="batchPreset" class="block text-sm text-gray-text mb-2">Efeito (Preset)</label>
+              <select id="batchPreset" class="w-full px-4 py-3 rounded-xl">
+                <option value="SLOWED">Slowed (0.88×)</option>
+                <option value="SPEED_125">Speed Up (1.25×)</option>
+                <option value="ULTRA_SLOWED">
+                  Ultra Slowed (10% + reverb)
+                </option>
+                <option value="MUFFLED_SLOWED">
+                  Muffled Slowed (80% + LP 300Hz)
+                </option>
+                <option value="MUFFLED_SPEED">
+                  Muffled Speed (125% + LP 500Hz)
+                </option>
+                <option value="DAYCORE">Daycore (80% + pitch ↓)</option>
+                <option value="NIGHTCORE">Nightcore (135% + pitch ↑)</option>
+                <option value="8D">8D (reverb + panorama)</option>
+              </select>
+            </div>
+
+            <div>
+              <label for="batchUrl" class="block text-sm text-gray-text mb-2">YouTube URL</label>
+              <div class="flex gap-2">
+                <input id="batchUrl" class="flex-1 px-4 py-3 rounded-xl" type="url" placeholder="https://youtu.be/..."
+                  aria-label="URL do vídeo YouTube" />
+                <button id="addUrlBtn" type="button" class="btn-primary px-5 py-3 rounded-xl font-semibold text-white">
+                  Adicionar
+                </button>
               </div>
-
-              <div>
-                <label for="batchUrl" class="block text-sm text-gray-text mb-2"
-                  >YouTube URL</label
-                >
-                <div class="flex gap-2">
-                  <input
-                    id="batchUrl"
-                    class="flex-1 px-4 py-3 rounded-xl"
-                    type="url"
-                    placeholder="https://youtu.be/..."
-                    aria-label="URL do vídeo YouTube"
-                  />
-                  <button
-                    id="addUrlBtn"
-                    type="button"
-                    class="btn-primary px-5 py-3 rounded-xl font-semibold text-white"
-                  >
-                    Adicionar
-                  </button>
-                </div>
-                <small class="block text-gray-text/80 mt-2"
-                  >Ou cole múltiplos links (um por linha) e clique em
-                  "Adicionar"</small
-                >
-                <div class="text-sm text-gray-text mt-1">
-                  URLs adicionadas: <span id="urlCount">0</span>/10
-                </div>
+              <small class="block text-gray-text/80 mt-2">Ou cole múltiplos links (um por linha) e clique em
+                "Adicionar"</small>
+              <div class="text-sm text-gray-text mt-1">
+                URLs adicionadas: <span id="urlCount">0</span>/10
               </div>
+            </div>
 
-              <div>
-                <textarea
-                  id="batchUrlsMulti"
-                  class="w-full px-4 py-3 rounded-xl"
-                  placeholder="Cole múltiplos links aqui (um por linha)..."
-                  style="
+            <div>
+              <textarea id="batchUrlsMulti" class="w-full px-4 py-3 rounded-xl"
+                placeholder="Cole múltiplos links aqui (um por linha)..." style="
                     min-height: 120px;
                     font-family: ui-monospace, SFMono-Regular, Menlo, Monaco,
                       Consolas, 'Liberation Mono', 'Courier New', monospace;
                     font-size: 0.9rem;
-                  "
-                  aria-label="Múltiplos URLs"
-                ></textarea>
-              </div>
-
-              <div class="grid grid-cols-2 gap-3 glass-card rounded-xl p-4">
-                <div class="flex items-center justify-between text-sm">
-                  <span class="text-gray-text">Total na fila</span
-                  ><span class="text-secondary font-semibold" id="statsTotal"
-                    >0</span
-                  >
-                </div>
-                <div class="flex items-center justify-between text-sm">
-                  <span class="text-gray-text">Processando</span
-                  ><span
-                    class="text-secondary font-semibold"
-                    id="statsProcessing"
-                    >0</span
-                  >
-                </div>
-                <div class="flex items-center justify-between text-sm">
-                  <span class="text-gray-text">Concluídos</span
-                  ><span class="text-secondary font-semibold" id="statsDone"
-                    >0</span
-                  >
-                </div>
-                <div class="flex items-center justify-between text-sm">
-                  <span class="text-gray-text">Erros</span
-                  ><span class="text-secondary font-semibold" id="statsError"
-                    >0</span
-                  >
-                </div>
-              </div>
-
-              <div class="flex gap-3">
-                <button
-                  id="batchStartBtn"
-                  type="button"
-                  class="btn-primary flex-1 py-3 rounded-xl font-semibold text-white"
-                >
-                  Processar tudo (máx 10)
-                </button>
-                <button
-                  id="batchClearBtn"
-                  type="button"
-                  class="btn-secondary px-6 py-3 rounded-xl font-semibold text-white"
-                >
-                  Limpar
-                </button>
-              </div>
-
-              <div
-                id="batchErrorMsg"
-                class="hidden bg-red-500/10 border border-red-500/30 text-red-400 px-5 py-4 rounded-xl text-sm"
-                role="alert"
-                aria-live="polite"
-              ></div>
+                  " aria-label="Múltiplos URLs"></textarea>
             </div>
-          </div>
 
-          <!-- Right: Queue -->
-          <div class="glass-card rounded-2xl p-6 md:p-8">
-            <h3 class="text-xl font-semibold mb-4">Fila de processamento</h3>
-            <div class="jobs-queue" id="jobsQueue">
-              <div class="empty-state">
-                <div class="empty-state-icon">📭</div>
-                <p>Nenhum job adicionado</p>
+            <div class="grid grid-cols-2 gap-3 glass-card rounded-xl p-4">
+              <div class="flex items-center justify-between text-sm">
+                <span class="text-gray-text">Total na fila</span><span class="text-secondary font-semibold"
+                  id="statsTotal">0</span>
               </div>
+              <div class="flex items-center justify-between text-sm">
+                <span class="text-gray-text">Processando</span><span class="text-secondary font-semibold"
+                  id="statsProcessing">0</span>
+              </div>
+              <div class="flex items-center justify-between text-sm">
+                <span class="text-gray-text">Concluídos</span><span class="text-secondary font-semibold"
+                  id="statsDone">0</span>
+              </div>
+              <div class="flex items-center justify-between text-sm">
+                <span class="text-gray-text">Erros</span><span class="text-secondary font-semibold"
+                  id="statsError">0</span>
+              </div>
+            </div>
+
+            <div class="flex gap-3">
+              <button id="batchStartBtn" type="button"
+                class="btn-primary flex-1 py-3 rounded-xl font-semibold text-white">
+                Processar tudo (máx 10)
+              </button>
+              <button id="batchClearBtn" type="button"
+                class="btn-secondary px-6 py-3 rounded-xl font-semibold text-white">
+                Limpar
+              </button>
+            </div>
+
+            <div id="batchErrorMsg"
+              class="hidden bg-red-500/10 border border-red-500/30 text-red-400 px-5 py-4 rounded-xl text-sm"
+              role="alert" aria-live="polite"></div>
+          </div>
+        </div>
+
+        <!-- Right: Queue -->
+        <div class="glass-card rounded-2xl p-6 md:p-8">
+          <h3 class="text-xl font-semibold mb-4">Fila de processamento</h3>
+          <div class="jobs-queue" id="jobsQueue">
+            <div class="empty-state">
+              <div class="empty-state-icon">📭</div>
+              <p>Nenhum job adicionado</p>
             </div>
           </div>
         </div>
       </div>
-    </main>
+    </div>
+  </main>
 
-    <script src="/js/batch.js"></script>
-  </body>
+  <script src="/js/batch.js"></script>
+</body>
+
 </html>
