@@ -91,8 +91,10 @@ async function loadPresets() {
   try {
     // Presets disponíveis (mesmo sem autenticação, só para visualização)
     const presets = [
-      { value: 'SLOWED', label: '🌙 Slowed (0.75x)' },
-      { value: 'SPEED_125', label: '⚡ Speed Up (1.5x)' },
+      { value: 'SLOWED', label: '🌙 Slowed (0.88x)' },
+      { value: 'SLOWED_REVERB', label: '🌊 Slowed + Reverb' },
+      { value: 'SPEED_125', label: '⚡ Speed Up (1.25x)' },
+      { value: 'ULTRA_SLOWED', label: '🐌 Ultra Slowed (0.12x)' },
       { value: 'NIGHTCORE', label: '🌟 Nightcore' },
       { value: 'DAYCORE', label: '☀️ Daycore' },
       { value: 'MUFFLED_SLOWED', label: '🌫️ Muffled Slowed' },

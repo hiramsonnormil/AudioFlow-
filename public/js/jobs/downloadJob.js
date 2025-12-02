@@ -36,7 +36,9 @@ let currentJob = null;
 // Mapeamento de ícones de preset
 const PRESET_ICONS = {
   'SLOWED': '🕐',
+  'SLOWED_REVERB': '🌊',
   'SPEED_125': '⚡',
+  'ULTRA_SLOWED': '🔄',
   'NIGHTCORE': '🌟',
   'DAYCORE': '☀️',
   'MUFFLED_SLOWED': '🔇',

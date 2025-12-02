@@ -20,13 +20,25 @@ const PRESETS = {
     id: 'SLOWED',
     name: 'Slowed',
     icon: '🕐',
-    description: 'Tempo 0.75× preservando o pitch',
+    description: 'Tempo 0.88× preservando o pitch',
+  },
+  SLOWED_REVERB: {
+    id: 'SLOWED_REVERB',
+    name: 'Slowed + Reverb',
+    icon: '🌊',
+    description: 'Slowed 0.88× com reverb profissional e redução de ruído',
   },
   SPEED_125: {
     id: 'SPEED_125',
     name: 'Speed Up',
     icon: '⚡',
-    description: '1.5× velocidade com pitch preservado',
+    description: '1.25× velocidade com pitch preservado',
+  },
+  ULTRA_SLOWED: {
+    id: 'ULTRA_SLOWED',
+    name: 'Ultra Slowed',
+    icon: '🔄',
+    description: 'Drone etéreo com tempo 0.12×, reverb amplo',
   },
   NIGHTCORE: {
     id: 'NIGHTCORE',
