@@ -12,6 +12,7 @@ import { confirmLogout } from './confirm-modal.js';
  */
 function updateNavbar() {
   const navLinks = document.querySelector('.nav-links');
+  const mobileMenuNav = document.querySelector('.mobile-menu-nav');
 
   if (!navLinks) {
     console.warn('⚠️ [NAVBAR] .nav-links não encontrado');
@@ -24,7 +25,7 @@ function updateNavbar() {
 
     console.log('✅ [NAVBAR] Usuário autenticado:', userName);
 
-    // Substituir botões de login/signup por user info e logout
+    // Substituir botões de login/signup por user info e logout - DESKTOP
     navLinks.innerHTML = `
       <a href="#effects" class="nav-link">Efeitos</a>
       <a href="#how" class="nav-link">Como funciona</a>
@@ -36,7 +37,28 @@ function updateNavbar() {
       <button class="nav-link nav-link-logout" id="navLogoutBtn">Sair</button>
     `;
 
-    // Adicionar listener no botão de logout
+    // Atualizar menu mobile também
+    if (mobileMenuNav) {
+      mobileMenuNav.innerHTML = `
+        <a href="#effects" class="mobile-nav-link">Efeitos</a>
+        <a href="#how" class="mobile-nav-link">Como funciona</a>
+        <a href="/html/recents.html" class="mobile-nav-link">📂 Meus Processamentos</a>
+        <div class="mobile-menu-divider"></div>
+        <div class="mobile-user-info" style="display: flex; align-items: center; gap: 0.75rem; padding: 1rem; background: rgba(255, 255, 255, 0.05); border-radius: 12px; margin-bottom: 0.5rem;">
+          <span style="width: 40px; height: 40px; background: linear-gradient(135deg, #7B61FF, #00E0FF); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 1.1rem;">👤</span>
+          <span style="color: var(--text-primary); font-weight: 600;">${userName}</span>
+        </div>
+        <button class="mobile-nav-link mobile-logout-btn" id="mobileNavLogoutBtn" style="width: 100%; text-align: left; background: rgba(255, 77, 77, 0.1); border: 1px solid rgba(255, 77, 77, 0.3); color: #ff4d4d;">Sair</button>
+      `;
+
+      // Adicionar listener no botão de logout mobile
+      const mobileLogoutBtn = document.getElementById('mobileNavLogoutBtn');
+      if (mobileLogoutBtn) {
+        mobileLogoutBtn.addEventListener('click', handleLogout);
+      }
+    }
+
+    // Adicionar listener no botão de logout desktop
     const logoutBtn = document.getElementById('navLogoutBtn');
     if (logoutBtn) {
       logoutBtn.addEventListener('click', handleLogout);
@@ -44,13 +66,24 @@ function updateNavbar() {
   } else {
     console.log('❌ [NAVBAR] Usuário não autenticado');
 
-    // Mostrar botões de login/signup
+    // Mostrar botões de login/signup - DESKTOP
     navLinks.innerHTML = `
       <a href="#effects" class="nav-link">Efeitos</a>
       <a href="#how" class="nav-link">Como funciona</a>
       <a href="#" class="nav-link" id="openLoginBtn">Entrar</a>
       <a href="#" class="nav-link nav-link-cta" id="openSignupBtn">Criar conta</a>
     `;
+
+    // Mostrar botões de login/signup - MOBILE
+    if (mobileMenuNav) {
+      mobileMenuNav.innerHTML = `
+        <a href="#effects" class="mobile-nav-link">Efeitos</a>
+        <a href="#how" class="mobile-nav-link">Como funciona</a>
+        <div class="mobile-menu-divider"></div>
+        <a href="#" class="mobile-nav-link" id="mobile-openLoginBtn">Entrar</a>
+        <a href="#" class="mobile-nav-link mobile-nav-link-cta" id="mobile-openSignupBtn">Criar conta</a>
+      `;
+    }
 
     // Re-adicionar event listeners dos botões de modal
     setTimeout(() => {
