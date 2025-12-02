@@ -17,54 +17,82 @@ export class AudioProcessingService {
    * Constrói a string de filtro de áudio com base no preset
    */
   buildAudioFilter(preset, durationSec) {
-    // 1. SLOWED - Tempo 0.75× preservando pitch
+    // FILTROS ORIGINAIS (com rubberband)
     if (preset === "SLOWED") {
-      return [`atempo=0.75`, `loudnorm=I=-14:TP=-1.0`].join(",");
+      // Slowdown simples com preservação de pitch (0.88x)
+      return [`rubberband=tempo=0.88:pitch=1.0`, `loudnorm=I=-14:TP=-1.0`].join(
+        ","
+      );
     }
 
-    // 2. SPEED UP - Tempo 1.5× preservando pitch
+    if (preset === "SLOWED_REVERB") {
+      // Slowed + Reverb profissional: asetrate para slowed, reverb com múltiplos ecos, noise reduction
+      return [
+        `asetrate=44100*0.88`,
+        `aresample=44100`,
+        `aecho=0.8:0.88:60|90|120:0.5|0.4|0.3`,
+        `afftdn=nf=-25`,
+        `loudnorm=I=-14:TP=-1.0`,
+      ].join(",");
+    }
+
     if (preset === "SPEED_125") {
-      return [`atempo=1.5`, `loudnorm=I=-14:TP=-1.0`].join(",");
+      // Speed up simples com preservação de pitch (1.25x)
+      return [`rubberband=tempo=1.25:pitch=1.0`, `loudnorm=I=-14:TP=-1.0`].join(
+        ","
+      );
     }
 
-    // 4. NIGHTCORE - Rápido + pitch agudo usando asetrate (1.25×)
-    if (preset === "NIGHTCORE") {
+    if (preset === "ULTRA_SLOWED") {
+      // Drone etéreo: tempo 0.12× (paulstretch-like), reverb longo (100ms), lowpass 8kHz para tail limpo, highpass 30Hz anti-mud
       return [
-        `asetrate=44100*1.25`,
-        `aresample=44100`,
+        `rubberband=tempo=0.12:pitch=1.0`,
+        `aecho=0.7:0.5:100:0.25`,
+        `lowpass=f=8000`,
+        `highpass=f=30`,
         `loudnorm=I=-14:TP=-1.0`,
       ].join(",");
     }
 
-    // 5. DAYCORE - Lento + pitch grave usando asetrate (0.80×)
-    if (preset === "DAYCORE") {
-      return [
-        `asetrate=44100*0.80`,
-        `aresample=44100`,
-        `loudnorm=I=-14:TP=-1.0`,
-      ].join(",");
-    }
-
-    // 6. MUFFLED SLOWED - Lento abafado com lowpass 3000Hz
     if (preset === "MUFFLED_SLOWED") {
+      // Abafado: lowpass 300Hz, tempo 0.85×, pitch 0.95, reverb sala 60ms
       return [
-        `lowpass=f=3000`,
-        `atempo=0.75`,
+        `lowpass=f=300`,
+        `rubberband=tempo=0.85:pitch=0.95`,
+        `aecho=0.4:0.5:60:0.15`,
         `loudnorm=I=-14:TP=-1.0`,
       ].join(",");
     }
 
-    // 7. MUFFLED SPEED - Rápido abafado com lowpass 3000Hz
     if (preset === "MUFFLED_SPEED") {
+      // Abafado acelerado: lowpass 600Hz (intelligibilidade), tempo 1.25×, pitch 1.05 (body), sem reverb
       return [
-        `lowpass=f=3000`,
-        `atempo=1.5`,
+        `lowpass=f=600`,
+        `rubberband=tempo=1.25:pitch=1.05`,
         `loudnorm=I=-14:TP=-1.0`,
       ].join(",");
     }
 
-    // 8. PHONA - Efeito telefone (bandpass 300Hz-3400Hz)
+    if (preset === "DAYCORE") {
+      // Tempo 80% + pitch down 0.8 (~-4 semitons) + reverb leve
+      return [
+        `rubberband=tempo=0.8:pitch=0.8`,
+        `aecho=0.3:0.4:30:0.15`,
+        `loudnorm=I=-14:TP=-1.0`,
+      ].join(",");
+    }
+
+    if (preset === "NIGHTCORE") {
+      // Tempo 135% + pitch 1.35 (~5-6 semitons)
+      return [
+        `rubberband=tempo=1.35:pitch=1.35`,
+        `loudnorm=I=-14:TP=-1.0`,
+      ].join(",");
+    }
+
+    // NOVOS FILTROS
     if (preset === "PHONA") {
+      // Efeito telefone (bandpass 300Hz-3400Hz)
       return [
         `highpass=f=300`,
         `lowpass=f=3400`,
@@ -72,32 +100,32 @@ export class AudioProcessingService {
       ].join(",");
     }
 
-    // 9. ECHO - Eco clássico com delay 800ms
     if (preset === "ECHO") {
+      // Eco clássico com delay 800ms
       return [
         `aecho=0.6:0.5:800:0.3`,
         `loudnorm=I=-14:TP=-1.0`,
       ].join(",");
     }
 
-    // 10. REVERB - Reverberação atmosférica com múltiplos ecos
     if (preset === "REVERB") {
+      // Reverberação atmosférica com múltiplos ecos
       return [
         `aecho=0.5:0.6:40|60|80:0.4|0.3|0.2`,
         `loudnorm=I=-14:TP=-1.0`,
       ].join(",");
     }
 
-    // 11. BASS BOOST - Graves potentes +12dB
     if (preset === "BASS_BOOST") {
+      // Graves potentes +12dB
       return [
         `bass=g=12:f=100:w=0.6`,
         `loudnorm=I=-14:TP=-1.0`,
       ].join(",");
     }
 
-    // 12. ROBOT VOICE - Voz robótica metálica
     if (preset === "ROBOT_VOICE") {
+      // Voz robótica metálica
       return [
         `afftfilt=real='hypot(re,im)*cos(0)':imag='hypot(re,im)*sin(0)'`,
         `aecho=0.3:0.4:50:0.2`,
@@ -105,8 +133,8 @@ export class AudioProcessingService {
       ].join(",");
     }
 
-    // 13. 8D AUDIO - Som girando 360° (apulsator com frequência baixa)
     if (preset === "8D") {
+      // Som girando 360° (apulsator com frequência baixa)
       return [
         `apulsator=mode=sine:hz=0.125:width=0.9`,
         `loudnorm=I=-14:TP=-1.0`,
