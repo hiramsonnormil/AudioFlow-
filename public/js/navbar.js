@@ -1,4 +1,5 @@
 import { getToken, getUserInitial, clearSession } from './auth/session.js';
+import { confirmLogout } from './confirm-modal.js';
 
 async function initNavbar() {
     const placeholder = document.getElementById('navbar-placeholder');
@@ -104,8 +105,13 @@ function setupEventListeners() {
     // Desktop logout
     const logoutBtn = document.getElementById('logoutBtn');
     if (logoutBtn) {
-        logoutBtn.addEventListener('click', (e) => {
+        logoutBtn.addEventListener('click', async (e) => {
             e.preventDefault();
+
+            // Mostrar modal de confirmação bonito
+            const confirmed = await confirmLogout();
+            if (!confirmed) return;
+
             clearSession();
             window.location.href = '/';
         });
@@ -114,8 +120,13 @@ function setupEventListeners() {
     // Mobile logout
     const mobileLogoutBtn = document.getElementById('mobile-logoutBtn');
     if (mobileLogoutBtn) {
-        mobileLogoutBtn.addEventListener('click', (e) => {
+        mobileLogoutBtn.addEventListener('click', async (e) => {
             e.preventDefault();
+
+            // Mostrar modal de confirmação bonito
+            const confirmed = await confirmLogout();
+            if (!confirmed) return;
+
             clearSession();
             window.location.href = '/';
         });
