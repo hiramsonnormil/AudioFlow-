@@ -280,12 +280,14 @@ async function startProcessing(url, presetName) {
 }
 
 /**
- * Validar URL do YouTube
+ * Validar URL do YouTube e YouTube Music
  */
 function isValidYouTubeUrl(url) {
   const patterns = [
     /^(https?:\/\/)?(www\.)?(youtube\.com\/watch\?v=|youtu\.be\/)[\w-]+/,
-    /^(https?:\/\/)?(www\.)?youtube\.com\/watch\?.*v=[\w-]+/
+    /^(https?:\/\/)?(www\.)?youtube\.com\/watch\?.*v=[\w-]+/,
+    /^(https?:\/\/)?music\.youtube\.com\/watch\?v=[\w-]+/,
+    /^(https?:\/\/)?music\.youtube\.com\/watch\?.*v=[\w-]+/
   ];
 
   return patterns.some(pattern => pattern.test(url));
