@@ -25,13 +25,8 @@ router.get('/recent-processings', authRequired, async (req, res) => {
       });
     }
 
-    console.log(`[RECENT] Buscando processamentos para usuário: ${userId}`);
-
     // Lista objetos do R2 para este usuário
     const objects = await r2.listFreeUserObjects(userId);
-
-    console.log(`[RECENT] Encontrados ${objects.length} processamentos para ${userId}`);
-
     // Retorna os objetos com informações adicionais
     const processings = objects.map(obj => {
       return {

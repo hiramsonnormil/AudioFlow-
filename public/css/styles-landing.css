@@ -1242,6 +1242,58 @@ section {
   margin-bottom: 2rem;
 }
 
+.processor-limit-note {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  margin-top: 1.5rem;
+  padding: 0.95rem 1.15rem;
+  border-radius: 14px;
+  border: 1px solid rgba(194, 140, 102, 0.2);
+  background: linear-gradient(
+    135deg,
+    rgba(194, 140, 102, 0.08) 0%,
+    rgba(232, 180, 160, 0.04) 100%
+  );
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
+.processor-limit-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: rgba(194, 140, 102, 0.12);
+  color: var(--copper-light);
+}
+
+.processor-limit-icon svg {
+  width: 24px;
+  height: 24px;
+  color: var(--copper-light);
+}
+
+.processor-limit-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.processor-limit-copy strong {
+  font-weight: 600;
+  color: var(--text-primary);
+  font-size: 0.95rem;
+}
+
+.processor-limit-note span {
+  display: block;
+  color: var(--text-muted);
+}
+
 .input-group {
   display: flex;
   flex-direction: column;
@@ -2210,6 +2262,23 @@ section {
     padding: 2rem 1.5rem;
   }
 
+  .processor-limit-note {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+    padding: 0.9rem 1rem;
+  }
+
+  .processor-limit-icon svg {
+    width: 22px;
+    height: 22px;
+  }
+
+  .processor-limit-icon {
+    width: 28px;
+    height: 28px;
+  }
+
   .footer-content {
     flex-direction: column;
     gap: 2rem;
@@ -2260,6 +2329,16 @@ section {
 
   .processor-card {
     padding: 1.5rem 1rem;
+  }
+
+  .processor-limit-note {
+    margin-top: 1rem;
+    padding: 0.85rem 0.9rem;
+  }
+
+  .processor-limit-icon {
+    width: 26px;
+    height: 26px;
   }
 
   .btn-process {

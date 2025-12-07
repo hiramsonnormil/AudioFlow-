@@ -62,8 +62,6 @@ function handlePremiumPlanClick(e) {
  * Inicializar página
  */
 function init() {
-  console.log('🔧 [PLANS] Inicializando página de planos...');
-  
   initPlanButtons();
   
   // Garantir que os listeners do modal estão configurados

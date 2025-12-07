@@ -160,11 +160,6 @@ addUrlBtn.addEventListener("click", () => {
 
   if (added > 0) {
     updateUrlList();
-    console.log(
-      `✅ ${added} URL${added > 1 ? "s" : ""} adicionada${added > 1 ? "s" : ""
-      }${skipped > 0 ? ` | ❌ ${skipped} inválida${skipped > 1 ? "s" : ""}` : ""
-      }`
-    );
   }
 
   if (skipped > 0 && added === 0) {
@@ -214,14 +209,24 @@ batchStartBtn.addEventListener("click", async () => {
         body: JSON.stringify({ url, preset }),
       });
 
-      if (!r.ok) {
-        const j = await r.json();
-        throw new Error(j.error || "server error");
+      let payload = null;
+      try {
+        payload = await r.json();
+      } catch (parseError) {
+        console.warn("⚠️ Falha ao interpretar resposta do servidor:", parseError);
       }
 
-      const j = await r.json();
-      manager.jobs.set(j.id, {
-        id: j.id,
+      if (!r.ok) {
+        const message = payload?.message || payload?.error || "server error";
+        throw new Error(message);
+      }
+
+      if (!payload || !payload.id) {
+        throw new Error("Resposta inesperada do servidor");
+      }
+
+      manager.jobs.set(payload.id, {
+        id: payload.id,
         url,
         status: "PENDING",
         progress: 0,

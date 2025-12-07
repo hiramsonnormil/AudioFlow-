@@ -5,6 +5,10 @@
 
 import { apiLogin, apiSignup, getErrorMessage } from '../api.js';
 import { saveSession, isAuthenticated } from './session.js';
+import { initGoogleAuth, handleOAuthCallback } from './google-auth.js';
+
+// Handle OAuth callback on page load
+handleOAuthCallback();
 
 // Elementos do modal
 const authModal = document.getElementById('authModal');
@@ -358,6 +362,54 @@ function setupOpenModalListeners() {
  */
 function init() {
   setupOpenModalListeners();
+
+  // Initialize Google OAuth only for recovery
+  initGoogleAuth('googleRecoveryBtn', 'recovery');
+
+  // Forgot password link - open forgot password modal
+  const forgotPasswordLink = document.getElementById('forgotPasswordLink');
+  const forgotPasswordModal = document.getElementById('forgotPasswordModal');
+  const closeForgotPasswordModal = document.getElementById('closeForgotPasswordModal');
+  const forgotPasswordOverlay = forgotPasswordModal?.querySelector('.modal-overlay');
+  const backToLoginLink = document.getElementById('backToLoginLink');
+
+  forgotPasswordLink?.addEventListener('click', (e) => {
+    e.preventDefault();
+    closeModal(); // Close auth modal
+    setTimeout(() => {
+      // Open forgot password modal
+      forgotPasswordModal?.classList.add('active');
+      document.body.classList.add('modal-open');
+    }, 300);
+  });
+
+  // Close forgot password modal
+  closeForgotPasswordModal?.addEventListener('click', () => {
+    forgotPasswordModal?.classList.add('closing');
+    setTimeout(() => {
+      forgotPasswordModal?.classList.remove('active', 'closing');
+      document.body.classList.remove('modal-open');
+    }, 300);
+  });
+
+  // Close on overlay click
+  forgotPasswordOverlay?.addEventListener('click', () => {
+    forgotPasswordModal?.classList.add('closing');
+    setTimeout(() => {
+      forgotPasswordModal?.classList.remove('active', 'closing');
+      document.body.classList.remove('modal-open');
+    }, 300);
+  });
+
+  // Back to login link
+  backToLoginLink?.addEventListener('click', (e) => {
+    e.preventDefault();
+    forgotPasswordModal?.classList.add('closing');
+    setTimeout(() => {
+      forgotPasswordModal?.classList.remove('active', 'closing');
+      openModal('login'); // Reopen login modal
+    }, 300);
+  });
 
   // Fechar modal
   closeAuthModal?.addEventListener('click', closeModal);

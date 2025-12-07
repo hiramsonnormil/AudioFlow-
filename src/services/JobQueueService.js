@@ -42,9 +42,6 @@ export class JobQueueService {
     if (!job) return false;
 
     this.queue.push(jobId);
-    console.log(
-      `[QUEUE] Job ${jobId} enqueued. Queue size: ${this.queue.length}`
-    );
     return true;
   }
 

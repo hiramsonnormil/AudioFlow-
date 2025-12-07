@@ -3,18 +3,21 @@
  */
 
 import { getToken, getUser } from './auth/session.js';
+import { openModal } from './auth/modal-auth.js';
 
 const API_BASE = '';
 
 // Inicializa a página
 async function init() {
-  console.log('🎵 Inicializando página de processamentos recentes');
-  
   // Verifica autenticação
   const token = getToken();
   if (!token) {
-    console.warn('⚠️ Usuário não autenticado - redirecionando para login');
-    window.location.href = '/html/login.html';
+    console.warn('⚠️ Usuário não autenticado - exibindo modal de login');
+    const loadingIndicator = document.getElementById('loading');
+    if (loadingIndicator) {
+      loadingIndicator.style.display = 'none';
+    }
+    setTimeout(() => openModal('login'), 100);
     return;
   }
 
@@ -72,7 +75,6 @@ async function loadProcessings() {
     }
 
     const data = await response.json();
-    console.log('✅ Processamentos carregados:', data);
 
     loading.style.display = 'none';
 
@@ -293,15 +295,11 @@ window.handleDownload = async function(e, key, expiresIn) {
     try {
       e.preventDefault();
       
-      console.log(`[DOWNLOAD] Tentando baixar arquivo: ${key}`);
-      
       const response = await fetch(`/api/download/${encodeURIComponent(key)}`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
       });
-      
-      console.log(`[DOWNLOAD] Resposta do servidor: ${response.status} ${response.statusText}`);
       
       if (!response.ok) {
         let errorMessage = 'Erro ao baixar o arquivo';
@@ -399,8 +397,6 @@ window.deleteProcessing = async function(key) {
     if (!response.ok) {
       throw new Error(`HTTP ${response.status}`);
     }
-
-    console.log('✅ Arquivo deletado:', key);
 
     // Remove o card da interface
     const card = document.querySelector(`[data-key="${key}"]`);

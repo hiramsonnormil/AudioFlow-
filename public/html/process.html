@@ -24,6 +24,7 @@
   <link rel="stylesheet" href="/css/styles-landing.css" />
   <!-- Process page styles -->
   <link rel="stylesheet" href="/css/process.css" />
+  <link rel="stylesheet" href="/css/modal.css" />
 </head>
 
 <body style="background: var(--bg-primary); color: var(--text-primary); min-height: 100vh;">
@@ -79,6 +80,18 @@
             </div>
           </div>
 
+          <div class="process-limit-note" role="note">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
+              <circle cx="12" cy="12" r="10" stroke-width="1.6"></circle>
+              <path d="M12 7v5" stroke-width="1.6" stroke-linecap="round"></path>
+              <circle cx="12" cy="16" r="0.9" fill="currentColor"></circle>
+            </svg>
+            <div>
+              <strong>Limite de duração</strong>
+              <span>Somente áudios com até 20 minutos são processados automaticamente.</span>
+            </div>
+          </div>
+
           <!-- Audio Player (Modern Custom Design) -->
           <div class="player-container">
             <audio id="audioPreview" aria-label="Pré-visualização de áudio"></audio>
@@ -118,8 +131,150 @@
     </div>
   </main>
 
+  <!-- Auth Modal with Tabs -->
+  <div id="authModal" class="modal">
+    <div class="modal-overlay"></div>
+    <div class="modal-content">
+      <button class="modal-close" id="closeAuthModal" aria-label="Fechar">&times;</button>
+
+      <!-- Tabs Header -->
+      <div class="modal-tabs">
+        <button class="modal-tab active" data-tab="login">
+          <span>Entrar</span>
+        </button>
+        <button class="modal-tab" data-tab="signup">
+          <span>Criar conta</span>
+        </button>
+        <div class="modal-tab-indicator"></div>
+      </div>
+
+      <div class="modal-header">
+        <div class="modal-logo">
+          <svg width="40" height="40" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <linearGradient id="modalLogoGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#c28c66" />
+                <stop offset="100%" stop-color="#e8b4a0" />
+              </linearGradient>
+            </defs>
+            <circle cx="22" cy="42" r="8" fill="url(#modalLogoGradient)" />
+            <path d="M 29 40 L 29 18 L 42 15 L 42 17 L 30 20 L 30 38 Z" fill="url(#modalLogoGradient)" />
+            <rect x="38" y="20" width="14" height="3" rx="1.5" fill="url(#modalLogoGradient)" />
+            <rect x="38" y="27" width="11" height="3" rx="1.5" fill="url(#modalLogoGradient)" />
+            <rect x="38" y="34" width="8" height="3" rx="1.5" fill="url(#modalLogoGradient)" />
+          </svg>
+          <span>phona</span>
+        </div>
+        <h2 class="modal-title" id="modalTitle">Bem-vindo de volta</h2>
+        <p class="modal-subtitle" id="modalSubtitle">Entre para transformar seu áudio</p>
+      </div>
+
+      <!-- Error Display -->
+      <div id="authError" class="modal-error" style="display: none;"></div>
+
+      <!-- Login Form -->
+      <form id="loginForm" class="modal-form auth-form active">
+        <div class="form-group">
+          <label for="loginEmail" class="form-label">E-mail</label>
+          <input type="email" id="loginEmail" name="email" class="form-input" placeholder="seu@email.com" required
+            autocomplete="email">
+        </div>
+
+        <div class="form-group">
+          <label for="loginPassword" class="form-label">Senha</label>
+          <div class="password-field">
+            <input type="password" id="loginPassword" name="password" class="form-input" placeholder="••••••••" required
+              autocomplete="current-password">
+            <button type="button" class="password-toggle" id="toggleLoginPassword" aria-label="Mostrar senha">
+              <svg class="eye-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                <circle cx="12" cy="12" r="3"></circle>
+              </svg>
+              <svg class="eye-off-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                style="display: none;">
+                <path
+                  d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24">
+                </path>
+                <line x1="1" y1="1" x2="23" y2="23"></line>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-lg modal-submit">
+          <span class="btn-text">Entrar</span>
+          <span class="spinner" style="display: none;"></span>
+        </button>
+      </form>
+
+      <!-- Signup Form -->
+      <form id="signupForm" class="modal-form auth-form">
+        <div class="form-group">
+          <label for="signupUsername" class="form-label">Nome de usuário</label>
+          <input type="text" id="signupUsername" name="username" class="form-input" placeholder="seunome" required
+            autocomplete="username" minlength="3">
+        </div>
+
+        <div class="form-group">
+          <label for="signupEmail" class="form-label">E-mail</label>
+          <input type="email" id="signupEmail" name="email" class="form-input" placeholder="seu@email.com" required
+            autocomplete="email">
+        </div>
+
+        <div class="form-group">
+          <label for="signupPassword" class="form-label">Senha</label>
+          <div class="password-field">
+            <input type="password" id="signupPassword" name="password" class="form-input" placeholder="••••••••"
+              required autocomplete="new-password" minlength="8">
+            <button type="button" class="password-toggle" id="toggleSignupPassword" aria-label="Mostrar senha">
+              <svg class="eye-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                <circle cx="12" cy="12" r="3"></circle>
+              </svg>
+              <svg class="eye-off-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                style="display: none;">
+                <path
+                  d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24">
+                </path>
+                <line x1="1" y1="1" x2="23" y2="23"></line>
+              </svg>
+            </button>
+          </div>
+          <p class="form-hint">Mínimo 8 caracteres</p>
+        </div>
+
+        <div class="form-group">
+          <label for="signupConfirmPassword" class="form-label">Confirmar senha</label>
+          <div class="password-field">
+            <input type="password" id="signupConfirmPassword" name="confirmPassword" class="form-input"
+              placeholder="••••••••" required autocomplete="new-password">
+            <button type="button" class="password-toggle" id="toggleSignupConfirmPassword" aria-label="Mostrar senha">
+              <svg class="eye-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                <circle cx="12" cy="12" r="3"></circle>
+              </svg>
+              <svg class="eye-off-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                style="display: none;">
+                <path
+                  d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24">
+                </path>
+                <line x1="1" y1="1" x2="23" y2="23"></line>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-lg modal-submit">
+          <span class="btn-text">Criar conta</span>
+          <span class="spinner" style="display: none;"></span>
+        </button>
+      </form>
+    </div>
+  </div>
+
   <script type="module" src="/js/navbar.js"></script>
-  <script src="/js/process.js"></script>
+  <script type="module" src="/js/auth/modal-auth.js"></script>
+  <script type="module" src="/js/process.js"></script>
 </body>
 
 </html>
