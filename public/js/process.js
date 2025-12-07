@@ -1,3 +1,6 @@
+import { getToken, clearSession } from './auth/session.js';
+import { openModal } from './auth/modal-auth.js';
+
 // DOM Elements
 const barInner = document.getElementById("barInner");
 const statusText = document.getElementById("statusText");
@@ -19,34 +22,54 @@ const playerProgressBar = document.getElementById("playerProgressBar");
 
 let pollId = null;
 let lastProgress = -1;
+let loginPromptDisplayed = false;
 
-// Verificar autenticação
-const token = localStorage.getItem('phona:token');
-if (!token) {
-  console.warn('⚠️ [PROCESS] Usuário não autenticado, redirecionando...');
-  window.location.href = '/html/login.html?redirect=' + encodeURIComponent(window.location.pathname + window.location.search);
-}
+const initialToken = getToken();
+initializeProcessPage(initialToken);
 
-// Obter ID do job da URL
-const params = new URLSearchParams(window.location.search);
-const jobId = params.get("id");
+function initializeProcessPage(token) {
+  if (!token) {
+    console.warn('⚠️ [PROCESS] Usuário não autenticado, exibindo modal de login');
+    promptLogin('Faça login para acompanhar o processamento.');
+    return;
+  }
 
-console.log("Job ID:", jobId);
-console.log("🔐 [PROCESS] Token presente:", !!token);
+  const params = new URLSearchParams(window.location.search);
+  const jobId = params.get("id");
 
-if (!jobId) {
-  showError("Job ID não encontrado. Retorne ao início.");
-} else {
-  // Tentar usar thumbnail precarregada da sessão anterior
+  if (!jobId) {
+    showError("Job ID não encontrado. Retorne ao início.");
+    return;
+  }
+
   const prefetchedThumbUrl = sessionStorage.getItem("prefetchedThumbUrl");
   if (prefetchedThumbUrl) {
     thumbnail.src = prefetchedThumbUrl;
     thumbnail.classList.remove("loading-placeholder");
-    console.log("Using prefetched thumbnail");
   }
 
-  // Iniciar polling do status
   startPoll(jobId);
+}
+
+function promptLogin(message, options = {}) {
+  if (statusText) {
+    statusText.textContent = 'Login necessário';
+  }
+
+  if (message) {
+    showError(message);
+  }
+
+  if (options.clearSession) {
+    clearSession();
+  }
+
+  if (loginPromptDisplayed) {
+    return;
+  }
+
+  loginPromptDisplayed = true;
+  setTimeout(() => openModal('login'), 100);
 }
 
 // Cleanup
@@ -84,8 +107,7 @@ function startPoll(id) {
 
   pollId = setInterval(async () => {
     try {
-      // Obter token do localStorage
-      const token = localStorage.getItem('phona:token');
+      const token = getToken();
 
       const statusUrl = `/status/${id}`;
       const headers = {};
@@ -97,10 +119,7 @@ function startPoll(id) {
       if (!r.ok) {
         if (r.status === 401) {
           clearInterval(pollId);
-          showError("Sessão expirada. Por favor, faça login novamente.");
-          setTimeout(() => {
-            window.location.href = '/html/login.html';
-          }, 2000);
+          promptLogin("Sessão expirada. Por favor, faça login novamente.", { clearSession: true });
           return;
         }
         throw new Error("status fetch failed");
@@ -153,22 +172,8 @@ function startPoll(id) {
           progressPercent.textContent = "100%";
         }
 
-        console.log("\n===========================================");
-        console.log("JOB DONE RESPONSE:");
-        console.log("Job ID:", j.id);
-        console.log("Title:", j.title);
-        console.log("Filename:", j.filename);
-        console.log("Output URL:", j.output);
-        console.log("File exists on server:", j.fileExists);
-        console.log("File size:", j.fileSize);
-        console.log("Expires in:", j.expiresIn, "ms");
-        console.log("Is expired:", j.isExpired);
-        console.log("===========================================\n");
-
         // Usar nome formatado do backend ou gerar localmente
         const downloadName = j.downloadFilename || j.filename || generateDownloadFilename(j.title, j.preset || 'custom');
-
-        console.log("Loading audio with authentication...");
 
         // Carregar áudio com autenticação via fetch e criar blob URL
         loadAudioWithAuth(id, downloadName, j.expiresIn, j.isExpired);
@@ -349,10 +354,13 @@ function handleExpiration() {
 
 async function loadAudioWithAuth(jobId, downloadName, expiresInMs, isExpired) {
   try {
-    const token = localStorage.getItem('phona:token');
+    const token = getToken();
     const audioUrl = `/file/${jobId}`;
 
-    console.log("Fetching audio from:", audioUrl);
+    if (!token) {
+      promptLogin("Faça login para baixar o áudio processado.");
+      return;
+    }
 
     // Fetch com autenticação
     const response = await fetch(audioUrl, {
@@ -361,17 +369,18 @@ async function loadAudioWithAuth(jobId, downloadName, expiresInMs, isExpired) {
       }
     });
 
+    if (response.status === 401) {
+      promptLogin("Sessão expirada. Faça login novamente.", { clearSession: true });
+      return;
+    }
+
     if (!response.ok) {
       throw new Error(`HTTP ${response.status}`);
     }
 
-    console.log("Audio fetched successfully, creating blob...");
-
     // Criar blob do áudio
     const blob = await response.blob();
     const blobUrl = URL.createObjectURL(blob);
-
-    console.log("Blob URL created:", blobUrl);
 
     // Limpar áudio anterior e suas URLs
     if (audioPreview.src && audioPreview.src.startsWith('blob:')) {
@@ -387,17 +396,9 @@ async function loadAudioWithAuth(jobId, downloadName, expiresInMs, isExpired) {
       audioPreview.src = blobUrl;
       audioPreview.load();
 
-      audioPreview.oncanplay = () => {
-        console.log("Audio ready to play");
-      };
-
       audioPreview.onerror = (e) => {
         console.error("Audio error:", e);
         showError("Erro ao reproduzir áudio.");
-      };
-
-      audioPreview.onloadeddata = () => {
-        console.log("Audio data loaded successfully");
       };
     }, 100);
 
@@ -421,8 +422,6 @@ async function loadAudioWithAuth(jobId, downloadName, expiresInMs, isExpired) {
     } else {
       handleExpiration();
     }
-
-    console.log("Audio and download configured");
 
   } catch (err) {
     console.error("Error loading audio:", err);

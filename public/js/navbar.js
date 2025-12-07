@@ -1,4 +1,5 @@
 import { getToken, getUserInitial, clearSession } from './auth/session.js';
+import { setupOpenModalListeners } from './auth/modal-auth.js';
 import { confirmLogout } from './confirm-modal.js';
 
 async function initNavbar() {
@@ -17,6 +18,9 @@ async function initNavbar() {
 
         // Setup auth state
         setupAuthState();
+
+        // Ensure modal triggers work after navbar injection
+        setupOpenModalListeners();
 
         // Setup event listeners
         setupEventListeners();

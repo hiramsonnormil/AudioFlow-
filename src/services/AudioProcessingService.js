@@ -6,7 +6,12 @@
 import { spawn } from "child_process";
 import path from "path";
 import fs from "fs";
+import {
+  isDurationTooLong,
+  buildDurationLimitMessage,
+} from "../config/audioLimits.js";
 import * as r2 from "../../storage/r2.js";
+import { getUserIdentity } from "../config/security.js";
 
 export class AudioProcessingService {
   constructor(storagePath) {
@@ -202,7 +207,6 @@ export class AudioProcessingService {
 
       ff.on("close", (code) => {
         if (code === 0) {
-          console.log(`[${jobId}] ffmpeg completed successfully`);
           resolve({ success: true, file: outputPath });
         } else {
           const errorMsg = `ffmpeg exit code ${code}: ${ffStderr.slice(-500)}`;
@@ -237,24 +241,42 @@ export class AudioProcessingService {
     let tempPath = null;
 
     try {
-      console.log(`[${jobId}] Iniciando processamento com upload para R2`);
+      const normalizedDuration =
+        typeof durationSec === 'number' && Number.isFinite(durationSec)
+          ? durationSec
+          : parseFloat(durationSec) || 0;
+
+      if (isDurationTooLong(normalizedDuration)) {
+        console.warn(
+          `[${jobId}] Abortado: duração ${normalizedDuration.toFixed(2)}s acima do limite`
+        );
+        throw new Error(buildDurationLimitMessage(normalizedDuration));
+      }
 
       // 1. Gera arquivo temporário
       const filename = `${jobId}.mp3`;
       tempPath = path.join('/tmp', filename);
 
       // 2. Processa áudio com FFmpeg (salva em /tmp)
-      const audioFilterStr = this.buildAudioFilter(preset, durationSec);
-      await this.processAudio(inputStream, tempPath, audioFilterStr, durationSec, jobId);
+      const audioFilterStr = this.buildAudioFilter(preset, normalizedDuration);
+      await this.processAudio(
+        inputStream,
+        tempPath,
+        audioFilterStr,
+        normalizedDuration,
+        jobId
+      );
 
       if (!fs.existsSync(tempPath)) {
         throw new Error('FFmpeg não gerou o arquivo de saída');
       }
 
-      console.log(`[${jobId}] Arquivo processado: ${tempPath}`);
-
       // 3. Define a chave no R2 (estrutura: free/<userId>/<jobId>.mp3)
-      const r2Key = `free/${userId}/${filename}`;
+      const safeUserFolder =
+        typeof userId === "string" && /^[a-z0-9_-]+$/i.test(userId)
+          ? userId
+          : getUserIdentity("anonymous").storageKey;
+      const r2Key = `free/${safeUserFolder}/${filename}`;
 
       // 4. Faz upload para R2
       const uploadResult = await r2.uploadFile(tempPath, r2Key, {
@@ -263,8 +285,6 @@ export class AudioProcessingService {
         preset,
         title,
       });
-
-      console.log(`[${jobId}] Upload concluído: ${uploadResult.publicUrl}`);
 
       // 5. Deleta arquivo temporário local
       await r2.deleteLocalFile(tempPath);
@@ -278,7 +298,6 @@ export class AudioProcessingService {
     } catch (error) {
       // Em caso de erro, tenta limpar o arquivo temporário
       if (tempPath && fs.existsSync(tempPath)) {
-        console.log(`[${jobId}] Limpando arquivo temporário após erro`);
         await r2.deleteLocalFile(tempPath).catch(() => { });
       }
       throw error;

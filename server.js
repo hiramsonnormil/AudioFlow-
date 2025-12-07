@@ -8,6 +8,13 @@ import path from "path";
 import fs from "fs";
 import cookieParser from "cookie-parser";
 import dotenv from "dotenv";
+import passport from "passport";
+import helmet from "helmet";
+import cors from "cors";
+import compression from "compression";
+import mongoSanitize from "express-mongo-sanitize";
+import xssClean from "xss-clean";
+import hpp from "hpp";
 import { fileURLToPath } from "url";
 import { ProcessController } from "./src/controllers/ProcessController.js";
 import { createProcessRoutes } from "./src/routes/processRoutes.js";
@@ -19,6 +26,9 @@ import recentsRoutes from "./src/routes/recents.js";
 import downloadRoutes from "./src/routes/download.js";
 import { connectDB } from "./src/config/db.js";
 import { initStorage } from "./src/utils/storage.js";
+import { configurePassport } from "./src/config/passport-config.js";
+import { securityConfig, isOriginAllowed } from "./src/config/security.js";
+import { apiLimiter, authLimiter, freeProcessLimiter } from "./src/middleware/rateLimiters.js";
 
 // ===== CONFIGURAÇÃO =====
 const __filename = fileURLToPath(import.meta.url);
@@ -28,10 +38,50 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 8080;
 
+const trustProxyCount = Number.isFinite(securityConfig.trustProxy)
+  ? securityConfig.trustProxy
+  : 1;
+app.set("trust proxy", trustProxyCount);
+app.disable("x-powered-by");
+
+const corsOptions = {
+  origin: (origin, callback) => {
+    if (isOriginAllowed(origin)) {
+      return callback(null, true);
+    }
+    return callback(new Error("CORS origin denied"));
+  },
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With", "Accept"],
+  exposedHeaders: ["Content-Disposition"],
+};
+
+const corsMiddleware = cors(corsOptions);
+
 // ===== MIDDLEWARE =====
-app.use(express.json());
+app.use(helmet({ crossOriginEmbedderPolicy: false, contentSecurityPolicy: false }));
+app.use(corsMiddleware);
+app.options("*", corsMiddleware);
+app.use(express.json({ limit: securityConfig.jsonLimit }));
+app.use(express.urlencoded({ extended: true, limit: securityConfig.urlencodedLimit }));
 app.use(cookieParser());
+app.use(hpp());
+app.use(mongoSanitize());
+app.use(xssClean());
+app.use(compression());
 app.use(express.static(path.join(__dirname, "public")));
+
+app.use((err, req, res, next) => {
+  if (err && err.message === "CORS origin denied") {
+    return res.status(403).json({ error: "forbidden_origin" });
+  }
+  return next(err);
+});
+
+// Initialize Passport
+configurePassport();
+app.use(passport.initialize());
 
 // ===== PAGE ROUTES =====
 // Rota principal (index)
@@ -76,11 +126,6 @@ fs.mkdirSync(STORAGE_IN, { recursive: true });
 fs.mkdirSync(STORAGE_OUT, { recursive: true });
 fs.mkdirSync(STORAGE_META, { recursive: true });
 
-console.log("📁 Storage initialized:");
-console.log(`  - Input: ${STORAGE_IN}`);
-console.log(`  - Output: ${STORAGE_OUT}`);
-console.log(`  - Metadata: ${STORAGE_META}`);
-
 // Initialize storage util
 initStorage(STORAGE_BASE);
 
@@ -96,10 +141,11 @@ const processRoutes = createProcessRoutes(processController);
 app.use("/", processRoutes);
 
 // ===== NEW API ROUTES =====
-app.use("/api/auth", authRoutes);
+app.use("/api", apiLimiter);
+app.use("/api/auth", authLimiter, authRoutes);
 app.use("/api/jobs", jobsRoutes);
 app.use("/api/r2-test", r2TestRoutes);
-app.use("/api/free", freeRoutes);
+app.use("/api/free", freeProcessLimiter, freeRoutes);
 app.use("/api", recentsRoutes); // Recent processings endpoint
 app.use("/api", downloadRoutes); // Download proxy for R2 files
 

@@ -3,8 +3,6 @@
  * Gerencia o processamento de áudio na landing page com proteção de autenticação
  */
 
-console.log('🚀 [LANDING-PROCESSOR] Script carregado');
-
 import { isAuthenticated } from './auth/session.js';
 import { openModal } from './auth/modal-auth.js';
 
@@ -24,19 +22,10 @@ function init() {
   presetSelect = document.getElementById('presetSelect');
   statusContainer = document.getElementById('statusContainer');
 
-  console.log('📋 [LANDING-PROCESSOR] Elementos encontrados:', {
-    processBtn: !!processBtn,
-    youtubeUrlInput: !!youtubeUrlInput,
-    presetSelect: !!presetSelect,
-    statusContainer: !!statusContainer
-  });
-
   if (!processBtn) {
     console.warn('⚠️ [LANDING] Botão #processBtn não encontrado');
     return;
   }
-
-  console.log('🔧 [LANDING] Inicializando proteção do botão de processar...');
 
   // Verificar se foi redirecionado por falta de autenticação
   const urlParams = new URLSearchParams(window.location.search);
@@ -63,15 +52,10 @@ function init() {
   // Atualizar referência
   const cleanBtn = document.getElementById('processBtn');
 
-  console.log('🔧 [LANDING] Botão clonado, adicionando event listener...');
-
   // Adicionar nosso event listener com captura (fase de captura executa primeiro)
   cleanBtn.addEventListener('click', (e) => {
-    console.log('🖱️ [LANDING] CLICK DETECTADO NO BOTÃO!');
     handleProcessClick(e);
   }, true);
-
-  console.log('✅ [LANDING] Event listener de proteção instalado no botão:', cleanBtn);
 
   // Permitir Enter no input de URL
   youtubeUrlInput?.addEventListener('keypress', (e) => {
@@ -130,11 +114,8 @@ function handleProcessClick(e) {
     e.stopImmediatePropagation();
   }
 
-  console.log('🔒 [LANDING] Botão processar clicado - verificando autenticação...');
-
   // Verificar se está autenticado
   if (!isAuthenticated()) {
-    console.log('❌ [LANDING] Usuário NÃO autenticado - bloqueando processamento');
     // Mostrar mensagem e abrir modal de login
     showAuthRequiredMessage();
     setTimeout(() => {
@@ -143,37 +124,27 @@ function handleProcessClick(e) {
     return false; // Importante: retornar false para prevenir propagação
   }
 
-  console.log('✅ [LANDING] Usuário autenticado - validando campos...');
-
   // Se está autenticado, validar campos
   const url = youtubeUrlInput?.value?.trim();
   const preset = presetSelect?.value;
 
-  console.log('📋 [LANDING] URL:', url);
-  console.log('📋 [LANDING] Preset:', preset);
-
   if (!url) {
-    console.log('❌ [LANDING] URL vazia');
     showError('Por favor, insira uma URL do YouTube');
     youtubeUrlInput?.focus();
     return false;
   }
 
   if (!isValidYouTubeUrl(url)) {
-    console.log('❌ [LANDING] URL inválida');
     showError('Por favor, insira uma URL válida do YouTube');
     youtubeUrlInput?.focus();
     return false;
   }
 
   if (!preset) {
-    console.log('❌ [LANDING] Preset não selecionado');
     showError('Por favor, selecione um preset');
     presetSelect?.focus();
     return false;
   }
-
-  console.log('✅ [LANDING] Campos validados - iniciando processamento...');
 
   // Processar áudio diretamente na landing page
   startProcessing(url, preset);
@@ -186,10 +157,7 @@ function handleProcessClick(e) {
 async function startProcessing(url, presetName) {
   const token = localStorage.getItem('phona:token');
 
-  console.log('🔐 [LANDING] Token do localStorage:', token);
-
   if (!token) {
-    console.error('❌ [LANDING] Token não encontrado!');
     showError('Sessão expirada. Faça login novamente.');
     openModal('login');
     return;
@@ -209,26 +177,17 @@ async function startProcessing(url, presetName) {
   }
 
   try {
-    console.log('📤 [LANDING] Enviando requisição para /process...');
-    console.log('📤 [LANDING] URL:', url);
-    console.log('📤 [LANDING] Preset:', presetName);
-    console.log('📤 [LANDING] Token (primeiros 20 chars):', token ? token.substring(0, 20) + '...' : 'Ausente');
-
     // Preparar headers
     const headers = {
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${token}`
     };
 
-    console.log('📋 [LANDING] Headers:', headers);
-
     // Preparar body
     const body = {
       url: url,
       preset: presetName
     };
-
-    console.log('📋 [LANDING] Body:', body);
 
     // Enviar requisição para criar job
     const response = await fetch('/process', {
@@ -237,18 +196,22 @@ async function startProcessing(url, presetName) {
       body: JSON.stringify(body)
     });
 
-    console.log('📥 [LANDING] Response status:', response.status);
-    console.log('📥 [LANDING] Response headers:', Object.fromEntries(response.headers.entries()));
+    let data = null;
 
-    const data = await response.json();
-    console.log('📥 [LANDING] Response data:', data);
-
-    if (!response.ok) {
-      throw new Error(data.error || 'Erro ao iniciar processamento');
+    try {
+      data = await response.json();
+    } catch (parseError) {
+      console.warn('⚠️ [LANDING] Falha ao ler JSON da resposta:', parseError);
     }
 
-    console.log('✅ [LANDING] Job criado com sucesso:', data.id);
-    console.log('🔄 [LANDING] Redirecionando para /html/process.html?id=' + data.id);
+    if (!response.ok) {
+      const errorMessage = data?.message || data?.error || 'Erro ao iniciar processamento';
+      throw new Error(errorMessage);
+    }
+
+    if (!data || !data.id) {
+      throw new Error('Resposta inesperada do servidor. Tente novamente.');
+    }
 
     // Redirecionar para página de processo com o jobId
     window.location.href = `/html/process.html?id=${data.id}`;

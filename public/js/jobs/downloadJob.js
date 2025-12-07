@@ -212,8 +212,6 @@ function init() {
   // Tracking de download
   if (downloadBtn) {
     downloadBtn.addEventListener('click', () => {
-      console.log('Download iniciado:', currentJob?.fileName);
-
       // Opcional: mostrar feedback de sucesso
       setTimeout(() => {
         const icon = downloadBtn.querySelector('svg');

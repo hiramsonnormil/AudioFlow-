@@ -72,7 +72,6 @@ class LandingController {
    */
   openLoginModal() {
     this.authModal.open('login', (user) => {
-      console.log('Login successful:', user);
       this.updateAuthUI();
       this.onAuthSuccess(user);
     });
@@ -83,7 +82,6 @@ class LandingController {
    */
   openSignupModal() {
     this.authModal.open('signup', (user) => {
-      console.log('Signup successful:', user);
       this.updateAuthUI();
       this.onAuthSuccess(user);
     });

@@ -6,12 +6,22 @@
 import { nanoid } from "nanoid";
 import fs from "fs";
 import path from "path";
+import { fileURLToPath } from "url";
 import { jobQueueService } from "../services/JobQueueService.js";
 import { youtubeService } from "../services/YouTubeService.js";
 import { AudioProcessingService } from "../services/AudioProcessingService.js";
 import { isValidPreset } from "../models/Preset.js";
-import { fileURLToPath } from "url";
+import {
+  MAX_AUDIO_DURATION_MINUTES,
+  isDurationTooLong,
+  buildDurationLimitMessage,
+} from "../config/audioLimits.js";
 import * as r2 from "../../storage/r2.js";
+import {
+  getUserIdentity,
+  sanitizePresetInput,
+  sanitizeUrlInput,
+} from "../config/security.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -28,7 +38,8 @@ export class ProcessController {
    * POST /process - Criar novo job de processamento
    */
   async startProcess(req, res) {
-    const { url, preset } = req.body || {};
+    const url = sanitizeUrlInput(req.body?.url);
+    const preset = sanitizePresetInput(req.body?.preset);
 
     // Validações
     if (!url || !preset) {
@@ -43,20 +54,50 @@ export class ProcessController {
       return res.status(400).json({ error: "Invalid preset" });
     }
 
-    // Criar job
     const jobId = nanoid(10);
+
+    // Obter metadados para validar duração antes de enfileirar
+    const metadata = await youtubeService.getMetadata(url, jobId);
+    const duration =
+      typeof metadata.duration === "number"
+        ? metadata.duration
+        : parseFloat(metadata.duration) || 0;
+
+    if (isDurationTooLong(duration)) {
+      console.warn(
+        `[${jobId}] Audio duration ${duration.toFixed(
+          2
+        )}s exceeds limit (${MAX_AUDIO_DURATION_MINUTES}min)`
+      );
+      return res.status(400).json({
+        error: "audio_too_long",
+        message: buildDurationLimitMessage(duration),
+        maxDurationMinutes: MAX_AUDIO_DURATION_MINUTES,
+      });
+    }
+
+    // Criar job
     const job = jobQueueService.createJob(jobId);
     job.in = url;
-    job.metadata.preset = preset;
+    job.metadata = {
+      ...job.metadata,
+      ...metadata,
+      preset,
+      duration,
+      youtubeUrl: url,
+    };
     
     // Salvar userId se houver autenticação (usa email como identificador)
-    job.userId = req.user?.email || req.user?._id || 'anonymous';
-    job.metadata.userId = job.userId;
+    const userSource = req.user?.email || req.user?._id || req.ip || "anonymous";
+    const userIdentity = getUserIdentity(userSource);
+
+    job.metadata = job.metadata || {};
+    job.userId = userIdentity.storageKey;
+    job.metadata.userStorageKey = userIdentity.storageKey;
+    job.metadata.userReference = userIdentity.reference;
 
     // Enfileirar
     jobQueueService.enqueueJob(jobId);
-
-    console.log(`[${jobId}] New job created: ${preset} from ${url}`);
 
     // Tentar processar a fila
     this.processQueue();
@@ -139,8 +180,6 @@ export class ProcessController {
     const { id } = req.params;
     const job = jobQueueService.getJob(id);
 
-    console.log(`[DEBUG] GET /file/${id}`);
-
     if (!job) {
       console.error(`[DEBUG] Job ${id} not found`);
       return res.status(404).send("not found");
@@ -153,8 +192,6 @@ export class ProcessController {
 
     // Se o job tem URL do R2, baixar com autenticação S3
     if (job.out && job.out.startsWith('http')) {
-      console.log(`[DEBUG] Downloading from R2: ${job.out}`);
-      
       try {
         // Extrair a key do R2 da URL
         const key = r2.extractKeyFromUrl(job.out);
@@ -163,8 +200,6 @@ export class ProcessController {
           console.error(`[DEBUG] Failed to extract key from URL: ${job.out}`);
           return res.status(500).send("Invalid R2 URL");
         }
-        
-        console.log(`[DEBUG] Extracted R2 key: ${key}`);
         
         // Baixar arquivo do R2 com autenticação
         const stream = await r2.downloadFile(key);
@@ -205,10 +240,6 @@ export class ProcessController {
     const fileSize = fs.statSync(filePath).size;
     // Usar nome formatado: nomedamusica-presetaplicado-diadoprocessamento.mp3
     const downloadName = job.getFormattedDownloadFilename();
-
-    console.log(
-      `[DEBUG] Serving local file: ${filePath} (${fileSize} bytes) as ${downloadName}`
-    );
 
     res.set("Cache-Control", "no-cache, no-store, must-revalidate");
     res.set("Pragma", "no-cache");
@@ -267,29 +298,43 @@ export class ProcessController {
       job.start();
 
       // Step 1: Extrair metadados
-      console.log(`[${jobId}] Extracting metadata...`);
       job.status = "EXTRACTING";
-      const metadata = await youtubeService.getMetadata(url, jobId);
-      job.metadata = { ...job.metadata, ...metadata };
+      if (!job.metadata) {
+        job.metadata = {};
+      }
+
+      if (!job.metadata.title || !job.metadata.duration) {
+        const fetchedMetadata = await youtubeService.getMetadata(url, jobId);
+        job.metadata = { ...job.metadata, ...fetchedMetadata };
+      }
+
       const duration =
-        typeof metadata.duration === "number"
-          ? metadata.duration
-          : parseFloat(metadata.duration) || 0;
+        typeof job.metadata.duration === "number"
+          ? job.metadata.duration
+          : parseFloat(job.metadata.duration) || 0;
+
+      job.metadata.duration = duration;
+      job.metadata.youtubeUrl = job.metadata.youtubeUrl || url;
+
+      if (isDurationTooLong(duration)) {
+        console.warn(
+          `[${jobId}] Abortando: duração ${duration.toFixed(
+            2
+          )}s acima do limite (${MAX_AUDIO_DURATION_MINUTES}min)`
+        );
+        throw new Error(buildDurationLimitMessage(duration));
+      }
       job.progress = 10;
 
       // Step 2: Processar e fazer upload para R2 (novo fluxo)
       job.status = "PROCESSING";
       job.progress = 15;
 
-      console.log(`[${jobId}] Iniciando processamento com upload para R2`);
-
       const audioStream = youtubeService.getAudioStream(url, jobId);
       
       // Obter userId do job (se foi definido ao criar) ou usar 'anonymous'
       // Usar email como identificador principal
-      const userId = job.userId || job.metadata?.userId || 'anonymous';
-      
-      console.log(`[${jobId}] Processing for user: ${userId}`);
+      const userId = job.userId || job.metadata?.userStorageKey || "anonymous";
       
       // Usar o novo método que faz tudo: processa + upload R2 + deleta local
       const r2Result = await this.audioService.processAndUploadToR2(
@@ -298,7 +343,7 @@ export class ProcessController {
         userId,
         preset,
         duration,
-        metadata.title
+        job.metadata?.title
       );
 
       job.progress = 95;
@@ -308,11 +353,8 @@ export class ProcessController {
       job.r2Key = r2Result.key; // Chave no R2
       job.filename = path.basename(r2Result.key); // Nome do arquivo
 
-      console.log(`[${jobId}] Arquivo disponível em: ${r2Result.publicUrl}`);
-
       // Step 5: Completar job
       jobQueueService.completeJob(jobId);
-      console.log(`[${jobId}] Job completed successfully - Uploaded to R2`);
     } catch (err) {
       console.error(`[${jobId}] Error:`, err.message);
       jobQueueService.failJob(jobId, err.message);

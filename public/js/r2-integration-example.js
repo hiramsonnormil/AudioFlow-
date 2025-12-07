@@ -24,11 +24,12 @@ async function processarAudioFree(videoUrl, preset) {
 
     const data = await response.json();
 
+    if (!response.ok) {
+      const message = data?.message || data?.error || 'Erro desconhecido';
+      throw new Error(message);
+    }
+
     if (data.success) {
-      console.log('✅ Processamento concluído!');
-      console.log('Download URL:', data.downloadUrl);
-      console.log('Expira em:', data.metadata.expiresIn);
-      
       // Mostrar link de download para o usuário
       mostrarLinkDownload(data.downloadUrl, data.metadata.title);
       
@@ -36,9 +37,9 @@ async function processarAudioFree(videoUrl, preset) {
       atualizarListaRecentes();
       
       return data;
-    } else {
-      throw new Error(data.error || 'Erro desconhecido');
     }
+
+    throw new Error(data.error || 'Erro desconhecido');
   } catch (error) {
     console.error('❌ Erro ao processar:', error);
     alert(`Erro: ${error.message}`);
@@ -61,16 +62,19 @@ async function listarProcessamentosRecentes() {
 
     const data = await response.json();
 
+    if (!response.ok) {
+      const message = data?.message || data?.error || 'Erro ao listar';
+      throw new Error(message);
+    }
+
     if (data.success) {
-      console.log(`📋 ${data.total} processamento(s) encontrado(s)`);
-      
       // Renderizar lista
       renderizarListaProcessamentos(data.processamentos);
       
       return data.processamentos;
-    } else {
-      throw new Error(data.error || 'Erro ao listar');
     }
+
+    throw new Error(data.error || 'Erro ao listar');
   } catch (error) {
     console.error('❌ Erro ao listar:', error);
     return [];
@@ -245,7 +249,6 @@ async function fluxoCompletoProcessamento() {
     const result = await processarAudioFree(videoUrl, preset);
     
     // 5. Sucesso - mostrar resultado
-    console.log('Processamento concluído:', result);
     
     // 6. Limpar formulário
     document.getElementById('video-url').value = '';
@@ -263,8 +266,6 @@ async function fluxoCompletoProcessamento() {
 // ===== EXEMPLO 7: Inicialização ao carregar a página =====
 
 document.addEventListener('DOMContentLoaded', () => {
-  console.log('🎵 Phona AudioFlow - R2 Integration');
-  
   // Se estiver na página de processamentos recentes
   if (document.getElementById('lista-processamentos')) {
     iniciarAutoAtualizacao();

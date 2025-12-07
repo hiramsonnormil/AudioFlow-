@@ -8,7 +8,7 @@
    RECENTS HERO
    ========================================== */
 .recents-hero {
-  padding: var(--space-3xl) 2rem var(--space-2xl);
+  padding: clamp(2rem, 6vw, 4rem) clamp(1rem, 4vw, 2rem) clamp(1.5rem, 4vw, 3rem);
   background: var(--bg-primary);
   text-align: center;
 }
@@ -26,10 +26,10 @@
   background: rgba(194, 140, 102, 0.1);
   border: 1px solid var(--border);
   border-radius: 100px;
-  font-size: 0.875rem;
+  font-size: clamp(0.8rem, 2vw, 0.875rem);
   font-weight: 500;
   color: var(--copper-light);
-  margin-bottom: 2rem;
+  margin-bottom: clamp(1rem, 3vw, 2rem);
   backdrop-filter: blur(10px);
 }
 
@@ -43,9 +43,12 @@
 }
 
 @keyframes pulse-dot {
-  0%, 100% {
+
+  0%,
+  100% {
     opacity: 1;
   }
+
   50% {
     opacity: 0.6;
   }
@@ -53,19 +56,22 @@
 
 .recents-title {
   font-family: var(--font-display);
-  font-size: clamp(2.5rem, 5vw, 4rem);
+  font-size: clamp(1.75rem, 6vw, 4rem);
   font-weight: 700;
   line-height: 1.2;
   letter-spacing: -0.02em;
-  margin-bottom: 1rem;
+  margin-bottom: clamp(0.75rem, 2vw, 1rem);
   color: var(--text-primary);
+  padding: 0 1rem;
 }
 
 .recents-subtitle {
-  font-size: 1.125rem;
+  font-size: clamp(0.95rem, 2.5vw, 1.125rem);
   color: var(--text-secondary);
   max-width: 600px;
   margin: 0 auto;
+  line-height: 1.6;
+  padding: 0 1rem;
 }
 
 /* ==========================================
@@ -146,7 +152,9 @@
 }
 
 @keyframes spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .loading-text {
@@ -195,9 +203,9 @@
    ========================================== */
 .recents-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-  gap: 2rem;
-  margin-top: 2rem;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 320px), 1fr));
+  gap: clamp(1.25rem, 3vw, 2rem);
+  margin-top: clamp(1.5rem, 3vw, 2rem);
   animation: fadeInUp 0.6s ease-out 0.2s both;
 }
 
@@ -205,18 +213,36 @@
   animation: fadeInUp 0.4s ease-out both;
 }
 
-.processing-card:nth-child(1) { animation-delay: 0.1s; }
-.processing-card:nth-child(2) { animation-delay: 0.2s; }
-.processing-card:nth-child(3) { animation-delay: 0.3s; }
-.processing-card:nth-child(4) { animation-delay: 0.4s; }
-.processing-card:nth-child(5) { animation-delay: 0.5s; }
-.processing-card:nth-child(n+6) { animation-delay: 0.6s; }
+.processing-card:nth-child(1) {
+  animation-delay: 0.1s;
+}
+
+.processing-card:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.processing-card:nth-child(3) {
+  animation-delay: 0.3s;
+}
+
+.processing-card:nth-child(4) {
+  animation-delay: 0.4s;
+}
+
+.processing-card:nth-child(5) {
+  animation-delay: 0.5s;
+}
+
+.processing-card:nth-child(n+6) {
+  animation-delay: 0.6s;
+}
 
 @keyframes fadeInUp {
   from {
     opacity: 0;
     transform: translateY(20px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -230,8 +256,8 @@
   position: relative;
   background: var(--bg-card);
   border: 1px solid var(--border);
-  border-radius: 16px;
-  padding: 2rem;
+  border-radius: clamp(12px, 2vw, 16px);
+  padding: clamp(1.25rem, 4vw, 2rem);
   transition: transform var(--animation-duration) var(--ease-smooth),
     border-color var(--animation-duration) var(--ease-smooth),
     box-shadow var(--animation-duration) var(--ease-smooth);
@@ -243,27 +269,27 @@
   content: '';
   position: absolute;
   inset: 0;
-  background-image: repeating-linear-gradient(
-    90deg,
-    transparent,
-    transparent 2px,
-    rgba(194, 140, 102, 0.02) 2px,
-    rgba(194, 140, 102, 0.02) 4px
-  );
+  background-image: repeating-linear-gradient(90deg,
+      transparent,
+      transparent 2px,
+      rgba(194, 140, 102, 0.02) 2px,
+      rgba(194, 140, 102, 0.02) 4px);
   pointer-events: none;
   opacity: 0;
   transition: opacity var(--animation-duration) var(--ease-smooth);
 }
 
-.processing-card:hover {
-  transform: translateY(-4px);
-  border-color: var(--border-hover);
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.3),
-    0 0 0 1px rgba(194, 140, 102, 0.2) inset;
-}
+@media (hover: hover) {
+  .processing-card:hover {
+    transform: translateY(-4px);
+    border-color: var(--border-hover);
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.3),
+      0 0 0 1px rgba(194, 140, 102, 0.2) inset;
+  }
 
-.processing-card:hover::before {
-  opacity: 1;
+  .processing-card:hover::before {
+    opacity: 1;
+  }
 }
 
 .card-header {
@@ -342,12 +368,10 @@
 
 .expiration-progress {
   height: 100%;
-  background: linear-gradient(
-    90deg,
-    var(--copper) 0%,
-    var(--copper-light) 50%,
-    var(--copper-dark) 100%
-  );
+  background: linear-gradient(90deg,
+      var(--copper) 0%,
+      var(--copper-light) 50%,
+      var(--copper-dark) 100%);
   border-radius: 3px;
   transition: width 1s linear;
   position: relative;
@@ -403,9 +427,12 @@
 }
 
 @keyframes pulse-warning {
-  0%, 100% {
+
+  0%,
+  100% {
     opacity: 1;
   }
+
   50% {
     opacity: 0.7;
   }
@@ -486,20 +513,29 @@
 /* ==========================================
    RESPONSIVE
    ========================================== */
-@media (max-width: 1024px) {
-  .recents-grid {
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-    gap: 1.5rem;
+
+/* Large tablets and small desktops */
+@media (max-width: 1200px) {
+  .recents-container {
+    max-width: 1100px;
   }
 }
 
-@media (max-width: 768px) {
-  .recents-hero {
-    padding: var(--space-xl) 1rem var(--space-lg);
+/* Tablets landscape */
+@media (max-width: 1024px) {
+  .recents-grid {
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr));
   }
 
+  .recents-container {
+    padding: 0 1.25rem;
+  }
+}
+
+/* Tablets portrait */
+@media (max-width: 768px) {
   .recents-section {
-    padding: var(--space-lg) 1rem var(--space-xl);
+    padding: clamp(1.5rem, 4vw, 2rem) 1rem clamp(2rem, 5vw, 3rem);
   }
 
   .recents-container {
@@ -508,47 +544,68 @@
 
   .recents-grid {
     grid-template-columns: 1fr;
-    gap: 1.25rem;
-  }
-
-  .processing-card {
-    padding: 1.5rem;
   }
 
   .user-info-card {
     margin-left: 0;
     margin-right: 0;
+    max-width: 100%;
+  }
+
+  .card-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+  }
+
+  .card-preset {
+    margin-bottom: 0;
   }
 
   .card-actions {
     flex-direction: column;
+    gap: 0.625rem;
   }
 
   .btn-download,
   .btn-delete {
     width: 100%;
   }
-  
-  .card-header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 0.75rem;
+}
+
+/* Mobile landscape */
+@media (max-width: 640px) {
+  .recents-badge {
+    padding: 0.4rem 1rem;
   }
-  
-  .card-preset {
-    margin-bottom: 0;
+
+  .user-info-card {
+    padding: 1.25rem;
+  }
+
+  .user-avatar {
+    width: 40px;
+    height: 40px;
+    font-size: 1.25rem;
+  }
+
+  .card-info {
+    gap: 0.625rem;
+  }
+
+  .btn-download {
+    padding: 0.75rem 1.25rem;
+    font-size: 0.9rem;
+  }
+
+  .btn-delete {
+    padding: 0.75rem;
+    min-width: 44px;
   }
 }
 
+/* Mobile portrait */
 @media (max-width: 480px) {
-  .recents-title {
-    font-size: clamp(1.75rem, 6vw, 2.5rem);
-  }
-
-  .recents-subtitle {
-    font-size: 0.95rem;
-  }
-
   .empty-icon {
     font-size: 3.5rem;
   }
@@ -557,22 +614,62 @@
     font-size: 1.25rem;
   }
 
-  .processing-card {
-    padding: 1.25rem;
+  .empty-description {
+    font-size: 0.9rem;
   }
 
   .card-title {
     font-size: 1rem;
   }
-  
+
   .info-row {
     flex-direction: column;
     align-items: flex-start;
     gap: 0.25rem;
   }
-  
+
+  .info-label,
+  .info-value {
+    font-size: 0.8125rem;
+  }
+
   .info-value {
     text-align: left;
   }
+
+  .expiration-time {
+    font-size: 0.8125rem;
+    padding: 0.4rem;
+  }
+
+  .card-preset {
+    font-size: 0.7rem;
+    padding: 0.3rem 0.75rem;
+  }
 }
 
+/* Small mobile devices */
+@media (max-width: 360px) {
+  .recents-container {
+    padding: 0 0.75rem;
+  }
+
+  .recents-badge {
+    font-size: 0.75rem;
+    padding: 0.35rem 0.875rem;
+  }
+
+  .user-info-card {
+    padding: 1rem;
+  }
+
+  .user-email {
+    font-size: 0.85rem;
+    word-break: break-all;
+  }
+
+  .btn-download {
+    padding: 0.625rem 1rem;
+    font-size: 0.85rem;
+  }
+}

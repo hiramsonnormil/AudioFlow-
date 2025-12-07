@@ -465,7 +465,6 @@ async function loadPresets() {
     // Create custom select with icons
     createCustomSelect(presetSelect, presets);
 
-    console.log(`✅ Loaded ${presets.length} presets`);
   } catch (error) {
     console.error("Error loading presets:", error);
     if (presetSelect.options.length === 0) {
@@ -824,5 +823,3 @@ function updateMobileMenuAuth() {
     }
   }
 }
-
-console.log("🎵 phona Landing - Initialized (Otimizado)");

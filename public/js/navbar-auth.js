@@ -23,8 +23,6 @@ function updateNavbar() {
     const user = getUser();
     const userName = user?.username || user?.email?.split('@')[0] || 'Usuário';
 
-    console.log('✅ [NAVBAR] Usuário autenticado:', userName);
-
     // Substituir botões de login/signup por user info e logout - DESKTOP
     navLinks.innerHTML = `
       <a href="#effects" class="nav-link">Efeitos</a>
@@ -64,8 +62,6 @@ function updateNavbar() {
       logoutBtn.addEventListener('click', handleLogout);
     }
   } else {
-    console.log('❌ [NAVBAR] Usuário não autenticado');
-
     // Mostrar botões de login/signup - DESKTOP
     navLinks.innerHTML = `
       <a href="#effects" class="nav-link">Efeitos</a>
@@ -96,17 +92,12 @@ function updateNavbar() {
  * Fazer logout
  */
 async function handleLogout() {
-  console.log('🚪 [NAVBAR] Solicitando confirmação de logout...');
-
   // Mostrar modal de confirmação bonito
   const confirmed = await confirmLogout();
 
   if (!confirmed) {
-    console.log('❌ [NAVBAR] Logout cancelado pelo usuário');
     return;
   }
-
-  console.log('🚪 [NAVBAR] Fazendo logout...');
 
   clearSession();
 
@@ -118,13 +109,11 @@ async function handleLogout() {
  * Inicializar
  */
 function init() {
-  console.log('🔧 [NAVBAR] Inicializando atualização de navbar...');
   updateNavbar();
 
   // Escutar mudanças no localStorage (login/logout em outra aba)
   window.addEventListener('storage', (e) => {
     if (e.key === 'phona:token' || e.key === null) {
-      console.log('🔄 [NAVBAR] Mudança detectada no localStorage');
       updateNavbar();
     }
   });

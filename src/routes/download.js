@@ -35,23 +35,14 @@ router.get('/download/:key(*)', authRequired, async (req, res) => {
     const key = decodeURIComponent(req.params.key);
     const userId = req.user.email || req.user._id;
     
-    console.log(`[DOWNLOAD] Proxy request - User: ${userId}, Key: ${key}`);
-    console.log(`[DOWNLOAD] Verificando se key começa com: free/${userId}/`);
-    
     // Verificar se o arquivo pertence ao usuário
     const expectedPrefix = `free/${userId}/`;
     if (!key.startsWith(expectedPrefix)) {
-      console.warn(`[DOWNLOAD] ❌ Acesso negado - arquivo não pertence ao usuário`);
-      console.warn(`[DOWNLOAD] Key recebida: "${key}"`);
-      console.warn(`[DOWNLOAD] Prefixo esperado: "${expectedPrefix}"`);
-      console.warn(`[DOWNLOAD] Key começa com prefixo? ${key.startsWith(expectedPrefix)}`);
       return res.status(403).json({ 
         error: 'forbidden',
         message: 'Você não tem permissão para acessar este arquivo'
       });
     }
-    
-    console.log(`[DOWNLOAD] ✅ Permissão validada - arquivo pertence ao usuário`);
     
     // Buscar arquivo do R2
     const s3Client = getR2Client();
@@ -93,7 +84,6 @@ router.get('/download/:key(*)', authRequired, async (req, res) => {
       const ONE_HOUR = 60 * 60 * 1000;
       
       if (fileAge > ONE_HOUR) {
-        console.warn(`[DOWNLOAD] Arquivo expirado: ${key} (idade: ${Math.round(fileAge / 1000 / 60)} min)`);
         return res.status(410).json({ 
           error: 'expired',
           message: 'Arquivo expirado (mais de 1 hora)'
@@ -143,8 +133,6 @@ router.get('/download/:key(*)', authRequired, async (req, res) => {
     }
     res.set('Content-Disposition', `attachment; filename="${formattedFileName}"`);
     res.set('Cache-Control', 'public, max-age=3600');
-    
-    console.log(`[DOWNLOAD] Streaming arquivo: ${formattedFileName} (${response.ContentLength || 'unknown'} bytes)`);
     
     // Stream do arquivo para a resposta
     response.Body.pipe(res);
