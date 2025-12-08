@@ -3,6 +3,7 @@
    ========================================== */
 
 import { confirmLogout } from './confirm-modal.js';
+import { isAuthenticated } from './auth/session.js';
 
 // Smooth scroll
 function scrollToSection(id) {
@@ -22,6 +23,28 @@ function scrollToProcessor() {
 // Exportar funções para uso global no HTML
 window.scrollToSection = scrollToSection;
 window.scrollToProcessor = scrollToProcessor;
+
+// Atualizar texto do sticky CTA baseado no estado de autenticação
+function updateStickyCTA() {
+  const stickyBtn = document.querySelector('.sticky-btn span:first-child');
+  if (stickyBtn) {
+    if (isAuthenticated()) {
+      stickyBtn.textContent = 'Criar meu remix';
+    } else {
+      stickyBtn.textContent = 'Criar conta grátis';
+    }
+  }
+}
+
+// Atualizar na inicialização
+updateStickyCTA();
+
+// Atualizar quando o estado de autenticação mudar
+window.addEventListener('storage', (e) => {
+  if (e.key === 'phona:token') {
+    updateStickyCTA();
+  }
+});
 
 // Sticky CTA visibility on scroll (otimizado com throttle)
 const stickyCta = document.querySelector(".sticky-cta");

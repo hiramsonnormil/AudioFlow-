@@ -82,8 +82,6 @@ const getAccountIdFromEndpoint = () => {
  */
 async function uploadFile(localPath, key, options = {}) {
   try {
-    console.log(`[R2] Iniciando upload: ${localPath} -> ${key}`);
-    
     // Lê o arquivo local em buffer
     const fileBuffer = await fs.readFile(localPath);
     
@@ -122,7 +120,6 @@ async function uploadFile(localPath, key, options = {}) {
     await _s3.send(command);
     
     const publicUrl = getPublicUrl(key);
-    console.log(`[R2] Upload concluído: ${publicUrl}`);
     
     return { key, publicUrl };
   } catch (error) {
@@ -155,8 +152,6 @@ function getPublicUrl(key) {
  */
 async function deleteObject(key) {
   try {
-    console.log(`[R2] Deletando objeto: ${key}`);
-    
     ensureClient();
     const command = new DeleteObjectCommand({
       Bucket: _BUCKET,
@@ -164,7 +159,6 @@ async function deleteObject(key) {
     });
     
     await _s3.send(command);
-    console.log(`[R2] Objeto deletado: ${key}`);
   } catch (error) {
     console.error(`[R2] Erro ao deletar objeto ${key}:`, error);
     throw new Error(`Falha ao deletar do R2: ${error.message}`);
@@ -179,8 +173,6 @@ async function deleteObject(key) {
  */
 async function cleanupExpiredFreeObjects(userId) {
   try {
-    console.log(`[R2] Iniciando limpeza de objetos expirados para usuário: ${userId}`);
-    
     // Lista objetos do usuário usando prefixo
     ensureClient();
     const prefix = `free/${userId}/`;
@@ -192,7 +184,6 @@ async function cleanupExpiredFreeObjects(userId) {
     const response = await _s3.send(command);
     
     if (!response.Contents || response.Contents.length === 0) {
-      console.log(`[R2] Nenhum objeto encontrado para o usuário ${userId}`);
       return { deleted: 0, errors: 0 };
     }
     
@@ -209,7 +200,6 @@ async function cleanupExpiredFreeObjects(userId) {
         const objectAge = now - new Date(obj.LastModified).getTime();
         
         if (objectAge > ONE_HOUR) {
-          console.log(`[R2] Objeto expirado detectado: ${obj.Key} (idade: ${Math.round(objectAge / 1000 / 60)} min)`);
           await deleteObject(obj.Key);
           deleted++;
         }
@@ -219,7 +209,6 @@ async function cleanupExpiredFreeObjects(userId) {
       }
     }
     
-    console.log(`[R2] Limpeza concluída: ${deleted} deletados, ${errors} erros`);
     return { deleted, errors };
   } catch (error) {
     console.error('[R2] Erro na limpeza de objetos expirados:', error);
@@ -235,8 +224,6 @@ async function cleanupExpiredFreeObjects(userId) {
  */
 async function listFreeUserObjects(userId) {
   try {
-    console.log(`[R2] Listando objetos do usuário free: ${userId}`);
-    
     ensureClient();
     const prefix = `free/${userId}/`;
     const command = new ListObjectsV2Command({
@@ -291,7 +278,6 @@ async function listFreeUserObjects(userId) {
         });
       } else {
         // Objeto expirado - deleta silenciosamente
-        console.log(`[R2] Deletando objeto expirado durante listagem: ${obj.Key}`);
         try {
           await deleteObject(obj.Key);
         } catch (error) {
@@ -300,7 +286,6 @@ async function listFreeUserObjects(userId) {
       }
     }
     
-    console.log(`[R2] ${validObjects.length} objetos válidos encontrados para ${userId}`);
     return validObjects;
   } catch (error) {
     console.error('[R2] Erro ao listar objetos do usuário:', error);
@@ -316,9 +301,7 @@ async function listFreeUserObjects(userId) {
  */
 async function deleteLocalFile(localPath) {
   try {
-    console.log(`[R2] Deletando arquivo local: ${localPath}`);
     await fs.unlink(localPath);
-    console.log(`[R2] Arquivo local deletado: ${localPath}`);
   } catch (error) {
     // Não lança erro, apenas loga - a falha em deletar local não deve quebrar o fluxo
     console.warn(`[R2] Falha ao deletar arquivo local ${localPath}:`, error.message);
@@ -337,8 +320,6 @@ async function downloadFile(key) {
     const s3 = ensureClient();
     const bucket = _BUCKET;
     
-    console.log(`[R2] Baixando arquivo: ${key} do bucket ${bucket}`);
-    
     const command = new GetObjectCommand({
       Bucket: bucket,
       Key: key,
@@ -349,7 +330,6 @@ async function downloadFile(key) {
     // response.Body é um stream ReadableStream (Web API)
     // Precisa converter para Node.js Readable stream
     if (response.Body) {
-      console.log(`[R2] Arquivo baixado com sucesso: ${key}`);
       return response.Body;
     }
     
@@ -383,6 +363,89 @@ function extractKeyFromUrl(url) {
   } catch (error) {
     console.error('[R2] Erro ao extrair key da URL:', error);
     return null;
+  }
+}
+
+/**
+ * Lista objetos de um usuário específico (funciona para free ou premium)
+ * Suporta tier 'free' (com expiração de 1h) e 'premium' (com expiração de 24h)
+ * @param {string} userId - Hash do usuário (storageKey)
+ * @param {string} tier - 'free' ou 'premium'
+ * @returns {Promise<Array>} Lista de objetos válidos com metadata
+ */
+export async function listUserObjects(userId, tier = 'free') {
+  try {
+    ensureClient();
+    const prefix = `${tier}/${userId}/`;
+    const command = new ListObjectsV2Command({
+      Bucket: _BUCKET,
+      Prefix: prefix,
+    });
+    
+    const response = await _s3.send(command);
+    
+    if (!response.Contents || response.Contents.length === 0) {
+      console.log(`[R2] Nenhum objeto encontrado em ${prefix}`);
+      return [];
+    }
+    
+    const now = Date.now();
+    const ONE_HOUR = 60 * 60 * 1000;
+    const TWENTY_FOUR_HOURS = 24 * 60 * 60 * 1000;
+    const validObjects = [];
+    
+    // Para premium, expiração de 24 horas; free expira em 1 hora
+    const expirationTime = tier === 'premium' ? TWENTY_FOUR_HOURS : ONE_HOUR;
+    
+    for (const obj of response.Contents) {
+      const objectAge = now - new Date(obj.LastModified).getTime();
+      
+      if (objectAge <= expirationTime) {
+        const fileName = path.basename(obj.Key);
+        const jobId = fileName.replace(path.extname(fileName), '');
+        
+        // Busca metadata do objeto
+        let metadata = {};
+        try {
+          const headCommand = new HeadObjectCommand({
+            Bucket: _BUCKET,
+            Key: obj.Key,
+          });
+          const headResponse = await _s3.send(headCommand);
+          metadata = headResponse.Metadata || {};
+        } catch (error) {
+          console.warn(`[R2] Não foi possível obter metadata de ${obj.Key}:`, error.message);
+        }
+        
+        validObjects.push({
+          key: obj.Key,
+          fileName: fileName,
+          jobId: jobId,
+          size: obj.Size,
+          createdAt: obj.LastModified,
+          expiresIn: tier === 'premium' ? Math.max(0, TWENTY_FOUR_HOURS - objectAge) : Math.max(0, ONE_HOUR - objectAge),
+          publicUrl: getPublicUrl(obj.Key),
+          preset: metadata['preset'] || 'CUSTOM',
+          userId: metadata['user-id'] || userId,
+          title: metadata['title'] || null,
+          tier: tier,
+        });
+      } else {
+        // Objeto expirado - deleta silenciosamente (free após 1h, premium após 24h)
+        try {
+          await deleteObject(obj.Key);
+          console.log(`[R2] Objeto expirado deletado: ${obj.Key}`);
+        } catch (delError) {
+          console.warn(`[R2] Falha ao deletar objeto expirado ${obj.Key}:`, delError.message);
+        }
+      }
+    }
+    
+    console.log(`[R2] ✅ ${validObjects.length} objetos válidos em ${prefix}`);
+    return validObjects;
+  } catch (error) {
+    console.error(`[R2] Erro ao listar objetos de ${tier}/${userId}:`, error);
+    throw error;
   }
 }
 

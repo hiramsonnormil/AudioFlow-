@@ -13,7 +13,7 @@ handleOAuthCallback();
 // Elementos do modal
 const authModal = document.getElementById('authModal');
 const closeAuthModal = document.getElementById('closeAuthModal');
-const modalOverlay = authModal?.querySelector('.modal-overlay');
+const modalOverlay = document.getElementById('authModalOverlay');
 
 // Botões de abrir modal
 const openLoginBtn = document.getElementById('openLoginBtn');
@@ -61,6 +61,7 @@ function openModal(tab = 'login') {
   currentTab = tab;
   switchTab(tab);
 
+  modalOverlay?.classList.add('active');
   authModal.classList.add('active');
   document.body.classList.add('modal-open');
 
@@ -78,9 +79,11 @@ function openModal(tab = 'login') {
 function closeModal() {
   if (!authModal) return;
   authModal.classList.add('closing');
+  modalOverlay?.classList.add('closing');
 
   setTimeout(() => {
     authModal.classList.remove('active', 'closing');
+    modalOverlay?.classList.remove('active', 'closing');
     document.body.classList.remove('modal-open');
 
     // Limpar forms e erros

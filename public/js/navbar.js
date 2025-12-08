@@ -55,7 +55,7 @@ function setupActiveState() {
     });
 }
 
-function setupAuthState() {
+async function setupAuthState() {
     const token = getToken();
     const loginBtn = document.getElementById('openLoginBtn');
     const signupBtn = document.getElementById('openSignupBtn');
@@ -90,6 +90,9 @@ function setupAuthState() {
             if (mobileInitialEl) mobileInitialEl.textContent = initial;
         }
         if (mobileRecentsLink) mobileRecentsLink.style.display = 'flex';
+
+        // Fetch and display user plan
+        await fetchAndDisplayUserPlan(token);
     } else {
         // Logged out - Desktop
         if (loginBtn) loginBtn.style.display = 'block';
@@ -207,6 +210,45 @@ function setupMobileMenu() {
             closeMobileMenu();
         }
     });
+}
+
+async function fetchAndDisplayUserPlan(token) {
+    try {
+        const response = await fetch('/api/auth/session', {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+
+        if (!response.ok) return;
+
+        const data = await response.json();
+        const plan = data.user?.plan || 'free';
+
+        const planConfig = {
+            free: { icon: '🆓', label: 'Free', color: '#999' },
+            voz_pro: { icon: '⭐', label: 'Pro', color: '#a78bfa' },
+            voz_master: { icon: '👑', label: 'Master', color: '#fbbf24' }
+        };
+
+        const config = planConfig[plan] || planConfig.free;
+
+        // Desktop badge
+        const desktopBadge = document.getElementById('nav-user-plan-badge');
+        if (desktopBadge && plan !== 'free') {
+            desktopBadge.textContent = `${config.icon} ${config.label}`;
+            desktopBadge.style.background = `${config.color}20`;
+            desktopBadge.style.color = config.color;
+            desktopBadge.style.border = `1px solid ${config.color}40`;
+        }
+
+        // Mobile badge
+        const mobileBadge = document.getElementById('mobile-nav-user-plan-badge');
+        if (mobileBadge && plan !== 'free') {
+            mobileBadge.textContent = `${config.icon} ${config.label}`;
+            mobileBadge.style.color = config.color;
+        }
+    } catch (error) {
+        console.error('Erro ao buscar plano do usuário:', error);
+    }
 }
 
 // Export for manual init if needed

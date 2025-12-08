@@ -178,6 +178,7 @@ Conteúdo:
 ├── GUIA_VISUAL_RESPONSIVIDADE.md   🎨 Diagramas
 ├── CHECKLIST_TESTES.md             ✅ QA
 ├── SNIPPETS_REUTILIZAVEIS.md       💾 Code
+├── docs/pix-subscriptions.md       💳 Integração PushinPay Pix
 └── README.md                        (este arquivo)
 ```
 

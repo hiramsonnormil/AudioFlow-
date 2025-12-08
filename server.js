@@ -24,11 +24,14 @@ import r2TestRoutes from "./src/routes/r2Test.js";
 import freeRoutes from "./src/routes/free.js";
 import recentsRoutes from "./src/routes/recents.js";
 import downloadRoutes from "./src/routes/download.js";
+import subscriptionRoutes from "./src/routes/subscriptions.js";
+import webhookRoutes from "./src/routes/webhooks.js";
 import { connectDB } from "./src/config/db.js";
 import { initStorage } from "./src/utils/storage.js";
 import { configurePassport } from "./src/config/passport-config.js";
 import { securityConfig, isOriginAllowed } from "./src/config/security.js";
 import { apiLimiter, authLimiter, freeProcessLimiter } from "./src/middleware/rateLimiters.js";
+import { initSubscriptionScheduler } from "./src/utils/subscriptionScheduler.js";
 
 // ===== CONFIGURAÇÃO =====
 const __filename = fileURLToPath(import.meta.url);
@@ -105,6 +108,24 @@ app.get("/batch", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "html", "batch.html"));
 });
 
+// Página de planos
+app.get("/plans", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "html", "plans.html"));
+});
+
+app.get("/plans.html", (req, res) => {
+  res.redirect(301, "/plans");
+});
+
+// Página de conta
+app.get("/account", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "html", "account.html"));
+});
+
+app.get("/account.html", (req, res) => {
+  res.redirect(301, "/account");
+});
+
 // ===== ROTAS DE COMPATIBILIDADE =====
 // Para manter compatibilidade com URLs antigas (.html)
 app.get("/index.html", (req, res) => {
@@ -148,6 +169,8 @@ app.use("/api/r2-test", r2TestRoutes);
 app.use("/api/free", freeProcessLimiter, freeRoutes);
 app.use("/api", recentsRoutes); // Recent processings endpoint
 app.use("/api", downloadRoutes); // Download proxy for R2 files
+app.use("/api", subscriptionRoutes);
+app.use("/api", webhookRoutes);
 
 // ===== DOCUMENTATION ROUTES =====
 app.get("/api", (req, res) => {
@@ -207,4 +230,5 @@ app.listen(PORT, () => {
   console.log("╚════════════════════════════════════════╝");
   console.log(`\n🚀 Server running on http://localhost:${PORT}`);
   console.log("\n📚 API Documentation: http://localhost:${PORT}/api\n");
+  initSubscriptionScheduler();
 });

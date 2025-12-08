@@ -1,64 +1,74 @@
 import mongoose from "mongoose";
 
+const PaymentSchema = new mongoose.Schema(
+  {
+    pixId: { type: String, required: true },
+    value: { type: Number, required: true },
+    status: {
+      type: String,
+      enum: ["pending", "paid", "expired", "cancelled"],
+      default: "pending",
+    },
+    createdAt: { type: Date, default: Date.now },
+    paidAt: { type: Date },
+    payload: { type: mongoose.Schema.Types.Mixed },
+  },
+  { _id: false }
+);
+
 const SubscriptionSchema = new mongoose.Schema(
   {
     userId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
       required: true,
-      index: true,
+    },
+    email: {
+      type: String,
+      lowercase: true,
+      trim: true,
     },
     planType: {
       type: String,
-      enum: ["premium_30"],
-      required: true,
-      default: "premium_30",
+      enum: ["voz_pro", "voz_master"],
+      default: "voz_pro",
     },
     status: {
       type: String,
-      enum: ["pending", "active", "expired", "cancelled"],
+      enum: ["pending", "active", "past_due", "cancelled"],
       default: "pending",
     },
     paymentMethod: {
       type: String,
-      enum: ["pix", "credit_card"],
+      enum: ["pix"],
+      default: "pix",
       required: true,
     },
-    pushinpayTransactionId: {
-      type: String,
-      required: true,
-      index: true,
-    },
-    pushinpayPaymentId: {
-      type: String,
-      index: true,
-    },
-    amount: {
+    monthlyAmount: {
       type: Number,
-      required: true, // valor em centavos
+      required: true,
     },
     currency: {
       type: String,
       default: "BRL",
     },
-    startsAt: {
+    nextBillingDate: {
       type: Date,
       default: Date.now,
     },
-    expiresAt: {
+    lastPaymentAt: {
       type: Date,
-      required: true,
     },
-    webhookData: {
-      type: mongoose.Schema.Types.Mixed,
+    payments: {
+      type: [PaymentSchema],
+      default: [],
     },
   },
   { timestamps: true }
 );
 
-// Índice composto para buscas eficientes
-SubscriptionSchema.index({ userId: 1, status: 1 });
-SubscriptionSchema.index({ pushinpayTransactionId: 1 });
+SubscriptionSchema.index({ userId: 1 }, { unique: true });
+SubscriptionSchema.index({ "payments.pixId": 1 }, { unique: true, sparse: true });
 
 export const Subscription = mongoose.model("Subscription", SubscriptionSchema);
 

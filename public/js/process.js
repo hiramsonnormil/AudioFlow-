@@ -23,6 +23,7 @@ const playerProgressBar = document.getElementById("playerProgressBar");
 let pollId = null;
 let lastProgress = -1;
 let loginPromptDisplayed = false;
+let userTier = 'free'; // tier do usuário (free ou premium)
 
 const initialToken = getToken();
 initializeProcessPage(initialToken);
@@ -125,6 +126,11 @@ function startPoll(id) {
         throw new Error("status fetch failed");
       }
       const j = await r.json();
+      
+      // Capturar tier do usuário
+      if (j.tier) {
+        userTier = j.tier;
+      }
 
       // Precarregar thumbnail na primeira chamada bem-sucedida (se não foi feito ainda)
       if (!thumbPreloaded && !thumbnail.src) {
@@ -159,8 +165,8 @@ function startPoll(id) {
         lastProgress = j.progress;
       }
 
-      // Carregar título
-      if (j.title && titleEl.textContent === "Processando...") {
+      // Carregar título (substituir placeholders)
+      if (j.title && (titleEl.textContent === "Processando..." || titleEl.textContent === "Criando seu remix...")) {
         titleEl.textContent = j.title;
       }
 
@@ -170,6 +176,11 @@ function startPoll(id) {
         statusText.textContent = "Concluído";
         if (progressPercent) {
           progressPercent.textContent = "100%";
+        }
+
+        // Garantir que o título está correto
+        if (j.title) {
+          titleEl.textContent = j.title;
         }
 
         // Usar nome formatado do backend ou gerar localmente
@@ -240,6 +251,9 @@ function startExpirationCountdown(expiresInMs, isExpired) {
 
   let remainingMs = expiresInMs;
 
+  // Criar e exibir aviso inicialmente
+  updateExpirationDisplay(remainingMs);
+
   expirationCountdownInterval = setInterval(() => {
     remainingMs -= 1000;
 
@@ -249,12 +263,9 @@ function startExpirationCountdown(expiresInMs, isExpired) {
       return;
     }
 
-    // Atualizar visual do tempo restante (opcional - pode adicionar elemento para mostrar)
+    // Atualizar visual do tempo restante
     updateExpirationDisplay(remainingMs);
   }, 1000);
-
-  // Atualizar inicialmente
-  updateExpirationDisplay(remainingMs);
 }
 
 function formatTimeRemaining(ms) {
@@ -277,23 +288,34 @@ function formatTimeRemaining(ms) {
 function updateExpirationDisplay(remainingMs) {
   // Adicionar elemento de aviso de expiração se não existir
   let expirationWarning = document.getElementById('expiration-warning');
-  if (!expirationWarning && remainingMs > 0) {
+  if (!expirationWarning) {
     expirationWarning = document.createElement('div');
     expirationWarning.id = 'expiration-warning';
     expirationWarning.className = 'expiration-warning';
 
     const infoSection = document.querySelector('.info-section');
     if (infoSection) {
-      infoSection.insertBefore(expirationWarning, infoSection.firstChild.nextSibling);
+      // Inserir após o header de música
+      const musicHeader = infoSection.querySelector('.music-header');
+      if (musicHeader && musicHeader.nextSibling) {
+        infoSection.insertBefore(expirationWarning, musicHeader.nextSibling);
+      } else {
+        infoSection.insertBefore(expirationWarning, infoSection.firstChild.nextSibling);
+      }
     }
   }
 
   if (expirationWarning) {
     const timeStr = formatTimeRemaining(remainingMs);
+    const isPremium = userTier === 'premium';
     const isWarning = remainingMs < 20 * 60 * 1000; // menos de 20 min
     const isDanger = remainingMs < 5 * 60 * 1000; // menos de 5 min
 
-    expirationWarning.className = 'expiration-warning' +
+    // Premium: ícone de estrela e estilo diferenciado
+    const icon = isPremium ? '🌟' : '⏱️';
+    const premiumClass = isPremium ? ' premium' : '';
+    
+    expirationWarning.className = 'expiration-warning' + premiumClass +
       (isDanger ? ' danger' : isWarning ? ' warning' : '');
     expirationWarning.innerHTML = `
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -301,7 +323,7 @@ function updateExpirationDisplay(remainingMs) {
         <line x1="12" y1="8" x2="12" y2="12"/>
         <line x1="12" y1="16" x2="12.01" y2="16"/>
       </svg>
-      <span>⏱️ Expira em: <strong>${timeStr}</strong></span>
+      <span>${icon} Expira em: <strong>${timeStr}</strong></span>
     `;
   }
 }

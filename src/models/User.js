@@ -7,7 +7,15 @@ const UserSchema = new mongoose.Schema(
     password: { type: String, required: false }, // Optional for Google OAuth users
     googleId: { type: String, sparse: true, unique: true }, // Google OAuth ID
     authProvider: { type: String, enum: ["local", "google", "both"], default: "local" },
-    plan: { type: String, enum: ["free", "pro", "business"], default: "free" },
+    plan: {
+      type: String,
+      enum: ["free", "voz_pro", "voz_master"],
+      default: "free",
+    },
+    usageHistory: {
+      type: [{ timestamp: Date }],
+      default: [],
+    },
   },
   { timestamps: true }
 );

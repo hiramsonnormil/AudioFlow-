@@ -6,6 +6,7 @@
 import express from 'express';
 import { authRequired } from '../middleware/authRequired.js';
 import { S3Client, GetObjectCommand, HeadObjectCommand } from '@aws-sdk/client-s3';
+import { User } from '../models/User.js';
 import path from 'path';
 
 const router = express.Router();
@@ -33,11 +34,22 @@ function getR2Client() {
 router.get('/download/:key(*)', authRequired, async (req, res) => {
   try {
     const key = decodeURIComponent(req.params.key);
-    const userId = req.user.email || req.user._id;
+    const userSource = req.user.email || req.user._id;
     
-    // Verificar se o arquivo pertence ao usuário
-    const expectedPrefix = `free/${userId}/`;
-    if (!key.startsWith(expectedPrefix)) {
+    // Obter storageKey do usuário (hash para organizar no R2)
+    const { getUserIdentity } = await import('../config/security.js');
+    const { storageKey } = getUserIdentity(userSource);
+    
+    // Verificar se o arquivo pertence ao usuário (pode ser free/ ou premium/)
+    const allowedPrefixes = [
+      `free/${storageKey}/`,
+      `premium/${storageKey}/`
+    ];
+    
+    const hasPermission = allowedPrefixes.some(prefix => key.startsWith(prefix));
+    
+    if (!hasPermission) {
+      console.log(`[DOWNLOAD] Acesso negado: ${key} não pertence a ${userSource}`);
       return res.status(403).json({ 
         error: 'forbidden',
         message: 'Você não tem permissão para acessar este arquivo'
@@ -76,17 +88,21 @@ router.get('/download/:key(*)', authRequired, async (req, res) => {
       throw headError;
     }
     
-    // Verificar se arquivo expirou (mais de 1 hora)
+    // Verificar se arquivo expirou (1h para free, 24h para premium)
+    const tier = key.startsWith('premium/') ? 'premium' : 'free';
     const lastModified = headResponse.LastModified;
     if (lastModified) {
       const now = new Date();
       const fileAge = now - new Date(lastModified).getTime();
       const ONE_HOUR = 60 * 60 * 1000;
+      const TWENTY_FOUR_HOURS = 24 * 60 * 60 * 1000;
+      const expirationTime = tier === 'premium' ? TWENTY_FOUR_HOURS : ONE_HOUR;
       
-      if (fileAge > ONE_HOUR) {
+      if (fileAge > expirationTime) {
+        const expirationText = tier === 'premium' ? '24 horas' : '1 hora';
         return res.status(410).json({ 
           error: 'expired',
-          message: 'Arquivo expirado (mais de 1 hora)'
+          message: `Arquivo expirado (mais de ${expirationText})`
         });
       }
     }
