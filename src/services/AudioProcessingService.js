@@ -221,11 +221,11 @@ export class AudioProcessingService {
   }
 
   /**
-   * Processa áudio e faz upload para R2 (usuário free)
+   * Processa áudio e faz upload para R2
    * 
    * Fluxo completo:
    * 1. Gera arquivo temporário com FFmpeg em /tmp
-   * 2. Faz upload para R2 no caminho free/<userId>/<jobId>.mp3
+   * 2. Faz upload para R2 no caminho <tier>/<userId>/<jobId>.mp3
    * 3. Deleta arquivo temporário local
    * 4. Retorna URL pública do R2
    * 
@@ -235,9 +235,10 @@ export class AudioProcessingService {
    * @param {string} preset - Nome do preset aplicado
    * @param {number} durationSec - Duração do áudio em segundos
    * @param {string} title - Título do arquivo (metadata)
+   * @param {string} userPlan - Plano do usuário (free, voz_pro, voz_master)
    * @returns {Promise<{publicUrl: string, key: string, localPath: string}>}
    */
-  async processAndUploadToR2(inputStream, jobId, userId, preset, durationSec, title = 'audio') {
+  async processAndUploadToR2(inputStream, jobId, userId, preset, durationSec, title = 'audio', userPlan = 'free') {
     let tempPath = null;
 
     try {
@@ -271,12 +272,19 @@ export class AudioProcessingService {
         throw new Error('FFmpeg não gerou o arquivo de saída');
       }
 
-      // 3. Define a chave no R2 (estrutura: free/<userId>/<jobId>.mp3)
+      // 3. Define a chave no R2 (estrutura: <tier>/<userId>/<jobId>.mp3)
       const safeUserFolder =
         typeof userId === "string" && /^[a-z0-9_-]+$/i.test(userId)
           ? userId
           : getUserIdentity("anonymous").storageKey;
-      const r2Key = `free/${safeUserFolder}/${filename}`;
+      
+      // Determinar tier baseado no plano
+      const tier = (userPlan === 'voz_pro' || userPlan === 'voz_master' || userPlan === 'premium_30') 
+        ? 'premium' 
+        : 'free';
+      
+      const r2Key = `${tier}/${safeUserFolder}/${filename}`;
+      console.log(`[R2] Upload para: ${r2Key} (plano: ${userPlan})`);
 
       // 4. Faz upload para R2
       const uploadResult = await r2.uploadFile(tempPath, r2Key, {

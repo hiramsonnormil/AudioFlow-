@@ -171,11 +171,16 @@ export function getErrorMessage(error) {
     const errorMap = {
       'missing_fields': 'Por favor, preencha todos os campos',
       'email_in_use': 'Este e-mail já está em uso',
+      'invalid_email': 'E-mail inválido',
+      'invalid_username': 'Nome de usuário inválido (mín. 3 caracteres)',
+      'weak_password': 'Senha fraca. Use no mínimo 8 caracteres, incluindo letras e números',
       'invalid_credentials': 'E-mail ou senha incorretos',
       'invalid_preset': 'Preset inválido selecionado',
       'url_not_supported': 'URL não suportada. Use links do YouTube',
       'not_found': 'Recurso não encontrado',
       'unauthorized': 'Você precisa fazer login',
+      'signup_failed': error.data?.message || 'Erro ao criar conta. Tente novamente.',
+      'login_failed': error.data?.message || 'Erro ao fazer login. Tente novamente.',
     };
     
     return errorMap[error.data.error] || error.data.error;

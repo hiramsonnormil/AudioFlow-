@@ -75,6 +75,9 @@ async function loadProcessings() {
     }
 
     const data = await response.json();
+    
+    console.log('📦 Dados recebidos da API:', data);
+    console.log('📦 Primeiro processamento:', data.processings?.[0]);
 
     loading.style.display = 'none';
 
@@ -124,10 +127,16 @@ function createProcessingCard(proc) {
   card.dataset.key = proc.key;
   card.dataset.expiresIn = proc.expiresIn;
 
-  const expirationPercent = Math.max(0, (proc.expiresIn / (60 * 60 * 1000)) * 100);
-  const timeRemaining = formatTimeRemaining(proc.expiresIn);
-  const isWarning = proc.expiresIn < 20 * 60 * 1000; // menos de 20 min
-  const isDanger = proc.expiresIn < 5 * 60 * 1000; // menos de 5 min
+  // Usuários premium têm expiração de 24h, free de 1h
+  const isPremium = proc.tier === 'premium';
+  const maxTime = isPremium ? (24 * 60 * 60 * 1000) : (60 * 60 * 1000); // 24h ou 1h
+  const expiresIn = proc.expiresIn || 0;
+  const expirationPercent = Math.max(0, (expiresIn / maxTime) * 100);
+  const timeRemaining = formatTimeRemaining(expiresIn);
+  const isWarning = expiresIn < 20 * 60 * 1000; // menos de 20 min
+  const isDanger = expiresIn < 5 * 60 * 1000; // menos de 5 min
+  
+  console.log(`📊 Card ${proc.jobId}: expiresIn=${expiresIn}, timeRemaining=${timeRemaining}, isPremium=${isPremium}`);
 
   // Extrai preset do metadata ou do jobId
   const preset = proc.preset || 'DESCONHECIDO';
@@ -139,6 +148,7 @@ function createProcessingCard(proc) {
     <div class="card-header">
       <div class="card-title">${displayName || proc.jobId}</div>
       <div class="card-preset">${preset}</div>
+      ${isPremium ? '<span style="background: linear-gradient(135deg, #c28c66, #a67351); color: white; padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.75rem; font-weight: 600;">PREMIUM</span>' : ''}
     </div>
 
     <div class="card-info">
@@ -160,13 +170,13 @@ function createProcessingCard(proc) {
       <div class="expiration-progress" style="width: ${expirationPercent}%"></div>
     </div>
     
-    <div class="expiration-time ${isDanger ? 'danger' : isWarning ? 'warning' : ''}" data-expires="${proc.expiresIn}">
-      ⏱️ Expira em: <strong>${timeRemaining}</strong>
+    <div class="expiration-time ${isDanger ? 'danger' : isWarning ? 'warning' : ''}" data-expires="${expiresIn}">
+      ${isPremium ? '🌟' : '⏱️'} Expira em: <strong>${timeRemaining}</strong>
     </div>
 
     <div class="card-actions">
-      ${proc.expiresIn > 0 ? `
-        <a href="/api/download/${encodeURIComponent(proc.key)}" class="btn-download" download onclick="handleDownload(event, '${proc.key}', ${proc.expiresIn})">
+      ${expiresIn > 0 ? `
+        <a href="/api/download/${encodeURIComponent(proc.key)}" class="btn-download" download onclick="handleDownload(event, '${proc.key}', ${expiresIn})">
           📥 Download
         </a>
       ` : `

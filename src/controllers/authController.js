@@ -45,37 +45,52 @@ const isPasswordValid = (password) => {
 export const authController = {
   async signup(req, res) {
     try {
+      console.log("[SIGNUP] Recebido:", { username: req.body?.username, email: req.body?.email });
+      
       const rawUsername = typeof req.body?.username === "string" ? req.body.username.trim() : "";
       const sanitizedUsername = validator
-        .whitelist(rawUsername, "a-zA-Z0-9 _-.")
+        .whitelist(rawUsername, "a-zA-Z0-9 _.-")
         .replace(/\s+/g, " ")
         .trim();
+
+      console.log("[SIGNUP] Username sanitizado:", sanitizedUsername);
 
       const normalizedEmail = normalizeEmail(req.body?.email);
       const password = req.body?.password;
 
+      console.log("[SIGNUP] Email normalizado:", normalizedEmail);
+
       if (!sanitizedUsername || !normalizedEmail || !password) {
+        console.log("[SIGNUP] Campos faltando:", { sanitizedUsername, normalizedEmail, hasPassword: !!password });
         return res.status(400).json({ error: "missing_fields" });
       }
 
       if (!validator.isLength(sanitizedUsername, { min: 3, max: 40 })) {
+        console.log("[SIGNUP] Username inválido (comprimento)");
         return res.status(400).json({ error: "invalid_username" });
       }
 
       if (!validator.isEmail(normalizedEmail)) {
+        console.log("[SIGNUP] Email inválido");
         return res.status(400).json({ error: "invalid_email" });
       }
 
       if (!isPasswordValid(password)) {
+        console.log("[SIGNUP] Senha fraca");
         return res.status(400).json({ error: "weak_password" });
       }
 
+      console.log("[SIGNUP] Verificando usuário existente...");
       const existing = await User.findOne({ email: normalizedEmail });
       if (existing) {
+        console.log("[SIGNUP] Email já em uso");
         return res.status(409).json({ error: "email_in_use" });
       }
 
+      console.log("[SIGNUP] Criando hash da senha...");
       const hash = await bcrypt.hash(password, 12);
+      
+      console.log("[SIGNUP] Criando usuário no banco...");
       const user = await User.create({
         username: sanitizedUsername,
         email: normalizedEmail,
@@ -83,11 +98,14 @@ export const authController = {
         plan: "free",
       });
 
+      console.log("[SIGNUP] Usuário criado:", user._id);
+
       const token = signToken(user);
       setAuthCookie(res, token);
 
       return res.status(201).json({ token, user: safeUser(user) });
     } catch (err) {
+      console.error("[SIGNUP] ERRO:", err);
       return res.status(500).json({ error: "signup_failed", message: err.message });
     }
   },

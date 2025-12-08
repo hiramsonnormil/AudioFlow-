@@ -5,6 +5,7 @@
 
 import { isAuthenticated } from './auth/session.js';
 import { openModal } from './auth/modal-auth.js';
+import { showPlanModal } from './utils/planModal.js';
 
 // Elementos (serão inicializados no init)
 let processBtn;
@@ -205,7 +206,25 @@ async function startProcessing(url, presetName) {
     }
 
     if (!response.ok) {
+      const errorCode = data?.error;
       const errorMessage = data?.message || data?.error || 'Erro ao iniciar processamento';
+      
+      if (errorCode === 'preset_not_available') {
+        processBtn.disabled = false;
+        updateUIBasedOnAuth();
+        if (statusContainer) statusContainer.style.display = 'none';
+        showPlanModal(errorMessage || 'Este efeito não está disponível no seu plano atual.');
+        return;
+      }
+      
+      if (errorCode === 'plan_limit_reached') {
+        processBtn.disabled = false;
+        updateUIBasedOnAuth();
+        if (statusContainer) statusContainer.style.display = 'none';
+        showPlanModal(errorMessage || 'Você atingiu o limite de processamentos do seu plano.');
+        return;
+      }
+      
       throw new Error(errorMessage);
     }
 

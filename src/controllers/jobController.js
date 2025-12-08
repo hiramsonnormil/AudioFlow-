@@ -5,6 +5,7 @@ import { jobQueueService } from "../services/JobQueueService.js";
 import { youtubeService } from "../services/YouTubeService.js";
 import { AudioProcessingService } from "../services/AudioProcessingService.js";
 import { isValidPreset } from "../models/Preset.js";
+import { User } from "../models/User.js";
 import {
   MAX_AUDIO_DURATION_MINUTES,
   isDurationTooLong,
@@ -17,6 +18,11 @@ import {
   sanitizePresetInput,
   sanitizeUrlInput,
 } from "../config/security.js";
+import {
+  getPlanDisplayName,
+  isPresetAllowedForPlan,
+  prepareUsageReservation,
+} from "../utils/planAccess.js";
 
 const audioService = new AudioProcessingService(() => STORAGE.base);
 
@@ -37,8 +43,43 @@ export const jobController = {
       if (!url || !preset) return res.status(400).json({ error: "missing_fields" });
       if (!isValidPreset(preset)) return res.status(400).json({ error: "invalid_preset" });
 
+      let userPlan = user?.plan || "free";
+      if (user?._id) {
+        const userRecord = await User.findById(user._id).select("plan");
+        if (userRecord?.plan) {
+          userPlan = userRecord.plan;
+        }
+      }
+
+      if (!isPresetAllowedForPlan(userPlan, preset)) {
+        return res.status(403).json({
+          error: "preset_not_available",
+          message: `O preset solicitado não faz parte do ${getPlanDisplayName(userPlan)}.`,
+        });
+      }
+
+      const userSource = user?.email || user?._id || req.ip || "anonymous";
+      const userIdentity = getUserIdentity(userSource);
+      
+      // Verificar limite de uso (banco de dados) - requer autenticação
+      if (!user?._id) {
+        return res.status(401).json({
+          error: "authentication_required",
+          message: "Você precisa estar autenticado para processar áudios"
+        });
+      }
+      
+      const usageReservation = await prepareUsageReservation(userPlan, user._id);
+      if (!usageReservation.allowed) {
+        return res.status(429).json({
+          error: "plan_limit_reached",
+          message: "Limite de processamentos do plano atingido. Tente novamente mais tarde.",
+          retryAt: usageReservation.retryAt?.toISOString() || null,
+        });
+      }
+
       // Free plan: in-memory only
-      if (user?.plan !== "free") {
+      if (userPlan !== "free") {
         // future: persist job
       }
 
@@ -75,9 +116,8 @@ export const jobController = {
         preset,
         duration,
         youtubeUrl: url,
+        plan: userPlan,
       };
-      const userSource = user?.email || user?._id || req.ip || "anonymous";
-      const userIdentity = getUserIdentity(userSource);
       job.userId = userIdentity.storageKey;
       job.metadata.userStorageKey = userIdentity.storageKey;
       job.metadata.userReference = userIdentity.reference;
@@ -85,6 +125,9 @@ export const jobController = {
       jobQueueService.enqueueJob(jobId);
       // background processing
       process.nextTick(() => jobController._processQueue());
+
+      // Registrar uso no banco de dados
+      await usageReservation.commit();
 
       return res.status(201).json({ jobId });
     } catch (err) {

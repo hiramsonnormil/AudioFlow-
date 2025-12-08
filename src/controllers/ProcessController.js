@@ -11,6 +11,7 @@ import { jobQueueService } from "../services/JobQueueService.js";
 import { youtubeService } from "../services/YouTubeService.js";
 import { AudioProcessingService } from "../services/AudioProcessingService.js";
 import { isValidPreset } from "../models/Preset.js";
+import { User } from "../models/User.js";
 import {
   MAX_AUDIO_DURATION_MINUTES,
   isDurationTooLong,
@@ -22,6 +23,11 @@ import {
   sanitizePresetInput,
   sanitizeUrlInput,
 } from "../config/security.js";
+import {
+  getPlanDisplayName,
+  isPresetAllowedForPlan,
+  prepareUsageReservation,
+} from "../utils/planAccess.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -52,6 +58,43 @@ export class ProcessController {
 
     if (!isValidPreset(preset)) {
       return res.status(400).json({ error: "Invalid preset" });
+    }
+
+    // Identificação do usuário e plano
+    const userSource = req.user?.email || req.user?._id || req.ip || "anonymous";
+    const userIdentity = getUserIdentity(userSource);
+
+    // Requer autenticação para processar
+    if (!req.user?._id) {
+      return res.status(401).json({
+        error: "authentication_required",
+        message: "Você precisa estar autenticado para processar áudios"
+      });
+    }
+
+    let userPlan = req.user?.plan || "free";
+    if (req.user?._id) {
+      const userRecord = await User.findById(req.user._id).select("plan");
+      if (userRecord?.plan) {
+        userPlan = userRecord.plan;
+      }
+    }
+
+    if (!isPresetAllowedForPlan(userPlan, preset)) {
+      return res.status(403).json({
+        error: "preset_not_available",
+        message: `O preset solicitado não faz parte do ${getPlanDisplayName(userPlan)}.`,
+      });
+    }
+
+    // Verificar limite de uso (agora com banco de dados)
+    const usageReservation = await prepareUsageReservation(userPlan, req.user._id);
+    if (!usageReservation.allowed) {
+      return res.status(429).json({
+        error: "plan_limit_reached",
+        message: "Limite de processamentos do plano atingido. Tente novamente mais tarde.",
+        retryAt: usageReservation.retryAt?.toISOString() || null,
+      });
     }
 
     const jobId = nanoid(10);
@@ -85,11 +128,8 @@ export class ProcessController {
       preset,
       duration,
       youtubeUrl: url,
+      plan: userPlan,
     };
-    
-    // Salvar userId se houver autenticação (usa email como identificador)
-    const userSource = req.user?.email || req.user?._id || req.ip || "anonymous";
-    const userIdentity = getUserIdentity(userSource);
 
     job.metadata = job.metadata || {};
     job.userId = userIdentity.storageKey;
@@ -101,6 +141,9 @@ export class ProcessController {
 
     // Tentar processar a fila
     this.processQueue();
+
+    // Registrar uso no banco de dados
+    await usageReservation.commit();
 
     res.json({ id: jobId });
   }
@@ -118,6 +161,9 @@ export class ProcessController {
 
     const result = job.toJSON();
     
+    // Incluir tier do usuário no resultado
+    result.tier = job.metadata?.plan || 'free';
+    
     // Incluir nome formatado para download no resultado
     if (job.status === "DONE") {
       result.downloadFilename = job.getFormattedDownloadFilename();
@@ -131,12 +177,16 @@ export class ProcessController {
         result.fileExists = true; // Assumimos que existe, o R2 gerencia a expiração
         result.r2Key = job.r2Key || null;
         
-        // Calcular tempo de expiração (1 hora a partir da conclusão)
+        // Calcular tempo de expiração baseado no tier (24h para premium, 1h para free)
         if (job.completedAt) {
+          const userTier = job.metadata?.plan || 'free';
           const ONE_HOUR = 60 * 60 * 1000; // 1 hora em ms
+          const TWENTY_FOUR_HOURS = 24 * 60 * 60 * 1000; // 24 horas em ms
+          const expirationTime = userTier === 'premium' ? TWENTY_FOUR_HOURS : ONE_HOUR;
+          
           const now = new Date();
           const completedTime = new Date(job.completedAt).getTime();
-          const expiresAt = completedTime + ONE_HOUR;
+          const expiresAt = completedTime + expirationTime;
           const expiresIn = Math.max(0, expiresAt - now.getTime());
           
           result.expiresAt = new Date(expiresAt).toISOString();
@@ -335,6 +385,7 @@ export class ProcessController {
       // Obter userId do job (se foi definido ao criar) ou usar 'anonymous'
       // Usar email como identificador principal
       const userId = job.userId || job.metadata?.userStorageKey || "anonymous";
+      const userPlan = job.metadata?.plan || 'free';
       
       // Usar o novo método que faz tudo: processa + upload R2 + deleta local
       const r2Result = await this.audioService.processAndUploadToR2(
@@ -343,7 +394,8 @@ export class ProcessController {
         userId,
         preset,
         duration,
-        job.metadata?.title
+        job.metadata?.title,
+        userPlan // Passar o plano do usuário
       );
 
       job.progress = 95;

@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Minha Conta - phona</title>
+  <link rel="stylesheet" href="/css/styles-landing.css">
+  <link rel="stylesheet" href="/css/global.css">
+  <link rel="stylesheet" href="/css/modal.css">
+  <link rel="stylesheet" href="/css/account.css">
+</head>
+<body class="account-page">
+  <!-- Navbar Placeholder -->
+  <div id="navbar-placeholder"></div>
+
+  <!-- Auth Modal Placeholder -->
+  <div id="authModal-placeholder"></div>
+
+  <section class="account-hero">
+    <div class="account-hero-decoration"></div>
+    <div class="account-hero-content">
+      <span class="account-hero-badge">✨ Dashboard do assinante</span>
+      <h1 class="account-title">
+        Minha <span class="text-accent">Conta</span>
+      </h1>
+      <p class="account-subtitle">Acompanhe seu plano, status da assinatura e próximos passos.</p>
+    </div>
+  </section>
+
+  <main class="account-main">
+    <div class="account-container">
+      <div class="account-content" id="accountContent">
+        <!-- Loading state -->
+        <div class="account-card">
+          <p style="text-align: center; color: var(--text-secondary);">Carregando...</p>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script type="module" src="/js/account.js"></script>
+  <script type="module" src="/js/navbar.js"></script>
+  <script type="module" src="/js/auth/authModal.js"></script>
+</body>
+</html>

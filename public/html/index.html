@@ -4,9 +4,26 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>phona — Transforme seu som</title>
+  <title>phona — Editor de Áudio Online | Slowed + Reverb, Daycore, Nightcore | Grátis</title>
   <meta name="description"
-    content="Aplique efeitos profissionais em músicas do YouTube. Slowed, reverb, daycore, nightcore e muito mais." />
+    content="Transforme músicas do YouTube com efeitos profissionais online. Slowed, reverb, daycore, nightcore, 8D audio e vaporwave. Ideal para criadores de conteúdo, DJs e produtores. Experimente grátis!" />
+  
+  <!-- SEO Keywords -->
+  <meta name="keywords" content="editor de áudio online, slowed reverb, daycore, nightcore, 8d audio, vaporwave, efeitos de áudio, processar música, transformar áudio, youtube para mp3, criador de conteúdo, produtor musical, remix online, áudio profissional grátis" />
+  
+  <!-- Open Graph / Facebook -->
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://phona.app/" />
+  <meta property="og:title" content="phona — Editor de Áudio Profissional Online | Slowed + Reverb" />
+  <meta property="og:description" content="Aplique efeitos profissionais em suas músicas. Slowed, reverb, daycore, nightcore e mais. Perfeito para criadores de conteúdo e produtores." />
+  <meta property="og:image" content="https://phona.app/assets/images/og-image.jpg" />
+  
+  <!-- Twitter -->
+  <meta property="twitter:card" content="summary_large_image" />
+  <meta property="twitter:url" content="https://phona.app/" />
+  <meta property="twitter:title" content="phona — Editor de Áudio Online | Slowed + Reverb" />
+  <meta property="twitter:description" content="Transforme músicas com efeitos profissionais. Ideal para criadores de conteúdo, DJs e produtores musicais." />
+  <meta property="twitter:image" content="https://phona.app/assets/images/twitter-image.jpg" />
 
   <!-- Favicon -->
   <link rel="icon" type="image/svg+xml" href="/assets/icons/favicon.svg" />
@@ -32,7 +49,7 @@
   <!-- Sticky CTA -->
   <div class="sticky-cta">
     <button class="sticky-btn" onclick="scrollToProcessor()">
-      <span>Começar agora</span>
+      <span>Criar conta grátis</span>
       <span class="pulse-dot"></span>
     </button>
   </div>
@@ -74,6 +91,7 @@
       <div class="nav-links">
         <a href="#effects" class="nav-link">Efeitos</a>
         <a href="#how" class="nav-link">Como funciona</a>
+        <a href="/plans" class="nav-link">Planos</a>
         <a href="#" class="nav-link" id="openLoginBtn">Entrar</a>
         <a href="#" class="nav-link nav-link-cta" id="openSignupBtn">Criar conta</a>
       </div>
@@ -105,6 +123,7 @@
       <nav class="mobile-menu-nav">
         <a href="#effects" class="mobile-nav-link">Efeitos</a>
         <a href="#how" class="mobile-nav-link">Como funciona</a>
+        <a href="/plans" class="mobile-nav-link">Planos</a>
         <div class="mobile-menu-divider"></div>
         <a href="#" class="mobile-nav-link" id="mobile-openLoginBtn">Entrar</a>
         <a href="#" class="mobile-nav-link mobile-nav-link-cta" id="mobile-openSignupBtn">Criar conta</a>
@@ -113,29 +132,24 @@
 
 
     <div class="hero-content">
-      <div class="hero-badge">
-        <span class="badge-dot"></span>
-        <span>Processamento de áudio profissional</span>
-      </div>
-
       <h1 class="hero-title">
-        Transforme o som<br />
-        <span class="hero-title-accent">do seu jeito</span>
+        Crie remixes incríveis<br />
+        <span class="hero-title-accent">em segundos</span>
       </h1>
 
       <p class="hero-description">
-        Aplique efeitos profissionais em músicas do YouTube.<br />
-        <span class="hero-highlight">Slowed, reverb, daycore, nightcore</span>
-        e muito mais.
+        Transforme qualquer música do YouTube em versão slowed, daycore, nightcore e mais.<br />
+        <span class="hero-highlight">Perfeito para TikTok, Instagram e YouTube</span>
+        — Usado por milhares de criadores de conteúdo.
       </p>
 
       <div class="hero-actions">
         <button class="btn-primary" onclick="scrollToProcessor()">
-          <span>Experimente com um link</span>
+          <span>Começar grátis agora</span>
           <span class="btn-arrow">→</span>
         </button>
         <button class="btn-secondary" onclick="scrollToSection('effects')">
-          Ver efeitos disponíveis
+          Explorar todos os efeitos
         </button>
       </div>
 
@@ -192,11 +206,10 @@
     <div class="section-container">
       <div class="section-header">
         <h2 class="section-title">
-          Efeitos <span class="text-accent">profissionais</span>
+          Efeitos <span class="text-accent">disponíveis</span>
         </h2>
         <p class="section-description">
-          Escolha entre presets cuidadosamente calibrados para transformar seu
-          áudio
+          Transforme suas músicas com um clique.
         </p>
       </div>
 
@@ -212,7 +225,7 @@
           </div>
           <h3 class="effect-title">SLOWED</h3>
           <p class="effect-description">
-            Velocidade reduzida com graves profundos
+            Deixa suas músicas mais profundas e relaxantes.
           </p>
           <div class="effect-preview">
             <canvas class="effect-wave" width="200" height="40"></canvas>
@@ -234,7 +247,7 @@
           </div>
           <h3 class="effect-title">REVERB</h3>
           <p class="effect-description">
-            Espacialidade e ambiência envolvente
+            Adiciona profundidade e atmosfera.
           </p>
           <div class="effect-preview">
             <canvas class="effect-wave" width="200" height="40"></canvas>
@@ -256,7 +269,7 @@
             </svg>
           </div>
           <h3 class="effect-title">DAYCORE</h3>
-          <p class="effect-description">Slowed com pitch reduzido e reverb</p>
+          <p class="effect-description">Versão mais lenta e grave.</p>
           <div class="effect-preview">
             <canvas class="effect-wave" width="200" height="40"></canvas>
           </div>
@@ -275,7 +288,7 @@
           </div>
           <h3 class="effect-title">NIGHTCORE</h3>
           <p class="effect-description">
-            Acelerado com pitch elevado e energia
+            Acelera e eleva o tom.
           </p>
           <div class="effect-preview">
             <canvas class="effect-wave" width="200" height="40"></canvas>
@@ -296,7 +309,7 @@
             </svg>
           </div>
           <h3 class="effect-title">8D AUDIO</h3>
-          <p class="effect-description">Som rotativo ao redor da cabeça</p>
+          <p class="effect-description">Experiência imersiva 360°.</p>
           <div class="effect-preview">
             <canvas class="effect-wave" width="200" height="40"></canvas>
           </div>
@@ -315,7 +328,7 @@
             </svg>
           </div>
           <h3 class="effect-title">VAPORWAVE</h3>
-          <p class="effect-description">Estética nostálgica dos anos 80/90</p>
+          <p class="effect-description">Estética retrô dos anos 80/90.</p>
           <div class="effect-preview">
             <canvas class="effect-wave" width="200" height="40"></canvas>
           </div>
@@ -336,7 +349,7 @@
           Como <span class="text-accent">funciona</span>
         </h2>
         <p class="section-description">
-          Três passos simples para transformar seu áudio
+          Em 3 passos simples você cria remixes profissionais.
         </p>
       </div>
 
@@ -351,10 +364,9 @@
                 stroke-linecap="round" />
             </svg>
           </div>
-          <h3 class="step-title">Cole o link</h3>
+          <h3 class="step-title">Crie sua conta grátis</h3>
           <p class="step-description">
-            Cole o URL do YouTube da música que deseja processar. Suportamos
-            qualquer vídeo público.
+            Cadastro rápido com e-mail ou Google.
           </p>
         </div>
 
@@ -371,10 +383,9 @@
               <path d="M12 1v6m0 6v6M1 12h6m6 0h6" stroke-width="2" stroke-linecap="round" />
             </svg>
           </div>
-          <h3 class="step-title">Escolha o efeito</h3>
+          <h3 class="step-title">Cole o link e escolha o efeito</h3>
           <p class="step-description">
-            Selecione um preset profissional ou customize os parâmetros
-            manualmente.
+            Cole o link do YouTube e selecione o efeito desejado.
           </p>
         </div>
 
@@ -391,10 +402,9 @@
                 stroke-linecap="round" stroke-linejoin="round" />
             </svg>
           </div>
-          <h3 class="step-title">Baixe o resultado</h3>
+          <h3 class="step-title">Baixe e compartilhe</h3>
           <p class="step-description">
-            Receba seu áudio processado em alta qualidade MP3, pronto para
-            compartilhar.
+            Download em MP3 de alta qualidade.
           </p>
         </div>
       </div>
@@ -409,15 +419,25 @@
           Ouça a <span class="text-accent">diferença</span>
         </h2>
         <p class="section-description">
-          Compare o antes e depois com nossos exemplos
+          Compare o original com o efeito aplicado.
         </p>
       </div>
+
+      <!-- Audio Players (Hidden) -->
+      <audio id="exampleOriginal" preload="metadata">
+        <source src="/assets/audio/vendido-verdadeoriginal.mp3" type="audio/mpeg">
+        Seu navegador não suporta o elemento de áudio.
+      </audio>
+      <audio id="exampleProcessed" preload="metadata">
+        <source src="/assets/audio/vendido-verdade-chinesa-remake-nightcore-20251207.mp3" type="audio/mpeg">
+        Seu navegador não suporta o elemento de áudio.
+      </audio>
 
       <div class="examples-grid">
         <div class="example-card">
           <div class="example-label">Original</div>
           <div class="example-player">
-            <div class="example-vinyl">
+            <div class="example-vinyl" id="vinylOriginal">
               <div class="vinyl-disc">
                 <div class="vinyl-center"></div>
                 <div class="vinyl-groove"></div>
@@ -426,10 +446,10 @@
               </div>
             </div>
             <div class="example-info">
-              <h4>Sample Track</h4>
-              <p>Original mix • 3:45</p>
+              <h4>Vendido - Verdade Chinesa</h4>
+              <p>Versão original</p>
             </div>
-            <button class="example-play">
+            <button class="example-play" id="playOriginal" data-audio="exampleOriginal" data-vinyl="vinylOriginal">
               <svg viewBox="0 0 24 24" fill="currentColor">
                 <path d="M8 5v14l11-7z" />
               </svg>
@@ -447,9 +467,9 @@
         </div>
 
         <div class="example-card processed">
-          <div class="example-label slowed">Slowed + Reverb</div>
+          <div class="example-label slowed">Nightcore</div>
           <div class="example-player">
-            <div class="example-vinyl slowed">
+            <div class="example-vinyl slowed" id="vinylProcessed">
               <div class="vinyl-disc">
                 <div class="vinyl-center"></div>
                 <div class="vinyl-groove"></div>
@@ -458,10 +478,10 @@
               </div>
             </div>
             <div class="example-info">
-              <h4>Sample Track</h4>
-              <p>Slowed + Reverb • 4:41</p>
+              <h4>Vendido - Verdade Chinesa</h4>
+              <p>Nightcore by phona 🎵</p>
             </div>
-            <button class="example-play">
+            <button class="example-play" id="playProcessed" data-audio="exampleProcessed" data-vinyl="vinylProcessed">
               <svg viewBox="0 0 24 24" fill="currentColor">
                 <path d="M8 5v14l11-7z" />
               </svg>
@@ -475,8 +495,56 @@
 
       <div class="examples-note">
         <span class="note-icon">🎧</span>
-        <span>Use fones de ouvido para melhor experiência</span>
+        <span>Use fones de ouvido para melhor experiência • Clique nos botões de play para ouvir a diferença!</span>
       </div>
+      
+      <script>
+        // Player de exemplos
+        document.addEventListener('DOMContentLoaded', function() {
+          const playButtons = document.querySelectorAll('.example-play');
+          let currentAudio = null;
+          
+          playButtons.forEach(button => {
+            button.addEventListener('click', function() {
+              const audioId = this.getAttribute('data-audio');
+              const vinylId = this.getAttribute('data-vinyl');
+              const audio = document.getElementById(audioId);
+              const vinyl = document.getElementById(vinylId);
+              
+              // Para qualquer áudio tocando
+              if (currentAudio && currentAudio !== audio) {
+                currentAudio.pause();
+                currentAudio.currentTime = 0;
+                // Remove rotação do vinyl anterior
+                document.querySelectorAll('.example-vinyl').forEach(v => {
+                  v.classList.remove('playing');
+                });
+              }
+              
+              if (audio.paused) {
+                audio.play();
+                vinyl.classList.add('playing');
+                currentAudio = audio;
+                
+                // Muda ícone para pause
+                this.innerHTML = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z" /></svg>';
+              } else {
+                audio.pause();
+                vinyl.classList.remove('playing');
+                
+                // Muda ícone para play
+                this.innerHTML = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z" /></svg>';
+              }
+              
+              // Quando terminar, volta para play
+              audio.addEventListener('ended', function() {
+                vinyl.classList.remove('playing');
+                button.innerHTML = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z" /></svg>';
+              });
+            });
+          });
+        });
+      </script>
     </div>
   </section>
 
@@ -485,10 +553,10 @@
     <div class="processor-container">
       <div class="processor-header">
         <h2 class="processor-title">
-          Processe seu <span class="text-accent">áudio agora</span>
+          Transforme sua música <span class="text-accent">agora mesmo</span>
         </h2>
         <p class="processor-subtitle">
-          Cole o link do YouTube e escolha o efeito desejado
+          Crie sua conta grátis e comece a fazer remixes profissionais em menos de 1 minuto
         </p>
       </div>
 
@@ -496,8 +564,8 @@
         <div class="processor-grid">
           <div class="input-group">
             <label for="youtubeUrl" class="input-label">
-              <span class="label-text">URL do YouTube</span>
-              <span class="label-hint">Cole o link da música</span>
+              <span class="label-text">Link do YouTube</span>
+              <span class="label-hint">Cole aqui o link da música ou vídeo</span>
             </label>
             <div class="input-wrapper">
               <span class="input-icon">
@@ -515,8 +583,8 @@
 
           <div class="input-group">
             <label for="presetSelect" class="input-label">
-              <span class="label-text">Preset de efeito</span>
-              <span class="label-hint">Escolha o estilo desejado</span>
+              <span class="label-text">Escolha o efeito</span>
+              <span class="label-hint">Selecione como quer transformar o áudio</span>
             </label>
             <div class="select-wrapper">
               <select id="presetSelect" class="select-field">
@@ -532,7 +600,7 @@
         </div>
 
         <button id="processBtn" class="btn-process">
-          <span class="btn-text">Processar áudio</span>
+          <span class="btn-text">✨ Criar remix agora</span>
           <span class="btn-spinner"></span>
           <span class="btn-icon">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
@@ -550,8 +618,8 @@
             </svg>
           </div>
           <div class="processor-limit-copy">
-            <strong>Limite de duração</strong>
-            <span>Processamos apenas áudios e Videos de até 20 minutos.</span>
+            <strong>Como funciona</strong>
+            <span>Crie sua conta gratuita em 30 segundos e comece a processar músicas de até 20 minutos. É rápido e fácil!</span>
           </div>
         </div>
 
@@ -596,15 +664,15 @@
       <div class="processor-features">
         <div class="feature">
           <span class="feature-icon">✦</span>
-          <span>Uso básico gratuito</span>
+          <span>Plano gratuito disponível</span>
         </div>
         <div class="feature">
           <span class="feature-icon">⚡</span>
-          <span>Processamento rápido</span>
+          <span>Resultados em menos de 1 minuto</span>
         </div>
         <div class="feature">
           <span class="feature-icon">🔒</span>
-          <span>Sem necessidade de cadastro</span>
+          <span>Cadastro rápido e seguro</span>
         </div>
       </div>
     </div>
@@ -630,7 +698,7 @@
           </svg>
           <span class="logo-text">phona</span>
         </div>
-        <p class="footer-tagline">Transforme o som do seu jeito</p>
+        <p class="footer-tagline">A ferramenta preferida de milhares de criadores de conteúdo</p>
       </div>
 
       <div class="footer-links">
@@ -649,9 +717,14 @@
     </div>
 
     <div class="footer-bottom">
-      <p>© 2024 phona. Feito com ♥ para amantes de música.</p>
+      <p>© <span id="currentYear"></span> phona. Feito com ♥ para criadores de conteúdo e produtores musicais.</p>
     </div>
   </footer>
+
+  <script>
+    // Atualiza o ano automaticamente
+    document.getElementById('currentYear').textContent = new Date().getFullYear();
+  </script>
 
   <!-- Auth Modal with Tabs -->
   <div id="authModal" class="modal">

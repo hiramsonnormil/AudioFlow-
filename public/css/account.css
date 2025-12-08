@@ -1,0 +1,436 @@
+body.account-page {
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  min-height: 100vh;
+  font-size: 0.875rem;
+}
+
+.account-hero {
+  position: relative;
+  padding: 6rem 1.5rem 4.5rem;
+  display: flex;
+  justify-content: center;
+  text-align: center;
+  overflow: hidden;
+}
+
+.account-hero::before {
+  content: '';
+  position: absolute;
+  inset: -40% -20% auto;
+  height: 120%;
+  background: radial-gradient(ellipse at center, rgba(123, 97, 255, 0.35) 0%, rgba(0, 0, 0, 0) 60%);
+  filter: blur(20px);
+  opacity: 0.75;
+  z-index: 0;
+}
+
+.account-hero-decoration {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(140deg, rgba(23, 23, 28, 0.6) 0%, rgba(15, 15, 19, 0.9) 80%);
+  mix-blend-mode: lighten;
+  opacity: 0.85;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.account-hero-content {
+  position: relative;
+  max-width: 720px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  align-items: center;
+  animation: fadeInUp 0.7s ease-out;
+  z-index: 1;
+}
+
+.account-hero-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.45rem 1.15rem;
+  background: rgba(123, 97, 255, 0.15);
+  border: 1px solid rgba(123, 97, 255, 0.35);
+  border-radius: 999px;
+  font-weight: 600;
+  font-size: 0.85rem;
+  letter-spacing: 0.01em;
+  color: #d0c7ff;
+}
+
+.account-title {
+  font-size: clamp(2.1rem, 5vw, 3rem);
+  font-weight: 800;
+  line-height: 1.05;
+  margin: 0;
+  letter-spacing: -0.02em;
+}
+
+.account-subtitle {
+  font-size: clamp(0.95rem, 2.2vw, 1.1rem);
+  color: var(--text-secondary);
+  line-height: 1.6;
+  max-width: 560px;
+}
+
+.account-main {
+  position: relative;
+  margin-top: -3rem;
+  z-index: 2;
+  padding: 0 1.5rem 4.5rem;
+}
+
+.account-container {
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+.account-content {
+  display: grid;
+  gap: 1.5rem;
+  animation: fadeInUp 0.8s ease-out 0.2s both;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.account-card {
+  background: linear-gradient(165deg, rgba(24, 24, 32, 0.92) 0%, rgba(16, 16, 24, 0.95) 100%);
+  border: 1px solid rgba(194, 140, 102, 0.18);
+  border-radius: 20px;
+  padding: 2rem;
+  box-shadow:
+    0 12px 40px rgba(10, 10, 14, 0.6),
+    0 0 0 1px rgba(255, 255, 255, 0.04) inset;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+  backdrop-filter: blur(12px);
+}
+
+.account-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 20% 20%, rgba(194, 140, 102, 0.18), transparent 55%),
+              radial-gradient(circle at 80% 10%, rgba(123, 97, 255, 0.12), transparent 45%);
+  opacity: 0.45;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.account-card::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg,
+    transparent,
+    rgba(194, 140, 102, 0.4) 45%,
+    rgba(123, 97, 255, 0.35) 55%,
+    transparent
+  );
+  opacity: 0;
+  transition: opacity 0.4s ease;
+  z-index: 1;
+}
+
+.account-card > * {
+  position: relative;
+  z-index: 2;
+}
+
+.account-card:hover {
+  border-color: rgba(194, 140, 102, 0.35);
+  transform: translateY(-4px);
+  box-shadow: 
+    0 12px 48px rgba(194, 140, 102, 0.2),
+    0 0 0 1px rgba(194, 140, 102, 0.1) inset;
+}
+
+.account-card:hover::after {
+  opacity: 1;
+}
+
+.account-card h2 {
+  font-size: 1.35rem;
+  font-weight: 700;
+  margin-bottom: 1.5rem;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  letter-spacing: -0.01em;
+}
+
+.plan-info-grid {
+  display: grid;
+  gap: 1rem;
+}
+
+.plan-info-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 1.25rem;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 14px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+}
+
+.plan-info-row::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: linear-gradient(180deg, var(--copper), var(--copper-light));
+  border-radius: 14px 0 0 14px;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.plan-info-row:hover {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(194, 140, 102, 0.25);
+  transform: translateX(4px);
+}
+
+.plan-info-row:hover::before {
+  opacity: 1;
+}
+
+.plan-info-label {
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+}
+
+.plan-info-value {
+  font-weight: 600;
+  color: var(--text-primary);
+  font-size: 0.95rem;
+  letter-spacing: -0.01em;
+}
+
+.plan-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.45rem 0.85rem;
+  border-radius: 10px;
+  font-weight: 600;
+  font-size: 0.85rem;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  letter-spacing: -0.01em;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.plan-badge.free {
+  background: linear-gradient(135deg, rgba(150, 150, 150, 0.2), rgba(120, 120, 120, 0.25));
+  color: #ccc;
+  border: 1.5px solid rgba(150, 150, 150, 0.3);
+}
+
+.plan-badge.voz_pro {
+  background: linear-gradient(135deg, rgba(123, 97, 255, 0.25), rgba(147, 51, 234, 0.3));
+  color: #b794f6;
+  border: 1.5px solid rgba(123, 97, 255, 0.4);
+  box-shadow: 0 4px 16px rgba(123, 97, 255, 0.3);
+}
+
+.plan-badge.voz_pro:hover {
+  transform: scale(1.05);
+  box-shadow: 0 6px 20px rgba(123, 97, 255, 0.4);
+}
+
+.plan-badge.voz_master {
+  background: linear-gradient(135deg, rgba(251, 191, 36, 0.25), rgba(245, 158, 11, 0.3));
+  color: #fcd34d;
+  border: 1.5px solid rgba(251, 191, 36, 0.4);
+  box-shadow: 0 4px 16px rgba(251, 191, 36, 0.3);
+}
+
+.plan-badge.voz_master:hover {
+  transform: scale(1.05);
+  box-shadow: 0 6px 20px rgba(251, 191, 36, 0.4);
+}
+
+.account-actions {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 1.5rem;
+}
+
+.btn-account {
+  flex: 1;
+  padding: 0.85rem 1.5rem;
+  border-radius: 12px;
+  font-weight: 600;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  border: none;
+  text-decoration: none;
+  text-align: center;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  letter-spacing: -0.01em;
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-account::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.1);
+  transform: translate(-50%, -50%);
+  transition: width 0.6s ease, height 0.6s ease;
+}
+
+.btn-account:hover::before {
+  width: 300px;
+  height: 300px;
+}
+
+.btn-account-primary {
+  background: linear-gradient(135deg, var(--copper) 0%, var(--copper-light) 100%);
+  color: white;
+  box-shadow: 0 6px 20px rgba(194, 140, 102, 0.35);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.btn-account-primary:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 12px 32px rgba(194, 140, 102, 0.5);
+}
+
+.btn-account-primary:active {
+  transform: translateY(-1px);
+}
+
+.btn-account-secondary {
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text-primary);
+  border: 1.5px solid rgba(255, 255, 255, 0.12);
+}
+
+.btn-account-secondary:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(194, 140, 102, 0.35);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.25);
+}
+
+.empty-state {
+  text-align: center;
+  padding: 3rem 1.5rem;
+}
+
+.empty-state-icon {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+  opacity: 0.6;
+}
+
+.empty-state h3 {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 0.5rem;
+}
+
+.empty-state p {
+  color: var(--text-secondary);
+  font-size: 1rem;
+}
+
+.subscription-highlight {
+  color: var(--copper-light);
+  font-weight: 700;
+}
+
+/* Responsive */
+@media (max-width: 992px) {
+  .account-main {
+    margin-top: -3rem;
+    padding: 0 1.25rem 4.5rem;
+  }
+
+  .account-card {
+    padding: 1.5rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .account-hero {
+    padding: 6rem 1rem 4.5rem;
+  }
+
+  .account-hero-badge {
+    font-size: 0.85rem;
+    padding: 0.45rem 1.1rem;
+  }
+
+  .account-main {
+    margin-top: -2.5rem;
+    padding: 0 1rem 3.5rem;
+  }
+
+  .account-card {
+    padding: 1.75rem;
+  }
+
+  .account-actions {
+    flex-direction: column;
+  }
+
+  .plan-info-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.6rem;
+  }
+
+  .plan-info-label,
+  .plan-info-value {
+    font-size: 0.95rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .account-hero {
+    padding-top: 5.5rem;
+  }
+
+  .account-card {
+    padding: 1.5rem;
+  }
+
+  .plan-badge {
+    width: 100%;
+    justify-content: center;
+  }
+}

@@ -1,3 +1,5 @@
+import { showPlanModal } from './utils/planModal.js';
+
 // Gerenciador de fila em massa
 class BatchQueueManager {
   constructor() {
@@ -217,7 +219,15 @@ batchStartBtn.addEventListener("click", async () => {
       }
 
       if (!r.ok) {
+        const errorCode = payload?.error;
         const message = payload?.message || payload?.error || "server error";
+        
+        if (errorCode === 'preset_not_available' || errorCode === 'plan_limit_reached') {
+          batchStartBtn.disabled = false;
+          showPlanModal(message);
+          return;
+        }
+        
         throw new Error(message);
       }
 
