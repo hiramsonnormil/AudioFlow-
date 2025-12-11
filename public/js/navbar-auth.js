@@ -3,7 +3,7 @@
  * Atualiza a navbar baseado no estado de autenticação
  */
 
-import { isAuthenticated, clearSession, getUserInitial, getUserPlan } from './auth/session.js';
+import { isAuthenticated, clearSession, getUserInitial, getUserName, getUserPlan } from './auth/session.js';
 import { setupOpenModalListeners } from './auth/modal-auth.js';
 import { confirmLogout } from './confirm-modal.js';
 
@@ -21,6 +21,7 @@ function updateNavbar() {
 
   if (isAuthenticated()) {
     const userInitial = getUserInitial();
+    const userName = getUserName();
     const planLabel = getPlanLabel(getUserPlan());
 
     // Substituir botões de login/signup por user info e logout - DESKTOP
@@ -28,10 +29,10 @@ function updateNavbar() {
       <a href="#effects" class="nav-link">Efeitos</a>
       <a href="#how" class="nav-link">Como funciona</a>
       <a href="/plans" class="nav-link">Planos</a>
-      <a href="/html/recents.html" class="nav-link" id="nav-recents">📂 Meus Processamentos</a>
+      <a href="/recents" class="nav-link" id="nav-recents">Meus Processamentos</a>
       <a href="/account" class="nav-link nav-link-account nav-user" style="display: flex; align-items: center; gap: 0.5rem;">
-        <span class="nav-user-icon" style="width: 32px; height: 32px; background: linear-gradient(135deg, #7B61FF, #00E0FF); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 600; color: #fff;">${userInitial}</span>
-        <span class="nav-user-name" style="font-weight: 600;">Conta</span>
+        <span class="nav-user-icon" style="width: 32px; height: 32px; background: linear-gradient(135deg, var(--copper), var(--peach)); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 600; color: #fff;">${userInitial}</span>
+        <span class="nav-user-name" style="font-weight: 600;">${userName}</span>
         <span class="nav-user-plan" id="nav-user-plan-badge" style="font-size: 0.8rem; opacity: 0.9; white-space: nowrap;">${planLabel}</span>
       </a>
       <button class="nav-link nav-link-logout" id="navLogoutBtn">Sair</button>
@@ -43,12 +44,12 @@ function updateNavbar() {
         <a href="#effects" class="mobile-nav-link">Efeitos</a>
         <a href="#how" class="mobile-nav-link">Como funciona</a>
         <a href="/plans" class="mobile-nav-link">Planos</a>
-        <a href="/html/recents.html" class="mobile-nav-link" id="mobile-nav-recents">📂 Meus Processamentos</a>
+        <a href="/recents" class="mobile-nav-link" id="mobile-nav-recents">Meus Processamentos</a>
         <div class="mobile-menu-divider"></div>
         <a href="/account" class="mobile-nav-link" style="display: flex; align-items: center; gap: 0.75rem; padding: 1rem; background: rgba(255, 255, 255, 0.05); border-radius: 12px; margin-bottom: 0.5rem;">
-          <span style="width: 40px; height: 40px; background: linear-gradient(135deg, #7B61FF, #00E0FF); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 1.1rem;">${userInitial}</span>
+          <span style="width: 40px; height: 40px; background: linear-gradient(135deg, var(--copper), var(--peach)); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 1.1rem;">${userInitial}</span>
           <div style="display: flex; flex-direction: column; gap: 0.25rem;">
-            <span style="color: var(--text-primary); font-weight: 600;">Conta</span>
+            <span style="color: var(--text-primary); font-weight: 600;">${userName}</span>
             <span style="font-size: 0.75rem; opacity: 0.85;">${planLabel}</span>
           </div>
         </a>
@@ -98,13 +99,13 @@ function updateNavbar() {
 
 function getPlanLabel(plan) {
   const planMap = {
-    voz_master: '👑 Master',
-    voz_pro: '⭐ Pro',
-    free: 'Plano Free'
+    voz_master: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" style="display: inline-block; vertical-align: middle; margin-right: 4px;"><path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" fill="#d4a378" stroke="#c28c66" stroke-width="1.5"/></svg>Master',
+    voz_pro: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" style="display: inline-block; vertical-align: middle; margin-right: 4px;"><circle cx="12" cy="12" r="10" fill="#e8b4a0" stroke="#d4a378" stroke-width="1.5"/><path d="M12 7v5l3 3" stroke="#c28c66" stroke-width="2" stroke-linecap="round"/></svg>Pro',
+    free: 'Free'
   };
 
   if (!plan) {
-    return 'Plano Free';
+    return 'Free';
   }
 
   return planMap[plan] || plan;

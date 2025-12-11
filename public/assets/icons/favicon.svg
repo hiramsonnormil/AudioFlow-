@@ -1,26 +1,63 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="phona icon">
-  <title>phona</title>
+<svg width="64" height="64" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
   <defs>
-    <linearGradient id="faviconGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#7B61FF"/>
-      <stop offset="100%" stop-color="#00E0FF"/>
+    <linearGradient id="mainGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#c28c66" />
+      <stop offset="50%" stop-color="#d4a378" />
+      <stop offset="100%" stop-color="#e8b4a0" />
     </linearGradient>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
   </defs>
   
-  <!-- Simplified musical note optimized for small sizes -->
-  <g>
-    <!-- Note circle (bottom) -->
-    <circle cx="11" cy="21" r="4.5" fill="url(#faviconGradient)"/>
-    
-    <!-- Note stem -->
-    <rect x="14" y="9" width="2.5" height="13" rx="1.25" fill="url(#faviconGradient)"/>
-    
-    <!-- Note flag -->
-    <path d="M 16.5 9 L 16.5 7 Q 16.5 6, 17.5 6 L 22 5 Q 23 4.8, 23 6 L 23 8 Q 23 9, 22 9.2 L 17.5 10.5 Q 16.5 10.8, 16.5 9.8 Z" 
-          fill="url(#faviconGradient)"/>
-    
-    <!-- Sound waves (simplified to 2 lines for clarity at small size) -->
-    <line x1="20" y1="14" x2="27" y2="14" stroke="url(#faviconGradient)" stroke-width="2" stroke-linecap="round"/>
-    <line x1="20" y1="19" x2="25" y2="19" stroke="url(#faviconGradient)" stroke-width="2" stroke-linecap="round"/>
+  <!-- Background circle -->
+  <circle cx="32" cy="32" r="32" fill="#0d0d0d"/>
+  <circle cx="32" cy="32" r="29" fill="url(#mainGradient)" opacity="0.1"/>
+  
+  <!-- Headphone arc -->
+  <path d="M 20 26 Q 32 14, 44 26" stroke="url(#mainGradient)" stroke-width="3" 
+        fill="none" stroke-linecap="round" filter="url(#glow)"/>
+  
+  <!-- Left ear cup with wave -->
+  <g filter="url(#glow)">
+    <rect x="16" y="26" width="8" height="14" rx="4" fill="url(#mainGradient)"/>
+    <path d="M 18.5 30 Q 20 31.5, 18.5 33 Q 20 34.5, 18.5 36" stroke="#e8b4a0" 
+          stroke-width="1.2" fill="none" stroke-linecap="round" opacity="0.6"/>
+  </g>
+  
+  <!-- Right ear cup with wave -->
+  <g filter="url(#glow)">
+    <rect x="40" y="26" width="8" height="14" rx="4" fill="url(#mainGradient)"/>
+    <path d="M 42.5 30 Q 44 31.5, 42.5 33 Q 44 34.5, 42.5 36" stroke="#e8b4a0" 
+          stroke-width="1.2" fill="none" stroke-linecap="round" opacity="0.6"/>
+  </g>
+  
+  <!-- Sound waves -->
+  <g opacity="0.5">
+    <path d="M 12 32 Q 9 32, 7 32" stroke="url(#mainGradient)" 
+          stroke-width="1.5" fill="none" stroke-linecap="round"/>
+    <path d="M 10 28 Q 6 28, 4 28" stroke="url(#mainGradient)" 
+          stroke-width="1" fill="none" stroke-linecap="round"/>
+    <path d="M 10 36 Q 6 36, 4 36" stroke="url(#mainGradient)" 
+          stroke-width="1" fill="none" stroke-linecap="round"/>
+          
+    <path d="M 52 32 Q 55 32, 57 32" stroke="url(#mainGradient)" 
+          stroke-width="1.5" fill="none" stroke-linecap="round"/>
+    <path d="M 54 28 Q 58 28, 60 28" stroke="url(#mainGradient)" 
+          stroke-width="1" fill="none" stroke-linecap="round"/>
+    <path d="M 54 36 Q 58 36, 60 36" stroke="url(#mainGradient)" 
+          stroke-width="1" fill="none" stroke-linecap="round"/>
+  </g>
+  
+  <!-- Equalizer bars -->
+  <g transform="translate(26, 42)">
+    <rect x="0" y="3" width="2" height="6" rx="1" fill="url(#mainGradient)" opacity="0.8"/>
+    <rect x="3" y="1" width="2" height="10" rx="1" fill="url(#mainGradient)" opacity="0.9"/>
+    <rect x="6" y="0" width="2" height="12" rx="1" fill="url(#mainGradient)"/>
+    <rect x="9" y="2" width="2" height="8" rx="1" fill="url(#mainGradient)" opacity="0.9"/>
   </g>
 </svg>

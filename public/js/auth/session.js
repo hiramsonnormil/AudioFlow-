@@ -70,6 +70,17 @@ export function getUserInitial() {
 }
 
 /**
+ * Obter nome do usuário para exibição
+ */
+export function getUserName() {
+  const user = getUser();
+  if (!user) return 'Conta';
+  
+  // Retorna username ou parte do email antes do @
+  return user.username || user.email?.split('@')[0] || 'Conta';
+}
+
+/**
  * Verificar se usuário é Free
  */
 export function isFreeUser() {
@@ -120,6 +131,7 @@ export default {
   isAuthenticated,
   clearSession,
   getUserInitial,
+  getUserName,
   isFreeUser,
   getUserPlan,
   restoreSessionFromCookie,

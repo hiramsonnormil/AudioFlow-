@@ -10,6 +10,27 @@ import { openModal } from "./auth/modal-auth.js";
 let paymentModal = null;
 let paymentModalOverlay = null;
 let statusPollingInterval = null;
+let statusPollingTargetPixId = null;
+let statusPollingStartedAt = null;
+
+/**
+ * Extrai o identificador Pix (transactionId) retornado pelo backend
+ */
+function extractPixId(payload) {
+  if (!payload) return null;
+  return (
+    payload.transactionId ||
+    payload.transactionID ||
+    payload.pixId ||
+    payload.pixID ||
+    payload.payment?.transactionId ||
+    payload.payment?.transactionID ||
+    payload.payment?.pixId ||
+    payload.payment?.id ||
+    payload.pendingPayment?.pixId ||
+    null
+  );
+}
 
 /**
  * Criar modal de pagamento Pix
@@ -139,6 +160,8 @@ function closePaymentModal() {
     clearInterval(statusPollingInterval);
     statusPollingInterval = null;
   }
+  statusPollingTargetPixId = null;
+  statusPollingStartedAt = null;
   
   if (paymentModalOverlay && paymentModal) {
     paymentModalOverlay.style.display = 'none';
@@ -154,16 +177,21 @@ function updateModalWithPixData(data) {
   const content = document.getElementById('paymentModalContent');
   if (!content) return;
 
-  // Se for upgrade, usar o plano de destino (requestedPlan)
-  const targetPlan = data.isUpgrade ? data.requestedPlan : data.planType;
-  const planName = targetPlan === 'voz_pro' ? 'Voz Pro' : 'Voz Master';
+  // Preferir informações de exibição vindas do backend (quando disponíveis)
+  const targetPlan = data.isUpgrade ? data.requestedPlan : (data.displayPlanType || data.planType);
+  const planNameMap = { free: 'Free', voz_pro: 'Voz Pro', voz_master: 'Voz Master', voz_plus_master: 'Plus Master' };
+  const planName = planNameMap[targetPlan] || targetPlan;
   
   // Se for upgrade, mostrar o valor proporcional
   let planPrice;
   if (data.isUpgrade) {
     planPrice = `R$ ${(data.upgradeAmount / 100).toFixed(2).replace('.', ',')}`;
+  } else if (typeof data.displayMonthlyAmount === 'number') {
+    planPrice = `R$ ${(data.displayMonthlyAmount / 100).toFixed(2).replace('.', ',')}`;
+  } else if (typeof data.monthlyAmount === 'number') {
+    planPrice = `R$ ${(data.monthlyAmount / 100).toFixed(2).replace('.', ',')}`;
   } else {
-    planPrice = targetPlan === 'voz_pro' ? 'R$ 14,90' : 'R$ 1,50';
+    planPrice = '';
   }
 
   content.innerHTML = `
@@ -482,17 +510,21 @@ function updateModalWithPixData(data) {
   const closeBtn = document.getElementById('closePaymentBtn');
   closeBtn?.addEventListener('click', closePaymentModal);
 
-  // Iniciar polling do status
-  startStatusPolling(data.userId, data.subscriptionId);
+  // Iniciar polling do status acompanhando o Pix gerado
+  const pixId = extractPixId(data);
+  startStatusPolling(data.userId, data.subscriptionId, pixId);
 }
 
 /**
  * Polling para verificar status do pagamento
  */
-function startStatusPolling(userId, subscriptionId) {
+function startStatusPolling(userId, subscriptionId, targetPixId) {
   if (statusPollingInterval) {
     clearInterval(statusPollingInterval);
   }
+
+  statusPollingTargetPixId = targetPixId || null;
+  statusPollingStartedAt = Date.now();
 
   statusPollingInterval = setInterval(async () => {
     try {
@@ -506,18 +538,35 @@ function startStatusPolling(userId, subscriptionId) {
 
       const data = await response.json();
 
-      if (data.status === 'active') {
-        // Atualizar plano no localStorage imediatamente
+      const lastPayment = data.lastPayment || null;
+      const lastPaymentStatus = lastPayment?.status ? String(lastPayment.status).toLowerCase() : null;
+      const lastPaymentPixId = lastPayment?.pixId || null;
+      const paidAtMs = lastPayment?.paidAt ? new Date(lastPayment.paidAt).getTime() : null;
+      const paidAtValid = Number.isFinite(paidAtMs);
+      const startedAt = statusPollingStartedAt || 0;
+      const paidAfterStart = paidAtValid ? paidAtMs >= startedAt - 1000 : false;
+      const matchesTargetPix = statusPollingTargetPixId && lastPaymentPixId
+        ? statusPollingTargetPixId === lastPaymentPixId
+        : false;
+
+      const paymentConfirmed = Boolean(data.active) && lastPaymentStatus === 'paid' && (
+        (matchesTargetPix && (paidAfterStart || !paidAtValid)) ||
+        (!statusPollingTargetPixId && paidAfterStart)
+      );
+
+      if (paymentConfirmed) {
         const user = getUser();
         if (user && data.planType) {
           user.plan = data.planType;
           localStorage.setItem('phona:user', JSON.stringify(user));
           console.log('✅ Plano atualizado no localStorage:', data.planType);
         }
-        
+
         showSuccessMessage();
         clearInterval(statusPollingInterval);
         statusPollingInterval = null;
+        statusPollingTargetPixId = null;
+        statusPollingStartedAt = null;
       }
     } catch (error) {
       console.error('Erro ao verificar status:', error);
@@ -566,7 +615,7 @@ function showSuccessMessage() {
       </p>
 
       <button 
-        onclick="window.location.href='/html/index.html'"
+        onclick="window.location.href='/'"
         style="
           width: 100%;
           padding: 1rem;
@@ -735,15 +784,15 @@ function handlePlanClick(event) {
   // Se não autenticado, redirecionar para login/signup
   if (!authenticated) {
     const loginUrl = plan === "free" 
-      ? "/html/index.html#processor" 
-      : `/html/index.html?signup=true&plan=${plan}`;
+      ? "/#processor" 
+      : `/?signup=true&plan=${plan}`;
     window.location.href = loginUrl;
     return;
   }
 
   // Plano free apenas redireciona
   if (plan === "free") {
-    window.location.href = "/html/index.html#processor";
+    window.location.href = "/#processor";
     return;
   }
 
@@ -760,7 +809,7 @@ async function fetchCurrentPlan() {
 
   try {
     const token = localStorage.getItem('phona:token');
-    const response = await fetch(`/api/subscriptions/${user._id}`, {
+    const response = await fetch(`/api/subscriptions/${user._id}/status`, {
       headers: {
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json'
@@ -769,16 +818,21 @@ async function fetchCurrentPlan() {
 
     if (response.ok) {
       const data = await response.json();
-      
-      // Atualizar o plano no localStorage se mudou
-      if (data.planType && user.plan !== data.planType) {
+
+      // Preferir effectivePlanType do backend; fallback mantém regra de ativo
+      const effectivePlan = data.effectivePlanType 
+        ? data.effectivePlanType 
+        : (data.active ? (data.planType || user.plan || 'free') : (user.plan || 'free'));
+
+      // Atualizar localStorage apenas quando ativo
+      if (data.active && data.planType && user.plan !== data.planType) {
         user.plan = data.planType;
         localStorage.setItem('phona:user', JSON.stringify(user));
-        console.log(`✅ Plano atualizado: ${data.planType}`);
+        console.log(`✅ Plano atualizado (ativo): ${data.planType}`);
       }
 
       return {
-        plan: data.planType || user.plan || 'free',
+        plan: effectivePlan,
         status: data.status,
         active: data.active,
         nextBillingDate: data.nextBillingDate

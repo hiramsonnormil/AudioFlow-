@@ -6,10 +6,7 @@
 import { spawn } from "child_process";
 import path from "path";
 import fs from "fs";
-import {
-  isDurationTooLong,
-  buildDurationLimitMessage,
-} from "../config/audioLimits.js";
+import { validateAudioDuration } from "../utils/audioValidation.js";
 import * as r2 from "../../storage/r2.js";
 import { getUserIdentity } from "../config/security.js";
 
@@ -62,9 +59,10 @@ export class AudioProcessingService {
     if (preset === "MUFFLED_SLOWED") {
       // Abafado: lowpass 300Hz, tempo 0.85×, pitch 0.95, reverb sala 60ms
       return [
-        `lowpass=f=300`,
-        `rubberband=tempo=0.85:pitch=0.95`,
-        `aecho=0.4:0.5:60:0.15`,
+        `lowpass=f=380`,
+        `bass=g=9:f=75`,
+        `rubberband=tempo=0.88:pitch=0.94`,
+        `aecho=0.3:0.4:60:0.25`,
         `loudnorm=I=-14:TP=-1.0`,
       ].join(",");
     }
@@ -72,10 +70,13 @@ export class AudioProcessingService {
     if (preset === "MUFFLED_SPEED") {
       // Abafado acelerado: lowpass 600Hz (intelligibilidade), tempo 1.25×, pitch 1.05 (body), sem reverb
       return [
-        `lowpass=f=600`,
-        `rubberband=tempo=1.25:pitch=1.05`,
-        `loudnorm=I=-14:TP=-1.0`,
+        "lowpass=f=520",              // abafado controlado, ainda inteligível
+        "highpass=f=120",             // remove o subgrave que suja quando acelera
+        "bass=g=4:f=90",              // leve reforço pra deixar cheio
+        "rubberband=tempo=1.22:pitch=1.04", // speed + corpo perfeito
+        "loudnorm=I=-14:TP=-1"
       ].join(",");
+
     }
 
     if (preset === "DAYCORE") {
@@ -146,6 +147,121 @@ export class AudioProcessingService {
       ].join(",");
     }
 
+    // ===== PLUS MASTER PRESETS =====
+    
+    if (preset === "BABY_VOICE") {
+      // Voz aguda fofinha estilo TikTok. Pitch +35%, formant leve e EQ cristalina
+      return [
+        `asetrate=44100*1.35`,
+        `aresample=44100`,
+        `atempo=1.0`,
+        `equalizer=f=200:t=h:width=200:g=-3`,
+        `equalizer=f=3000:t=h:width=2000:g=4`,
+        `afftdn=nf=-25`,
+        `loudnorm=I=-14:TP=-1.0`,
+      ].join(",");
+    }
+
+    if (preset === "DEEP_VOICE") {
+      // Voz grave cinematográfica. Pitch -20%, corte suave nos agudos e compressão limpa
+      return [
+        `asetrate=44100*0.80`,
+        `aresample=44100`,
+        `atempo=1.0`,
+        `lowpass=f=6000`,
+        `compand=attacks=0:decays=0:points=-80/-80|-20/-10|0/-2`,
+        `loudnorm=I=-14:TP=-1.0`,
+      ].join(",");
+    }
+
+    if (preset === "VAPORWAVE_CLEAN") {
+      // Vaporwave suave sem reverb pesado. Tempo 0.80, pitch -4%, equalização vintage
+      return [
+        `asetrate=44100*0.96`,
+        `aresample=44100`,
+        `atempo=0.80`,
+        `equalizer=f=100:t=h:width=100:g=6`,
+        `equalizer=f=800:t=h:width=400:g=-3`,
+        `afftdn=nf=-22`,
+        `loudnorm=I=-14:TP=-1.0`,
+      ].join(",");
+    }
+
+    if (preset === "RADIO_RETRO_AM") {
+      // Som de rádio AM antigo. Bandpass 300–3500Hz + distorção leve
+      return [
+        `bandpass=f=1500:width_type=h:w=3000`,
+        `acompressor=threshold=-20dB:ratio=2:attack=5:release=50`,
+        `loudnorm=I=-18:TP=-1:LRA=11`,
+      ].join(",");
+    }
+
+    if (preset === "CRYSTAL_SPEED") {
+      // Speed Up cristalino. Tempo 1.35× sem distorção + brilho limpo
+      return [
+        `atempo=1.35`,
+        `equalizer=f=3500:t=h:width=2500:g=5`,
+        `afftdn=nf=-25`,
+        `loudnorm=I=-14:TP=-1.0`,
+      ].join(",");
+    }
+
+    if (preset === "TAPE_WARP") {
+      // Simulação de fita antiga. Wow/flutter, pitch drift e saturação vintage
+      // Nota: rubberband não tem parâmetro "wow", usando efeito alternativo
+      return [
+        `rubberband=pitch=1.00:tempo=1.00:transients=crisp:formant=preserved`,
+        `highpass=f=80`,
+        `lowpass=f=12000`,
+        `compand=attacks=0.02:decays=0.3:points=-80/-80|-30/-15|0/-5`,
+        `loudnorm=I=-14:TP=-1.0`,
+      ].join(",");
+    }
+
+    if (preset === "WHISPER_CORE") {
+      // Sussurro etéreo. Gate agressivo + brilho + reverb infinito
+      return [
+        `afftdn=nf=-30`,
+        `highpass=f=200`,
+        `equalizer=f=6000:t=h:width=3000:g=6`,
+        `aecho=0.8:0.9:2000:0.5`,
+        `loudnorm=I=-14:TP=-1.0`,
+      ].join(",");
+    }
+
+    if (preset === "GHOST_REVERB") {
+      // Reverb fantasma. Predelay absurdo + decay muito longo + corte de agudos
+      return [
+        `aecho=0.6:0.7:1200:0.5`,
+        `lowpass=f=4000`,
+        `aecho=0.8:0.7:5000:0.6`,
+        `loudnorm=I=-14:TP=-1.0`,
+      ].join(",");
+    }
+
+    if (preset === "CHOIRIFY") {
+      // Coro sintético. Chorus suave + micro desafinação + expansão estéreo
+      return [
+        `asplit=3[a][b][c]`,
+        `[b]asetrate=44100*1.002,aresample=44100[bp]`,
+        `[c]asetrate=44100*0.998,aresample=44100[cp]`,
+        `[a][bp][cp]amix=inputs=3:weights=0.5 0.25 0.25:normalize=0[mixed]`,
+        `[mixed]chorus=0.5:0.9:55|60|65:0.4|0.32|0.3:0.25|0.4|0.3:2|2.3|1.8[chorused]`,
+        `[chorused]stereowiden=delay=20:feedback=0.2:crossfeed=0.15:drymix=0.85[widened]`,
+        `[widened]loudnorm=I=-14:TP=-1.0`,
+      ].join(";");
+    }
+
+    if (preset === "SUBHARMONIC_BASS") {
+      // Grave enorme. Geração de sub-harmônicos com compressão segura
+      return [
+        `bass=g=8:f=80`,
+        `compand=attacks=0:decays=0:points=-80/-80|-40/-10|0/-3`,
+        `afftdn=nf=-20`,
+        `loudnorm=I=-14:TP=-1.0`,
+      ].join(",");
+    }
+
     // Default fallback
     return `loudnorm=I=-14:TP=-1.0`;
   }
@@ -157,21 +273,34 @@ export class AudioProcessingService {
   processAudio(inputStream, outputPath, audioFilterStr, durationSec, jobId) {
     return new Promise((resolve, reject) => {
       const durationMs = Math.round(durationSec * 1000);
+      
+      // Bitrate adaptativo baseado na duração (economiza espaço)
+      const bitrate = durationSec > 600 ? "128k" : "192k"; // 128k para áudios > 10min
+
+      // Detecta se o filtro usa sintaxe complexa (asplit, amix, etc.)
+      const isComplexFilter = audioFilterStr.includes('[') || audioFilterStr.includes(';');
+      const filterFlag = isComplexFilter ? "-filter_complex" : "-af";
 
       const ffArgs = [
-        "-i",
-        "-",
-        "-af",
-        audioFilterStr,
-        "-c:a",
-        "libmp3lame",
-        "-b:a",
-        "192k",
-        "-progress",
-        "pipe:1",
+        "-threads", "2",        // Limita threads para não sobrecarregar CPU
+        "-i", "-",
+        filterFlag, audioFilterStr,
+        "-c:a", "libmp3lame",
+        "-q:a", "2",           // Qualidade VBR (melhor compressão)
+        "-compression_level", "5", // Balanço entre velocidade e compressão
+        "-progress", "pipe:1",
         "-y",
         outputPath,
       ];
+
+      // Ajuda na depuração de falhas do FFmpeg
+      console.info("[FFmpeg] Iniciando processamento", {
+        jobId,
+        outputPath,
+        durationSec,
+        bitrate,
+        filter: audioFilterStr,
+      });
 
       const ff = spawn("ffmpeg", ffArgs);
       let ffStderr = "";
@@ -194,24 +323,55 @@ export class AudioProcessingService {
       });
 
       ff.on("error", (err) => {
-        console.error(`[${jobId}] ffmpeg spawn error:`, err.message);
+        console.error("[FFmpeg] Erro ao iniciar processo", {
+          jobId,
+          err: err.message,
+        });
         inputStream.process?.kill?.();
         reject(err);
       });
 
       inputStream.process?.on?.("error", (err) => {
-        console.error(`[${jobId}] input source error:`, err.message);
+        console.error("[FFmpeg] Erro no stream de entrada", {
+          jobId,
+          err: err.message,
+        });
         ff.kill();
         reject(err);
       });
 
       ff.on("close", (code) => {
         if (code === 0) {
+          console.info("[FFmpeg] Processamento concluído", {
+            jobId,
+            outputPath,
+          });
           resolve({ success: true, file: outputPath });
         } else {
-          const errorMsg = `ffmpeg exit code ${code}: ${ffStderr.slice(-500)}`;
-          console.error(`[${jobId}] ${errorMsg}`);
-          reject(new Error(errorMsg));
+          const errorMsg = `FFmpeg falhou (código ${code})`;
+          const stderrOutput = ffStderr.trim();
+          const stderrSnippet = stderrOutput
+            .split("\n")
+            .slice(-20)
+            .join("\n")
+            .slice(-4000);
+
+          console.error("[FFmpeg] Falha no processamento", {
+            jobId,
+            code,
+            outputPath,
+            stderr: stderrSnippet,
+          });
+
+          const err = new Error(
+            stderrSnippet
+              ? `${errorMsg}: ${stderrSnippet}`
+              : errorMsg
+          );
+          err.stderr = stderrOutput;
+          err.ffmpegArgs = ffArgs;
+          err.jobId = jobId;
+          reject(err);
         }
       });
 
@@ -242,17 +402,7 @@ export class AudioProcessingService {
     let tempPath = null;
 
     try {
-      const normalizedDuration =
-        typeof durationSec === 'number' && Number.isFinite(durationSec)
-          ? durationSec
-          : parseFloat(durationSec) || 0;
-
-      if (isDurationTooLong(normalizedDuration)) {
-        console.warn(
-          `[${jobId}] Abortado: duração ${normalizedDuration.toFixed(2)}s acima do limite`
-        );
-        throw new Error(buildDurationLimitMessage(normalizedDuration));
-      }
+      const normalizedDuration = validateAudioDuration(durationSec, jobId);
 
       // 1. Gera arquivo temporário
       const filename = `${jobId}.mp3`;
@@ -284,7 +434,6 @@ export class AudioProcessingService {
         : 'free';
       
       const r2Key = `${tier}/${safeUserFolder}/${filename}`;
-      console.log(`[R2] Upload para: ${r2Key} (plano: ${userPlan})`);
 
       // 4. Faz upload para R2
       const uploadResult = await r2.uploadFile(tempPath, r2Key, {

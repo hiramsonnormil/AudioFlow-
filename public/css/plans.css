@@ -106,9 +106,12 @@ body {
 /* Plans grid */
 .plans-comparison__grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  grid-template-columns: repeat(4, 1fr);
   gap: 1.25rem;
   margin-bottom: 1.5rem;
+  max-width: 1400px;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 /* Plan card */
@@ -302,6 +305,12 @@ body {
 }
 
 /* Responsive */
+@media (max-width: 1200px) {
+  .plans-comparison__grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
 @media (max-width: 768px) {
   .nav-links {
     gap: 1rem;

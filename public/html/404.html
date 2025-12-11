@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#0A0A0A" />
+  <meta name="description" content="Página não encontrada | phona" />
+  <title>404 - Página não encontrada | phona</title>
+  <link rel="icon" href="/assets/icons/favicon.svg" type="image/svg+xml" />
+
+  <style>
+    @import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap");
+    @import url("https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700;800&display=swap");
+
+    :root {
+      --bg-primary: #0A0A0A;
+      --bg-secondary: #141414;
+      --text-primary: #FFFFFF;
+      --text-secondary: #B8B8B8;
+      --text-muted: #737373;
+      --copper: #c28c66;
+      --copper-light: #d4a378;
+      --copper-dark: #a67654;
+      --peach: #e8b4a0;
+      --charcoal: #1a1a1a;
+      --cream: #f5f1ed;
+      --border: rgba(255, 255, 255, 0.08);
+      --font-display: 'Space Grotesk', sans-serif;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
+      overflow: hidden;
+    }
+
+    .error-container {
+      max-width: 600px;
+      text-align: center;
+      z-index: 10;
+      position: relative;
+    }
+
+    .error-icon {
+      margin: 0 auto 2rem;
+      position: relative;
+      animation: float 3s ease-in-out infinite;
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(-20px); }
+    }
+
+    .equalizer-404 {
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      gap: 1rem;
+      height: 200px;
+      margin-bottom: 2rem;
+    }
+
+    .bar {
+      width: 40px;
+      background: linear-gradient(180deg, var(--copper) 0%, var(--copper-dark) 100%);
+      border-radius: 8px 8px 0 0;
+      animation: pulse 1.5s ease-in-out infinite;
+      box-shadow: 0 4px 20px rgba(194, 140, 102, 0.3);
+    }
+
+    .bar:nth-child(1) {
+      height: 120px;
+      animation-delay: 0s;
+    }
+
+    .bar:nth-child(2) {
+      height: 80px;
+      animation-delay: 0.2s;
+    }
+
+    .bar:nth-child(3) {
+      height: 120px;
+      animation-delay: 0.4s;
+    }
+
+    @keyframes pulse {
+      0%, 100% { 
+        opacity: 0.6;
+        transform: scaleY(0.8);
+      }
+      50% { 
+        opacity: 1;
+        transform: scaleY(1);
+      }
+    }
+
+    .error-code {
+      font-family: var(--font-display);
+      font-size: 8rem;
+      font-weight: 800;
+      background: linear-gradient(135deg, var(--copper) 0%, var(--peach) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      line-height: 1;
+      margin-bottom: 1rem;
+      letter-spacing: -0.05em;
+    }
+
+    .error-title {
+      font-family: var(--font-display);
+      font-size: 2rem;
+      font-weight: 700;
+      margin-bottom: 1rem;
+      color: var(--text-primary);
+    }
+
+    .error-message {
+      font-size: 1.125rem;
+      color: var(--text-secondary);
+      margin-bottom: 2.5rem;
+      line-height: 1.6;
+    }
+
+    .error-actions {
+      display: flex;
+      gap: 1rem;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 1rem 2rem;
+      border-radius: 12px;
+      font-weight: 600;
+      font-size: 1rem;
+      text-decoration: none;
+      transition: all 0.3s ease;
+      cursor: pointer;
+      border: none;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--copper) 0%, var(--copper-dark) 100%);
+      color: white;
+      box-shadow: 0 8px 24px rgba(194, 140, 102, 0.3);
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 12px 32px rgba(194, 140, 102, 0.4);
+    }
+
+    .btn-secondary {
+      background: var(--bg-secondary);
+      color: var(--text-primary);
+      border: 1px solid var(--border);
+    }
+
+    .btn-secondary:hover {
+      background: var(--charcoal);
+      border-color: var(--copper);
+    }
+
+    .btn svg {
+      width: 20px;
+      height: 20px;
+    }
+
+    /* Animated background particles */
+    .particles {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+      pointer-events: none;
+    }
+
+    .particle {
+      position: absolute;
+      width: 4px;
+      height: 4px;
+      background: var(--copper);
+      border-radius: 50%;
+      opacity: 0.3;
+      animation: particleFloat 10s infinite;
+    }
+
+    @keyframes particleFloat {
+      0% {
+        transform: translateY(100vh) translateX(0);
+        opacity: 0;
+      }
+      10% {
+        opacity: 0.3;
+      }
+      90% {
+        opacity: 0.3;
+      }
+      100% {
+        transform: translateY(-100px) translateX(100px);
+        opacity: 0;
+      }
+    }
+
+    .particle:nth-child(1) { left: 10%; animation-delay: 0s; }
+    .particle:nth-child(2) { left: 20%; animation-delay: 2s; }
+    .particle:nth-child(3) { left: 30%; animation-delay: 4s; }
+    .particle:nth-child(4) { left: 40%; animation-delay: 6s; }
+    .particle:nth-child(5) { left: 50%; animation-delay: 8s; }
+    .particle:nth-child(6) { left: 60%; animation-delay: 1s; }
+    .particle:nth-child(7) { left: 70%; animation-delay: 3s; }
+    .particle:nth-child(8) { left: 80%; animation-delay: 5s; }
+    .particle:nth-child(9) { left: 90%; animation-delay: 7s; }
+
+    @media (max-width: 768px) {
+      .error-code {
+        font-size: 5rem;
+      }
+
+      .error-title {
+        font-size: 1.5rem;
+      }
+
+      .error-message {
+        font-size: 1rem;
+      }
+
+      .equalizer-404 {
+        height: 120px;
+        gap: 0.75rem;
+      }
+
+      .bar {
+        width: 24px;
+      }
+
+      .bar:nth-child(1) { height: 80px; }
+      .bar:nth-child(2) { height: 50px; }
+      .bar:nth-child(3) { height: 80px; }
+
+      .error-actions {
+        flex-direction: column;
+        width: 100%;
+      }
+
+      .btn {
+        width: 100%;
+        justify-content: center;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <!-- Animated particles -->
+  <div class="particles">
+    <div class="particle"></div>
+    <div class="particle"></div>
+    <div class="particle"></div>
+    <div class="particle"></div>
+    <div class="particle"></div>
+    <div class="particle"></div>
+    <div class="particle"></div>
+    <div class="particle"></div>
+    <div class="particle"></div>
+  </div>
+
+  <div class="error-container">
+    <div class="error-icon">
+      <div class="equalizer-404">
+        <div class="bar"></div>
+        <div class="bar"></div>
+        <div class="bar"></div>
+      </div>
+    </div>
+
+    <h1 class="error-code">404</h1>
+    <h2 class="error-title">Ops! Página não encontrada</h2>
+    <p class="error-message">
+      A página que você está procurando não existe ou foi movida. <br>
+      Que tal processar um áudio enquanto você está aqui?
+    </p>
+
+    <div class="error-actions">
+      <a href="/" class="btn btn-primary">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" stroke-linecap="round" stroke-linejoin="round"/>
+          <polyline points="9 22 9 12 15 12 15 22" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        Ir para o início
+      </a>
+      <a href="/#processor" class="btn btn-secondary">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="3" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M12 1v6m0 6v6M6 12H1m6 0h6" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        Processar áudio
+      </a>
+    </div>
+  </div>
+
+  <script>
+    // Adicionar mais partículas dinamicamente para criar efeito visual rico
+    const particlesContainer = document.querySelector('.particles');
+    for (let i = 0; i < 15; i++) {
+      const particle = document.createElement('div');
+      particle.className = 'particle';
+      particle.style.left = Math.random() * 100 + '%';
+      particle.style.animationDelay = Math.random() * 10 + 's';
+      particle.style.animationDuration = (8 + Math.random() * 4) + 's';
+      particlesContainer.appendChild(particle);
+    }
+  </script>
+</body>
+
+</html>

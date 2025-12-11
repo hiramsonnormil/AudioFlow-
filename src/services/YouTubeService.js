@@ -48,7 +48,7 @@ export class YouTubeService {
    * Obtém metadados do vídeo do YouTube
    */
   getMetadata(url, jobId) {
-    return new Promise((resolve) => {
+    return new Promise((resolve, reject) => {
       const args = ["-j", "--no-warnings", "--socket-timeout", "30"];
 
       if (this.cookiesPath && fs.existsSync(this.cookiesPath)) {
@@ -59,21 +59,50 @@ export class YouTubeService {
 
       const ydl = spawn("yt-dlp", args);
       let output = "";
+      let errorOutput = "";
 
       ydl.stdout.on("data", (d) => {
         output += d;
       });
 
       ydl.stderr.on("data", (d) => {
+        const error = String(d);
+        errorOutput += error;
         console.error(
-          `[${jobId}] yt-dlp metadata error: ${String(d).slice(0, 100)}`
+          `[${jobId}] yt-dlp metadata error: ${error.slice(0, 100)}`
         );
       });
 
-      ydl.on("close", () => {
+      ydl.on("close", (code) => {
+        // Se o código de saída não é 0, houve erro
+        if (code !== 0) {
+          const errorMessage = errorOutput.toLowerCase();
+          
+          // Detectar erros específicos
+          if (errorMessage.includes('video unavailable') || 
+              errorMessage.includes('private video') || 
+              errorMessage.includes('video not found') ||
+              errorMessage.includes('removed by the uploader') ||
+              errorMessage.includes('this video is not available')) {
+            return reject(new Error('Video unavailable or not found'));
+          }
+          
+          if (errorMessage.includes('sign in') || errorMessage.includes('age-restricted')) {
+            return reject(new Error('Video requires authentication or is age-restricted'));
+          }
+          
+          return reject(new Error('Failed to fetch video metadata'));
+        }
+
         try {
           const data = JSON.parse(output);
-          const title = data.title || `Audio ${jobId}`;
+          
+          // Validar se os dados essenciais existem
+          if (!data.title || !data.duration) {
+            return reject(new Error('Invalid video data'));
+          }
+
+          const title = data.title;
           const duration = parseFloat(data.duration) || 0;
           const videoId = data.id || this.extractVideoId(url);
           const thumbnail = videoId
@@ -83,7 +112,7 @@ export class YouTubeService {
           resolve({ title, duration, thumbnail, videoId });
         } catch (e) {
           console.error(`[${jobId}] Error parsing metadata:`, e.message);
-          resolve({ title: `Audio ${jobId}`, duration: 0, thumbnail: null });
+          reject(new Error('Failed to parse video metadata'));
         }
       });
     });

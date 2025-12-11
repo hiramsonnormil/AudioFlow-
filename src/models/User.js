@@ -9,7 +9,7 @@ const UserSchema = new mongoose.Schema(
     authProvider: { type: String, enum: ["local", "google", "both"], default: "local" },
     plan: {
       type: String,
-      enum: ["free", "voz_pro", "voz_master"],
+      enum: ["free", "voz_pro", "voz_master", "voz_plus_master"],
       default: "free",
     },
     usageHistory: {

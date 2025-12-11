@@ -14,9 +14,8 @@ import { isValidPreset } from "../models/Preset.js";
 import { User } from "../models/User.js";
 import {
   MAX_AUDIO_DURATION_MINUTES,
-  isDurationTooLong,
-  buildDurationLimitMessage,
 } from "../config/audioLimits.js";
+import { validateAudioDuration } from "../utils/audioValidation.js";
 import * as r2 from "../../storage/r2.js";
 import {
   getUserIdentity,
@@ -101,20 +100,15 @@ export class ProcessController {
 
     // Obter metadados para validar duração antes de enfileirar
     const metadata = await youtubeService.getMetadata(url, jobId);
-    const duration =
-      typeof metadata.duration === "number"
-        ? metadata.duration
-        : parseFloat(metadata.duration) || 0;
-
-    if (isDurationTooLong(duration)) {
-      console.warn(
-        `[${jobId}] Audio duration ${duration.toFixed(
-          2
-        )}s exceeds limit (${MAX_AUDIO_DURATION_MINUTES}min)`
-      );
+    
+    let duration;
+    try {
+      duration = validateAudioDuration(metadata.duration, jobId);
+      metadata.duration = duration;
+    } catch (err) {
       return res.status(400).json({
         error: "audio_too_long",
-        message: buildDurationLimitMessage(duration),
+        message: err.message,
         maxDurationMinutes: MAX_AUDIO_DURATION_MINUTES,
       });
     }
@@ -231,12 +225,10 @@ export class ProcessController {
     const job = jobQueueService.getJob(id);
 
     if (!job) {
-      console.error(`[DEBUG] Job ${id} not found`);
       return res.status(404).send("not found");
     }
 
     if (job.status !== "DONE") {
-      console.error(`[DEBUG] Job ${id} not ready. Status: ${job.status}`);
       return res.status(400).send("not ready");
     }
 
@@ -247,7 +239,6 @@ export class ProcessController {
         const key = r2.extractKeyFromUrl(job.out);
         
         if (!key) {
-          console.error(`[DEBUG] Failed to extract key from URL: ${job.out}`);
           return res.status(500).send("Invalid R2 URL");
         }
         
@@ -266,7 +257,6 @@ export class ProcessController {
         stream.pipe(res);
         
         stream.on('error', (err) => {
-          console.error(`[DEBUG] Stream error:`, err);
           if (!res.headersSent) {
             res.status(500).send("Error streaming file");
           }
@@ -274,7 +264,6 @@ export class ProcessController {
         
         return;
       } catch (err) {
-        console.error(`[DEBUG] Error downloading from R2:`, err);
         return res.status(500).send("Error loading file from storage");
       }
     }
@@ -283,8 +272,7 @@ export class ProcessController {
     const filePath = job.out;
 
     if (!fs.existsSync(filePath)) {
-      console.error(`[DEBUG] File not found at: ${filePath}`);
-      return res.status(404).send(`file not found: ${filePath}`);
+      return res.status(404).send("file not found");
     }
 
     const fileSize = fs.statSync(filePath).size;
@@ -298,11 +286,7 @@ export class ProcessController {
     res.set("Content-Disposition", `attachment; filename="${downloadName}"`);
     res.set("Content-Length", fileSize);
 
-    res.sendFile(filePath, (err) => {
-      if (err) {
-        console.error(`[DEBUG] Error sending file: ${err.message}`);
-      }
-    });
+    res.sendFile(filePath);
   }
 
   /**
@@ -323,8 +307,7 @@ export class ProcessController {
 
       this.processJob(jobId)
         .catch((err) => {
-          console.error(`[${jobId}] Unexpected error:`, err);
-          jobQueueService.failJob(jobId, "Unexpected error: " + err.message);
+          jobQueueService.failJob(jobId, err.message || "Erro desconhecido");
         })
         .finally(() => {
           jobQueueService.decrementActive();
@@ -358,22 +341,9 @@ export class ProcessController {
         job.metadata = { ...job.metadata, ...fetchedMetadata };
       }
 
-      const duration =
-        typeof job.metadata.duration === "number"
-          ? job.metadata.duration
-          : parseFloat(job.metadata.duration) || 0;
-
+      const duration = validateAudioDuration(job.metadata.duration, jobId);
       job.metadata.duration = duration;
       job.metadata.youtubeUrl = job.metadata.youtubeUrl || url;
-
-      if (isDurationTooLong(duration)) {
-        console.warn(
-          `[${jobId}] Abortando: duração ${duration.toFixed(
-            2
-          )}s acima do limite (${MAX_AUDIO_DURATION_MINUTES}min)`
-        );
-        throw new Error(buildDurationLimitMessage(duration));
-      }
       job.progress = 10;
 
       // Step 2: Processar e fazer upload para R2 (novo fluxo)
@@ -408,7 +378,6 @@ export class ProcessController {
       // Step 5: Completar job
       jobQueueService.completeJob(jobId);
     } catch (err) {
-      console.error(`[${jobId}] Error:`, err.message);
       jobQueueService.failJob(jobId, err.message);
     }
   }

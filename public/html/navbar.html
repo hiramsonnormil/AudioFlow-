@@ -30,7 +30,7 @@
         <a href="/#effects" class="nav-link">Efeitos</a>
         <a href="/#how" class="nav-link">Como funciona</a>
         <a href="/plans" class="nav-link">Planos</a>
-        <a href="/html/recents.html" class="nav-link" id="nav-recents" style="display: none;">Meus Processamentos</a>
+        <a href="/recents" class="nav-link" id="nav-recents" style="display: none;">Meus Processamentos</a>
         <a href="#" class="nav-link" id="openLoginBtn">Entrar</a>
         <a href="#" class="nav-link nav-link-cta" id="openSignupBtn">Criar conta</a>
         <div id="nav-user-menu" style="display: none; align-items: center; gap: 1rem; flex-direction: row;">
@@ -52,18 +52,36 @@
 <div class="mobile-menu" id="mobileMenu">
     <div class="mobile-menu-header">
         <div class="mobile-menu-logo">
-            <svg class="logo-icon" width="28" height="28" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+            <svg class="logo-icon" width="32" height="32" viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg">
                 <defs>
                     <linearGradient id="mobileNavGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                        <stop offset="0%" stop-color="#7B61FF" />
-                        <stop offset="100%" stop-color="#00E0FF" />
+                        <stop offset="0%" stop-color="#c28c66" />
+                        <stop offset="50%" stop-color="#d4a378" />
+                        <stop offset="100%" stop-color="#e8b4a0" />
                     </linearGradient>
                 </defs>
-                <circle cx="22" cy="42" r="8" fill="url(#mobileNavGradient)" />
-                <path d="M 29 40 L 29 18 L 42 15 L 42 17 L 30 20 L 30 38 Z" fill="url(#mobileNavGradient)" />
-                <rect x="38" y="20" width="14" height="3" rx="1.5" fill="url(#mobileNavGradient)" />
-                <rect x="38" y="27" width="11" height="3" rx="1.5" fill="url(#mobileNavGradient)" />
-                <rect x="38" y="34" width="8" height="3" rx="1.5" fill="url(#mobileNavGradient)" />
+                
+                <!-- Arco do headphone -->
+                <path d="M 25 32 Q 40 18, 55 32" stroke="url(#mobileNavGradient)" stroke-width="3" 
+                      fill="none" stroke-linecap="round"/>
+                
+                <!-- Almofada esquerda -->
+                <rect x="20" y="32" width="10" height="18" rx="5" fill="url(#mobileNavGradient)"/>
+                <path d="M 23 38 Q 25 40, 23 42 Q 25 44, 23 46" stroke="#e8b4a0" 
+                      stroke-width="1.5" fill="none" stroke-linecap="round" opacity="0.6"/>
+                
+                <!-- Almofada direita -->
+                <rect x="50" y="32" width="10" height="18" rx="5" fill="url(#mobileNavGradient)"/>
+                <path d="M 53 38 Q 55 40, 53 42 Q 55 44, 53 46" stroke="#e8b4a0" 
+                      stroke-width="1.5" fill="none" stroke-linecap="round" opacity="0.6"/>
+                
+                <!-- Ondas sonoras -->
+                <g opacity="0.5">
+                  <path d="M 15 40 Q 12 40, 10 40" stroke="url(#mobileNavGradient)" 
+                        stroke-width="2" fill="none" stroke-linecap="round"/>
+                  <path d="M 65 40 Q 68 40, 70 40" stroke="url(#mobileNavGradient)" 
+                        stroke-width="2" fill="none" stroke-linecap="round"/>
+                </g>
             </svg>
             <span class="logo-text">phona</span>
         </div>
@@ -72,7 +90,7 @@
         <a href="/#effects" class="mobile-nav-link">Efeitos</a>
         <a href="/#how" class="mobile-nav-link">Como funciona</a>
         <a href="/plans" class="mobile-nav-link">Planos</a>
-        <a href="/html/recents.html" class="mobile-nav-link" id="mobile-nav-recents" style="display: none;">Meus
+        <a href="/recents" class="mobile-nav-link" id="mobile-nav-recents" style="display: none;">Meus
             Processamentos</a>
         <div class="mobile-menu-divider"></div>
         <a href="#" class="mobile-nav-link" id="mobile-openLoginBtn">Entrar</a>

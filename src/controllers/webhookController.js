@@ -3,6 +3,19 @@ import { User } from "../models/User.js";
 import { advanceBillingCycle } from "./subscriptionController.js";
 import { getPushinpayWebhookSecret } from "../utils/webhook.js";
 
+// Normaliza o status vindo do provedor para um conjunto previsível
+function normalizeStatus(status) {
+  const s = String(status || "").trim().toLowerCase();
+  if (!s) return "unknown";
+  const success = new Set(["paid", "approved", "completed", "confirmed", "success", "concluded"]);
+  const expired = new Set(["expired", "timeout"]);
+  const cancelled = new Set(["cancelled", "canceled", "void", "refunded", "chargeback"]);
+  if (success.has(s)) return "paid";
+  if (expired.has(s)) return "expired";
+  if (cancelled.has(s)) return "cancelled";
+  return s;
+}
+
 function validateSecret(req) {
   const expected = getPushinpayWebhookSecret();
   if (!expected) {
@@ -35,16 +48,25 @@ export async function processPayment(subscription, payment, pixStatus, webhookDa
     return false;
   }
 
-  const pixStatusLower = String(pixStatus || "").toLowerCase();
+  const pixStatusLower = normalizeStatus(pixStatus);
   
   // Atualizar payload se fornecido
   if (webhookData) {
+    // Se houver token esperado e o dado externo trouxer token diferente, rejeitar
+    try {
+      const expectedToken = payment?.payload?.metadata?.webhookToken;
+      const providedToken = webhookData?.metadata?.webhookToken;
+      if (expectedToken && expectedToken !== providedToken) {
+        console.warn(`⚠️ Dados de pagamento rejeitados: token inválido para PixID ${payment.pixId}`);
+        return false;
+      }
+    } catch {}
     payment.payload = webhookData;
   }
 
   let updated = false;
 
-  if (pixStatusLower === "paid" || pixStatusLower === "approved") {
+  if (pixStatusLower === "paid") {
     if (payment.status !== "paid") {
       payment.status = "paid";
       payment.paidAt = new Date();
@@ -120,6 +142,23 @@ export async function handlePushinpayWebhook(req, res) {
       return res.status(401).json({ error: "unauthorized" });
     }
 
+    // Log estruturado do webhook (payload cru + headers essenciais)
+    try {
+      const shouldLog = process.env.LOG_WEBHOOKS !== "false";
+      if (shouldLog) {
+        const safeBody = JSON.stringify(req.body).slice(0, 5000);
+        console.log("📦 Webhook RAW payload:", safeBody);
+        console.log("🧾 Webhook headers:", JSON.stringify({
+          "content-type": req.headers["content-type"],
+          "user-agent": req.headers["user-agent"],
+          "x-forwarded-for": req.headers["x-forwarded-for"],
+        }));
+        console.log("🔗 Webhook query:", JSON.stringify(req.query));
+      }
+    } catch (e) {
+      console.warn("⚠️ Falha ao logar webhook:", e?.message);
+    }
+
     const pixId = extractPixId(req.body);
     if (!pixId) {
       console.warn("⚠️ Webhook sem pixId:", req.body);
@@ -138,6 +177,14 @@ export async function handlePushinpayWebhook(req, res) {
     if (!payment) {
       console.log(`ℹ️ Pagamento não encontrado na assinatura: ${pixId}`);
       return res.sendStatus(200);
+    }
+
+    // Verificação de reforço: token de webhook por transação
+    const expectedToken = payment?.payload?.metadata?.webhookToken;
+    const providedToken = req.body?.metadata?.webhookToken;
+    if (expectedToken && expectedToken !== providedToken) {
+      console.warn(`⚠️ Webhook rejeitado: token inválido para PixID ${pixId}`);
+      return res.status(401).json({ error: "unauthorized" });
     }
 
     const pixStatus = req.body.status;

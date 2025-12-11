@@ -13,6 +13,9 @@ let youtubeUrlInput;
 let presetSelect;
 let statusContainer;
 
+// Variável de controle para evitar duplo clique
+let isProcessing = false;
+
 /**
  * Inicializar proteção do botão de processar
  */
@@ -65,6 +68,18 @@ function init() {
       handleProcessClick(e);
     }
   });
+  
+  // Limpar erro de duração quando usuário modificar o input
+  youtubeUrlInput?.addEventListener('input', () => {
+    hideDurationError();
+    clearFieldErrors();
+  });
+  
+  // Limpar erro quando mudar o preset
+  presetSelect?.addEventListener('change', () => {
+    hideDurationError();
+    clearFieldErrors();
+  });
 }
 
 /**
@@ -115,6 +130,12 @@ function handleProcessClick(e) {
     e.stopImmediatePropagation();
   }
 
+  // PROTEÇÃO: Evitar duplo clique
+  if (isProcessing) {
+    console.warn('⚠️ [LANDING] Processamento já em andamento, ignorando clique duplicado');
+    return false;
+  }
+
   // Verificar se está autenticado
   if (!isAuthenticated()) {
     // Mostrar mensagem e abrir modal de login
@@ -129,53 +150,139 @@ function handleProcessClick(e) {
   const url = youtubeUrlInput?.value?.trim();
   const preset = presetSelect?.value;
 
+  // Limpar erros visuais anteriores
+  clearFieldErrors();
+
+  // Validar campos vazios
+  if (!url && !preset) {
+    showFieldError(youtubeUrlInput, 'Cole o link do YouTube aqui');
+    showFieldError(presetSelect, 'Escolha um efeito');
+    showGeneralError('Preencha o link e escolha um efeito para continuar');
+    return false;
+  }
+
   if (!url) {
-    showError('Por favor, insira uma URL do YouTube');
+    showFieldError(youtubeUrlInput, 'Cole o link do YouTube aqui');
+    showGeneralError('Cole o link da música do YouTube');
     youtubeUrlInput?.focus();
     return false;
   }
 
   if (!isValidYouTubeUrl(url)) {
-    showError('Por favor, insira uma URL válida do YouTube');
+    showFieldError(youtubeUrlInput, 'Este link não é válido');
+    showGeneralError('Por favor, insira um link válido do YouTube');
     youtubeUrlInput?.focus();
     return false;
   }
 
   if (!preset) {
-    showError('Por favor, selecione um preset');
+    showFieldError(presetSelect, 'Escolha um efeito');
+    showGeneralError('Selecione o efeito que deseja aplicar');
     presetSelect?.focus();
     return false;
   }
 
-  // Processar áudio diretamente na landing page
-  startProcessing(url, preset);
+  // Verificar se o vídeo existe antes de processar
+  validateAndProcess(url, preset);
   return false;
 }
 
 /**
- * Iniciar processamento do áudio
+ * Validar se o vídeo existe no YouTube antes de processar
  */
-async function startProcessing(url, presetName) {
+async function validateAndProcess(url, preset) {
+  // Marcar como processando para evitar múltiplos cliques
+  if (isProcessing) {
+    return;
+  }
+  isProcessing = true;
+
+  // Mostrar loading de validação
+  processBtn.disabled = true;
+  processBtn.innerHTML = `
+    <span class="btn-spinner"></span>
+    <span class="btn-text">Verificando vídeo...</span>
+  `;
+
   const token = localStorage.getItem('phona:token');
 
   if (!token) {
+    isProcessing = false;
+    processBtn.disabled = false;
+    updateUIBasedOnAuth();
     showError('Sessão expirada. Faça login novamente.');
     openModal('login');
     return;
   }
 
-  // Mostrar loading no botão
-  processBtn.disabled = true;
+  try {
+    // Fazer requisição para validar o vídeo
+    const response = await fetch('/api/validate-youtube', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify({ url })
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      isProcessing = false;
+      processBtn.disabled = false;
+      updateUIBasedOnAuth();
+
+      if (response.status === 404 || data.error === 'video_not_found') {
+        showFieldError(youtubeUrlInput, 'Este vídeo não existe ou está indisponível');
+        showGeneralError(data.message || 'Vídeo não encontrado. Verifique se o link está correto e se o vídeo é público.');
+        youtubeUrlInput?.focus();
+        return;
+      }
+
+      if (data.error === 'video_unavailable') {
+        showFieldError(youtubeUrlInput, 'Este vídeo não está disponível');
+        showGeneralError(data.message || 'O vídeo pode ser privado ou ter sido removido.');
+        youtubeUrlInput?.focus();
+        return;
+      }
+
+      // Outros erros genéricos
+      showGeneralError(data.message || 'Erro ao verificar o vídeo. Tente novamente.');
+      return;
+    }
+
+    // Vídeo válido, prosseguir com o processamento
+    startProcessing(url, preset);
+
+  } catch (error) {
+    console.error('Erro ao validar vídeo:', error);
+    isProcessing = false;
+    processBtn.disabled = false;
+    updateUIBasedOnAuth();
+    showGeneralError('Erro de conexão. Verifique sua internet e tente novamente.');
+  }
+}
+
+/**
+ * Iniciar processamento do áudio (após validação)
+ */
+async function startProcessing(url, presetName) {
+  // Já está marcado como processando pela validateAndProcess
+  const token = localStorage.getItem('phona:token');
+
+  if (!token) {
+    isProcessing = false; // Liberar flag
+    showError('Sessão expirada. Faça login novamente.');
+    openModal('login');
+    return;
+  }
+
+  // Atualizar texto do botão para "Iniciando..."
   processBtn.innerHTML = `
     <span class="btn-spinner"></span>
-    <span class="btn-text">Processando...</span>
+    <span class="btn-text">Iniciando processamento...</span>
   `;
-
-  // Mostrar container de status
-  if (statusContainer) {
-    statusContainer.style.display = 'block';
-    document.getElementById('statusText').textContent = 'Iniciando processamento...';
-  }
 
   try {
     // Preparar headers
@@ -209,18 +316,27 @@ async function startProcessing(url, presetName) {
       const errorCode = data?.error;
       const errorMessage = data?.message || data?.error || 'Erro ao iniciar processamento';
       
-      if (errorCode === 'preset_not_available') {
+      // Tratar erro de duração de forma especial (RÁPIDO - sem mostrar "Iniciando...")
+      if (errorCode === 'audio_too_long') {
+        isProcessing = false;
         processBtn.disabled = false;
         updateUIBasedOnAuth();
-        if (statusContainer) statusContainer.style.display = 'none';
+        showDurationError(errorMessage);
+        return;
+      }
+      
+      if (errorCode === 'preset_not_available') {
+        isProcessing = false;
+        processBtn.disabled = false;
+        updateUIBasedOnAuth();
         showPlanModal(errorMessage || 'Este efeito não está disponível no seu plano atual.');
         return;
       }
       
       if (errorCode === 'plan_limit_reached') {
+        isProcessing = false;
         processBtn.disabled = false;
         updateUIBasedOnAuth();
-        if (statusContainer) statusContainer.style.display = 'none';
         showPlanModal(errorMessage || 'Você atingiu o limite de processamentos do seu plano.');
         return;
       }
@@ -232,13 +348,26 @@ async function startProcessing(url, presetName) {
       throw new Error('Resposta inesperada do servidor. Tente novamente.');
     }
 
+    // Mostrar "Iniciando processamento..." apenas quando for redirecionar
+    if (statusContainer) {
+      statusContainer.style.display = 'block';
+      document.getElementById('statusText').textContent = 'Iniciando processamento...';
+    }
+    
+    processBtn.innerHTML = `
+      <span class="btn-spinner"></span>
+      <span class="btn-text">Processando...</span>
+    `;
+
+    // Não liberar isProcessing aqui - o redirecionamento vai acontecer
     // Redirecionar para página de processo com o jobId
-    window.location.href = `/html/process.html?id=${data.id}`;
+    window.location.href = `/process?id=${data.id}`;
 
   } catch (error) {
-    console.error('❌ [LANDING] Erro ao processar:', error);
+    // Liberar flag de processamento
+    isProcessing = false;
 
-    // Esconder status container
+    // Esconder status container (caso tenha sido mostrado)
     if (statusContainer) {
       statusContainer.style.display = 'none';
     }
@@ -303,9 +432,85 @@ function showAuthRequiredMessage() {
 }
 
 /**
- * Mostrar erro no campo
+ * Destacar campo com erro visual
+ */
+function showFieldError(field, message) {
+  if (!field) return;
+
+  // Adicionar classe de erro ao wrapper
+  const wrapper = field.closest('.input-wrapper') || field.closest('.select-wrapper');
+  if (wrapper) {
+    wrapper.classList.add('field-error');
+    wrapper.setAttribute('data-error-message', message);
+  }
+
+  // Adicionar shake animation
+  field.classList.add('shake-error');
+  setTimeout(() => field.classList.remove('shake-error'), 500);
+}
+
+/**
+ * Limpar erros visuais dos campos
+ */
+function clearFieldErrors() {
+  document.querySelectorAll('.field-error').forEach(el => {
+    el.classList.remove('field-error');
+    el.removeAttribute('data-error-message');
+  });
+  
+  // Esconder erro geral se existir
+  const generalError = document.querySelector('.processor-general-error');
+  if (generalError) {
+    generalError.remove();
+  }
+}
+
+/**
+ * Mostrar mensagem de erro geral acima do botão
+ */
+function showGeneralError(message) {
+  // Remover erro anterior se existir
+  let errorEl = document.querySelector('.processor-general-error');
+  
+  if (!errorEl) {
+    errorEl = document.createElement('div');
+    errorEl.className = 'processor-general-error';
+    processBtn?.parentElement?.insertBefore(errorEl, processBtn);
+  }
+
+  errorEl.innerHTML = `
+    <div class="error-icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+        <circle cx="12" cy="12" r="10" stroke-width="1.6"></circle>
+        <path d="M12 8v4" stroke-width="1.8" stroke-linecap="round"></path>
+        <circle cx="12" cy="16" r="1" fill="currentColor"></circle>
+      </svg>
+    </div>
+    <span>${message}</span>
+  `;
+
+  // Scroll suave até o erro
+  errorEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+
+  // Remover após 6s
+  setTimeout(() => {
+    errorEl.classList.add('fade-out');
+    setTimeout(() => errorEl.remove(), 300);
+  }, 6000);
+}
+
+/**
+ * Mostrar erro no campo (mantido para compatibilidade)
  */
 function showError(message) {
+  // Verificar se é erro de duração
+  const isDurationError = message.includes('muito longo') || message.includes('até 20 minutos');
+  
+  if (isDurationError) {
+    showDurationError(message);
+    return;
+  }
+  
   // Criar elemento de erro se não existir
   let errorEl = document.querySelector('.processor-error');
 
@@ -325,10 +530,54 @@ function showError(message) {
 }
 
 /**
+ * Mostrar erro de duração no lugar da nota de guest
+ */
+function showDurationError(message) {
+  const guestNote = document.getElementById('guest-limit-note');
+  const durationNote = document.getElementById('duration-error-note');
+  const durationMessage = document.getElementById('duration-error-message');
+  
+  if (guestNote) {
+    guestNote.style.display = 'none';
+  }
+  
+  if (durationNote && durationMessage) {
+    durationMessage.textContent = message;
+    durationNote.style.display = 'flex';
+    
+    // Scroll suave até a mensagem
+    durationNote.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+}
+
+/**
+ * Esconder erro de duração e mostrar nota de guest novamente
+ */
+function hideDurationError() {
+  const guestNote = document.getElementById('guest-limit-note');
+  const durationNote = document.getElementById('duration-error-note');
+  const isLoggedIn = isAuthenticated();
+  
+  if (durationNote) {
+    durationNote.style.display = 'none';
+  }
+  
+  if (guestNote && !isLoggedIn) {
+    guestNote.style.display = 'flex';
+  }
+}
+
+/**
  * Atualizar UI baseado no estado de autenticação
  */
 function updateUIBasedOnAuth() {
   const isLoggedIn = isAuthenticated();
+  
+  // Controlar visibilidade da nota de limite
+  const limitNote = document.getElementById('guest-limit-note');
+  if (limitNote) {
+    limitNote.style.display = isLoggedIn ? 'none' : 'flex';
+  }
 
   if (processBtn) {
     if (isLoggedIn) {

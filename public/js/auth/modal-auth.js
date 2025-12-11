@@ -217,7 +217,7 @@ async function handleLogin(e) {
     closeModal();
 
     // Atualizar UI da página
-    if (window.location.pathname === '/' || window.location.pathname === '/html/index.html') {
+    if (window.location.pathname === '/' || window.location.pathname === '/index.html') {
       // Está na landing - recarregar para atualizar o estado de autenticação
       window.location.reload();
     } else {
@@ -302,7 +302,7 @@ async function handleSignup(e) {
     closeModal();
 
     // Atualizar UI da página
-    if (window.location.pathname === '/' || window.location.pathname === '/html/index.html') {
+    if (window.location.pathname === '/' || window.location.pathname === '/index.html') {
       // Está na landing - recarregar para atualizar o estado de autenticação
       window.location.reload();
     } else {

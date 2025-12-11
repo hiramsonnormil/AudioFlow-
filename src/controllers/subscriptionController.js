@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import crypto from "crypto";
 import { Subscription } from "../models/Subscription.js";
 import { User } from "../models/User.js";
 import { createPixCharge } from "../services/pushinpayService.js";
@@ -11,7 +12,12 @@ const DEFAULT_PRO_AMOUNT = Number.parseInt(
 );
 
 const DEFAULT_MASTER_AMOUNT = Number.parseInt(
-  process.env.SUBSCRIPTION_VOZ_MASTER_PRICE_CENTS || "150",
+  process.env.SUBSCRIPTION_VOZ_MASTER_PRICE_CENTS || "2990",
+  10
+);
+
+const DEFAULT_PLUS_MASTER_AMOUNT = Number.parseInt(
+  process.env.SUBSCRIPTION_VOZ_PLUS_MASTER_PRICE_CENTS || "5990",
   10
 );
 
@@ -26,6 +32,11 @@ function getPlanConfig(planType = "premium_30") {
       amount: DEFAULT_MASTER_AMOUNT,
       currency: "BRL",
       description: "Assinatura mensal Voz Master",
+    },
+    voz_plus_master: {
+      amount: DEFAULT_PLUS_MASTER_AMOUNT,
+      currency: "BRL",
+      description: "Assinatura mensal Plus Master",
     },
   };
   return plans[planType] || null;
@@ -43,24 +54,25 @@ function sanitizeObjectId(value) {
 
 export async function startSubscription(req, res) {
   try {
-    const { userId, email, planType = "voz_pro" } = req.body;
+    const { planType = "voz_pro", userId: bodyUserId, email: bodyEmail } = req.body;
     const plan = getPlanConfig(planType);
     if (!plan) {
       return res.status(400).json({ error: "invalid_plan" });
     }
 
-    if (!userId && !email) {
-      return res.status(400).json({ error: "user_identifier_required" });
+    // Enforce authenticated user; ignore arbitrary identifiers from body
+    const authUser = req.user;
+    if (!authUser?._id || !authUser?.email) {
+      return res.status(401).json({ error: "unauthorized" });
     }
 
-    let user = null;
-    if (userId) {
-      const objectId = sanitizeObjectId(userId);
-      user = objectId ? await User.findById(objectId) : null;
+    // If client sent identifiers, they must match the authenticated user
+    if ((bodyUserId && String(bodyUserId) !== String(authUser._id)) ||
+        (bodyEmail && String(bodyEmail).toLowerCase() !== String(authUser.email).toLowerCase())) {
+      return res.status(403).json({ error: "forbidden" });
     }
-    if (!user && email) {
-      user = await User.findOne({ email: email.toLowerCase() });
-    }
+
+    let user = await User.findById(sanitizeObjectId(authUser._id));
     if (!user) {
       return res.status(404).json({ error: "user_not_found" });
     }
@@ -70,7 +82,7 @@ export async function startSubscription(req, res) {
     let subscription = await Subscription.findOne({ userId: user._id });
 
     // Hierarquia de planos para validação de upgrade/downgrade
-    const planHierarchy = { voz_pro: 1, voz_master: 2 };
+    const planHierarchy = { voz_pro: 1, voz_master: 2, voz_plus_master: 3 };
     const currentPlanLevel = subscription ? planHierarchy[subscription.planType] || 0 : 0;
     const requestedPlanLevel = planHierarchy[planType] || 0;
 
@@ -118,6 +130,7 @@ export async function startSubscription(req, res) {
       if (isActive) {
         // UPGRADE: Calcular valor proporcional
         try {
+          const webhookToken = crypto.randomBytes(16).toString("hex");
           const daysRemaining = Math.ceil((new Date(subscription.nextBillingDate) - now) / (1000 * 60 * 60 * 24));
           const currentPlanConfig = getPlanConfig(subscription.planType);
           const newPlanConfig = getPlanConfig(planType);
@@ -145,7 +158,8 @@ export async function startSubscription(req, res) {
               planType,
               isUpgrade: true,
               daysRemaining,
-              originalPlan: subscription.planType
+              originalPlan: subscription.planType,
+              webhookToken,
             },
           });
 
@@ -159,13 +173,25 @@ export async function startSubscription(req, res) {
             pixId,
             value: upgradeAmount,
             status: "pending",
-            payload: { ...pixResponse, isUpgrade: true, originalPlan: subscription.planType, daysRemaining },
+            payload: { 
+              ...pixResponse, 
+              isUpgrade: true, 
+              originalPlan: subscription.planType, 
+              daysRemaining,
+              metadata: { ...(pixResponse?.metadata || {}), userId: String(user._id), planType, isUpgrade: true, daysRemaining, originalPlan: subscription.planType, webhookToken }
+            },
             createdAt: new Date(),
           };
 
           subscription.payments.push(upgradePayment);
           await subscription.save();
 
+          const planNames = {
+            voz_pro: 'Voz Pro',
+            voz_master: 'Voz Master',
+            voz_plus_master: 'Plus Master'
+          };
+          
           return res.status(201).json({
             subscriptionId: subscription._id,
             userId: user._id,
@@ -178,7 +204,7 @@ export async function startSubscription(req, res) {
             pixCopyAndPaste: pixResponse.qr_code || pixResponse.qrCode || pixResponse.brcode || pixResponse.emv,
             pixQrCodeBase64: pixResponse.qr_code_base64 || pixResponse.qrCodeBase64 || pixResponse.qrCodeImage,
             transactionId: pixResponse.id,
-            message: `Upgrade para ${planType === 'voz_master' ? 'Voz Master' : 'Voz Pro'}. Valor proporcional: R$ ${(upgradeAmount / 100).toFixed(2)}`
+            message: `Upgrade para ${planNames[planType] || planType}. Valor proporcional: R$ ${(upgradeAmount / 100).toFixed(2)}`
           });
         } catch (err) {
           console.error("Erro ao processar upgrade:", err);
@@ -201,28 +227,48 @@ export async function startSubscription(req, res) {
 
           // Buscar planType nos metadados
           const paymentPlanType = p.payload?.metadata?.planType || p.payload?.planType;
-          return paymentPlanType === planType;
+          
+          // ⚠️ VALIDAÇÃO CRÍTICA: Valor DEVE ser exatamente igual ao preço atual do plano
+          const paymentValue = typeof p.value === 'string' ? Number(p.value) : p.value;
+          const valueMatches = paymentValue === plan.amount;
+          
+          console.log(`🔍 Validando PIX pendente: planType=${paymentPlanType}, value=${paymentValue}, expected=${plan.amount}, matches=${valueMatches && paymentPlanType === planType}`);
+          
+          // Ambos devem ser true: planType correto E valor correto
+          return paymentPlanType === planType && valueMatches;
         }).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))[0]
       : null;
 
     if (existingPendingForPlan) {
-      console.log(`♻️ Reutilizando PIX pendente existente do plano ${planType}`);
+      const paymentValue = typeof existingPendingForPlan.value === 'string' ? Number(existingPendingForPlan.value) : existingPendingForPlan.value;
+      console.log(`♻️ Reutilizando PIX pendente: plano=${planType}, valor=R$ ${(paymentValue / 100).toFixed(2)}`);
+      
+      const planNames = {
+        voz_pro: 'Voz Pro',
+        voz_master: 'Voz Master',
+        voz_plus_master: 'Plus Master'
+      };
+      
       return res.status(200).json({
         subscriptionId: subscription._id,
         userId: user._id,
         status: subscription.status,
         planType: planType,
+        displayPlanType: planType,
         pixCopyAndPaste: existingPendingForPlan.payload?.qr_code,
         pixQrCodeBase64: existingPendingForPlan.payload?.qr_code_base64,
         transactionId: existingPendingForPlan.pixId,
         pending: true,
         reused: true,
-        message: `Reutilizando código PIX para o plano ${planType === 'voz_pro' ? 'Voz Pro' : 'Voz Master'}`
+        monthlyAmount: plan.amount,
+        displayMonthlyAmount: paymentValue,
+        message: `Reutilizando código PIX para o plano ${planNames[planType] || planType}`
       });
     }
 
     // CASO 3: Criar novo PIX para o plano solicitado (múltiplos PIX podem coexistir)
 
+    const webhookToken = crypto.randomBytes(16).toString("hex");
     const pixResponse = await createPixCharge({
       value: plan.amount,
       webhookUrl,
@@ -230,6 +276,7 @@ export async function startSubscription(req, res) {
       metadata: {
         userId: String(user._id),
         planType,
+        webhookToken,
       },
     });
 
@@ -251,7 +298,10 @@ export async function startSubscription(req, res) {
       pixId,
       value: plan.amount,
       status: "pending",
-      payload: pixResponse,
+      payload: { 
+        ...pixResponse,
+        metadata: { ...(pixResponse?.metadata || {}), userId: String(user._id), planType, webhookToken }
+      },
       createdAt: new Date(),
     };
 
@@ -283,10 +333,16 @@ export async function startSubscription(req, res) {
       subscriptionId: subscription._id,
       userId: user._id,
       status: subscription.status,
-      planType: subscription.planType,
+      planType: planType,
+      displayPlanType: planType,
+      monthlyAmount: plan.amount,
+      displayMonthlyAmount: plan.amount,
       pixCopyAndPaste: pixResponse.qr_code || pixResponse.qrCode || pixResponse.brcode || pixResponse.emv,
       pixQrCodeBase64: pixResponse.qr_code_base64 || pixResponse.qrCodeBase64 || pixResponse.qrCodeImage,
-      transactionId: pixResponse.id,
+      transactionId: pixId,
+      pending: true,
+      reused: false,
+      message: `Gerado código PIX para o plano ${plan.description}`
     });
   } catch (error) {
     console.error("startSubscription error", error);
@@ -301,14 +357,15 @@ export async function getSubscriptionStatus(req, res) {
       return res.status(400).json({ error: "user_identifier_required" });
     }
 
+    // Only allow querying own status
+    if (!req.user?._id || String(req.user._id) !== String(userId)) {
+      return res.status(403).json({ error: "forbidden" });
+    }
+
     let subscription = null;
     const objectId = sanitizeObjectId(userId);
     if (objectId) {
       subscription = await Subscription.findOne({ userId: objectId }).lean();
-    }
-
-    if (!subscription && typeof userId === "string") {
-      subscription = await Subscription.findOne({ email: userId.toLowerCase() }).lean();
     }
 
     if (!subscription) {
@@ -325,6 +382,15 @@ export async function getSubscriptionStatus(req, res) {
       subscription.status === "active" &&
       subscription.nextBillingDate &&
       new Date(subscription.nextBillingDate) > now;
+
+    // Compute effective plan from authoritative user doc when not active
+    let effectivePlanType = subscription.planType;
+    try {
+      const user = await User.findById(subscription.userId).lean();
+      if (!active) {
+        effectivePlanType = user?.plan || "free";
+      }
+    } catch {}
 
     const sanitizePayment = (payment) => {
       if (!payment) return null;
@@ -344,12 +410,24 @@ export async function getSubscriptionStatus(req, res) {
       };
     };
 
+    const requestedPlanType = pendingPayment?.payload?.metadata?.planType || null;
+    const displayPlanType = active
+      ? subscription.planType
+      : (requestedPlanType || effectivePlanType);
+
+    const requestedAmount = pendingPayment ? (typeof pendingPayment.value === "string" ? Number(pendingPayment.value) : pendingPayment.value) : null;
+    const displayMonthlyAmount = active ? subscription.monthlyAmount : (requestedAmount || subscription.monthlyAmount);
+
     return res.json({
       subscriptionId: subscription._id,
       planType: subscription.planType,
+      effectivePlanType,
+      requestedPlanType,
+      displayPlanType,
       status: subscription.status,
       active,
       monthlyAmount: subscription.monthlyAmount,
+      displayMonthlyAmount,
       nextBillingDate: subscription.nextBillingDate,
       lastPayment: sanitizePayment(lastPayment),
       pendingPayment: sanitizePayment(pendingPayment),

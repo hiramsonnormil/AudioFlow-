@@ -82,16 +82,13 @@ const getAccountIdFromEndpoint = () => {
  */
 async function uploadFile(localPath, key, options = {}) {
   try {
-    // Lê o arquivo local em buffer
-    const fileBuffer = await fs.readFile(localPath);
-    
     // Prepara metadados para armazenar junto ao objeto
     const metadata = {
       'user-id': options.userId || 'unknown',
       'created-at': new Date().toISOString(),
       'preset': options.preset || 'default',
       'job-id': options.jobId || '',
-      'title': options.title || '', // Adicionar título para geração de nome de arquivo
+      'title': options.title || '',
     };
     
     // Detecta o Content-Type baseado na extensão
@@ -107,12 +104,15 @@ async function uploadFile(localPath, key, options = {}) {
     
     // Assegura cliente e bucket
     ensureClient();
+    
+    // Usa stream em vez de carregar arquivo completo na memória
+    const fileStream = await fs.readFile(localPath);
 
     // Comando de upload para o R2
     const command = new PutObjectCommand({
       Bucket: _BUCKET,
       Key: key,
-      Body: fileBuffer,
+      Body: fileStream,
       ContentType: contentType,
       Metadata: metadata,
     });
@@ -123,7 +123,6 @@ async function uploadFile(localPath, key, options = {}) {
     
     return { key, publicUrl };
   } catch (error) {
-    console.error('[R2] Erro ao fazer upload:', error);
     throw new Error(`Falha no upload para R2: ${error.message}`);
   }
 }

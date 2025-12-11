@@ -55,21 +55,21 @@ export function redirectToLogin() {
  * Redirecionar para app
  */
 export function redirectToApp() {
-  navigate('/html/index.html');
+  navigate('/');
 }
 
 /**
  * Redirecionar para download
  */
 export function redirectToDownload() {
-  navigate('/html/download.html');
+  navigate('/download');
 }
 
 /**
  * Redirecionar para home/landing
  */
 export function redirectToHome() {
-  navigate('/html/index.html');
+  navigate('/');
 }
 
 /**

@@ -1,5 +1,16 @@
 # Sistema de Pagamentos - Melhorias de Segurança e Confiabilidade
 
+## 🧩 Causa Raiz & Correção Definitiva
+
+- Causa: O provedor enviava status de sucesso como "COMPLETED/CONFIRMED" e o backend só tratava "PAID/APPROVED". Com isso, o webhook era recebido, mas a função de liberação não executava. Em alguns casos, o plano Plus Master também não era refletido no usuário por falta do valor na enum.
+- Correções aplicadas:
+  - Normalização de status: "completed", "confirmed", "success", "concluded" passam a ser tratados como pago.
+  - Log do payload cru do webhook (headers essenciais e query) com `LOG_WEBHOOKS` controlando a verbosidade.
+  - Enum de planos do usuário atualizado para incluir `voz_plus_master`.
+  - Mantida idempotência via checagem de `payment.status` e `payments.pixId` único.
+
+Como reproduzir o problema antigo: simular webhook com `status=COMPLETED` → antes não ativava; agora ativa e atualiza `User.plan` e `Subscription` corretamente.
+
 ## 🔒 Segurança e Confiabilidade Implementadas
 
 ### 1. ⏰ Expiração de Pix (15 minutos)
@@ -28,8 +39,10 @@ await preventDuplicateSubscriptions();
 #### Webhook Robusto:
 - Função `processPayment()` reutilizável
 - Logs detalhados de cada operação
+- Normalização de status do provedor (PAID/COMPLETED/CONFIRMED → pago)
 - Tratamento de pagamentos expirados
 - Atualização automática do `user.plan`
+- Validação por `secret` na URL e token por-transação em `metadata.webhookToken`
 
 **Cenário coberto**: Se o servidor cair durante um pagamento, o cron job recuperará o status ao reiniciar.
 
@@ -103,7 +116,8 @@ Pagamento → Webhook → user.plan atualizado → Filtros liberados
 ### Logs Disponíveis:
 ```bash
 # Webhook
-📥 Webhook recebido - PixID: xxx, Status: paid
+📥 Webhook recebido - PixID: xxx, Status: completed
+📦 Webhook RAW payload: { ... }
 ✅ Plano atualizado para voz_pro - User: xxx
 
 # Cron Job
@@ -130,6 +144,9 @@ SUBSCRIPTION_CRON_TIMEZONE="America/Sao_Paulo"
 
 # Desabilitar crons (desenvolvimento)
 ENABLE_SUBSCRIPTION_CRON=false
+
+# Verbosidade de logs do webhook
+LOG_WEBHOOKS=true
 ```
 
 ## 🚀 Como Testar
@@ -156,7 +173,7 @@ ENABLE_SUBSCRIPTION_CRON=false
 
 ### 4. Teste de Liberação de Filtros:
 ```bash
-# Fazer pagamento
+# Fazer pagamento (ou simular webhook com status COMPLETED)
 # Acessar /process com preset premium
 # Deve funcionar sem logout/login
 ```

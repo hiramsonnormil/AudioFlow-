@@ -16,6 +16,11 @@ export class JobQueueService {
       totalErrors: 0,
       totalSuccess: 0,
     };
+    
+    // Limpeza automática de jobs antigos a cada 1 hora
+    this.cleanupInterval = setInterval(() => {
+      this.cleanupOldJobs(2); // Remove jobs com mais de 2 horas
+    }, 60 * 60 * 1000); // A cada 1 hora
   }
 
   /**
@@ -136,11 +141,29 @@ export class JobQueueService {
   cleanupOldJobs(hoursThreshold = 24) {
     const now = new Date();
     const threshold = hoursThreshold * 60 * 60 * 1000;
+    let cleaned = 0;
 
     for (const [id, job] of this.jobs.entries()) {
       if (job.isFinished() && now - job.completedAt > threshold) {
         this.jobs.delete(id);
+        cleaned++;
       }
+    }
+    
+    if (cleaned > 0) {
+      console.log(`[JobQueue] Limpeza automática: ${cleaned} jobs removidos`);
+    }
+    
+    return cleaned;
+  }
+  
+  /**
+   * Para a limpeza automática (útil para testes)
+   */
+  stopAutoCleanup() {
+    if (this.cleanupInterval) {
+      clearInterval(this.cleanupInterval);
+      this.cleanupInterval = null;
     }
   }
 }

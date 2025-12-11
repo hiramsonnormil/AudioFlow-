@@ -48,9 +48,12 @@
 <body>
   <!-- Sticky CTA -->
   <div class="sticky-cta">
-    <button class="sticky-btn" onclick="scrollToProcessor()">
-      <span>Criar conta grátis</span>
+    <button class="sticky-btn" onclick="handleStickyBtnClick()">
+      <span class="sticky-btn-text">Criar conta grátis</span>
       <span class="pulse-dot"></span>
+      <svg class="sticky-btn-arrow" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 19V5M5 12l7-7 7 7"/>
+      </svg>
     </button>
   </div>
 
@@ -64,18 +67,84 @@
 
     <nav class="nav">
       <div class="nav-logo">
-        <svg class="logo-icon" width="32" height="32" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+        <svg class="logo-icon" width="40" height="40" viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg">
           <defs>
             <linearGradient id="navGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stop-color="#7B61FF" />
-              <stop offset="100%" stop-color="#00E0FF" />
+              <stop offset="0%" stop-color="#c28c66" />
+              <stop offset="50%" stop-color="#d4a378" />
+              <stop offset="100%" stop-color="#e8b4a0" />
             </linearGradient>
+            <linearGradient id="glowGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#c28c66" stop-opacity="0.3" />
+              <stop offset="100%" stop-color="#e8b4a0" stop-opacity="0.1" />
+            </linearGradient>
+            <filter id="glow">
+              <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
+              <feMerge>
+                <feMergeNode in="coloredBlur"/>
+                <feMergeNode in="SourceGraphic"/>
+              </feMerge>
+            </filter>
           </defs>
-          <circle cx="22" cy="42" r="8" fill="url(#navGradient)" />
-          <path d="M 29 40 L 29 18 L 42 15 L 42 17 L 30 20 L 30 38 Z" fill="url(#navGradient)" />
-          <rect x="38" y="20" width="14" height="3" rx="1.5" fill="url(#navGradient)" />
-          <rect x="38" y="27" width="11" height="3" rx="1.5" fill="url(#navGradient)" />
-          <rect x="38" y="34" width="8" height="3" rx="1.5" fill="url(#navGradient)" />
+          
+          <!-- Círculo de fundo com brilho -->
+          <circle cx="40" cy="40" r="36" fill="url(#glowGradient)" opacity="0.2"/>
+          
+          <!-- Forma principal: headphone moderno + ondas de som -->
+          <!-- Arco do headphone -->
+          <path d="M 25 32 Q 40 18, 55 32" stroke="url(#navGradient)" stroke-width="3.5" 
+                fill="none" stroke-linecap="round" filter="url(#glow)"/>
+          
+          <!-- Almofada esquerda com onda interna -->
+          <g filter="url(#glow)">
+            <rect x="20" y="32" width="10" height="18" rx="5" fill="url(#navGradient)"/>
+            <path d="M 23 38 Q 25 40, 23 42 Q 25 44, 23 46" stroke="#e8b4a0" 
+                  stroke-width="1.5" fill="none" stroke-linecap="round" opacity="0.6"/>
+          </g>
+          
+          <!-- Almofada direita com onda interna -->
+          <g filter="url(#glow)">
+            <rect x="50" y="32" width="10" height="18" rx="5" fill="url(#navGradient)"/>
+            <path d="M 53 38 Q 55 40, 53 42 Q 55 44, 53 46" stroke="#e8b4a0" 
+                  stroke-width="1.5" fill="none" stroke-linecap="round" opacity="0.6"/>
+          </g>
+          
+          <!-- Ondas sonoras emanando -->
+          <g opacity="0.5">
+            <path d="M 15 40 Q 12 40, 10 40" stroke="url(#navGradient)" 
+                  stroke-width="2" fill="none" stroke-linecap="round"/>
+            <path d="M 13 35 Q 9 35, 6 35" stroke="url(#navGradient)" 
+                  stroke-width="1.5" fill="none" stroke-linecap="round"/>
+            <path d="M 13 45 Q 9 45, 6 45" stroke="url(#navGradient)" 
+                  stroke-width="1.5" fill="none" stroke-linecap="round"/>
+                  
+            <path d="M 65 40 Q 68 40, 70 40" stroke="url(#navGradient)" 
+                  stroke-width="2" fill="none" stroke-linecap="round"/>
+            <path d="M 67 35 Q 71 35, 74 35" stroke="url(#navGradient)" 
+                  stroke-width="1.5" fill="none" stroke-linecap="round"/>
+            <path d="M 67 45 Q 71 45, 74 45" stroke="url(#navGradient)" 
+                  stroke-width="1.5" fill="none" stroke-linecap="round"/>
+          </g>
+          
+          <!-- Equalizador central estilizado -->
+          <g transform="translate(32, 52)">
+            <rect x="0" y="4" width="2.5" height="8" rx="1.25" fill="url(#navGradient)" opacity="0.8">
+              <animate attributeName="height" values="8;12;8" dur="1.2s" repeatCount="indefinite"/>
+              <animate attributeName="y" values="4;0;4" dur="1.2s" repeatCount="indefinite"/>
+            </rect>
+            <rect x="4" y="2" width="2.5" height="12" rx="1.25" fill="url(#navGradient)" opacity="0.9">
+              <animate attributeName="height" values="12;16;12" dur="1s" repeatCount="indefinite"/>
+              <animate attributeName="y" values="2;-2;2" dur="1s" repeatCount="indefinite"/>
+            </rect>
+            <rect x="8" y="0" width="2.5" height="16" rx="1.25" fill="url(#navGradient)">
+              <animate attributeName="height" values="16;10;16" dur="0.8s" repeatCount="indefinite"/>
+              <animate attributeName="y" values="0;3;0" dur="0.8s" repeatCount="indefinite"/>
+            </rect>
+            <rect x="12" y="3" width="2.5" height="10" rx="1.25" fill="url(#navGradient)" opacity="0.9">
+              <animate attributeName="height" values="10;14;10" dur="1.1s" repeatCount="indefinite"/>
+              <animate attributeName="y" values="3;-1;3" dur="1.1s" repeatCount="indefinite"/>
+            </rect>
+          </g>
         </svg>
         <span class="logo-text">phona</span>
       </div>
@@ -104,18 +173,36 @@
     <div class="mobile-menu" id="mobileMenu">
       <div class="mobile-menu-header">
         <div class="mobile-menu-logo">
-          <svg class="logo-icon" width="28" height="28" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+          <svg class="logo-icon" width="32" height="32" viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg">
             <defs>
               <linearGradient id="mobileNavGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stop-color="#7B61FF" />
-                <stop offset="100%" stop-color="#00E0FF" />
+                <stop offset="0%" stop-color="#c28c66" />
+                <stop offset="50%" stop-color="#d4a378" />
+                <stop offset="100%" stop-color="#e8b4a0" />
               </linearGradient>
             </defs>
-            <circle cx="22" cy="42" r="8" fill="url(#mobileNavGradient)" />
-            <path d="M 29 40 L 29 18 L 42 15 L 42 17 L 30 20 L 30 38 Z" fill="url(#mobileNavGradient)" />
-            <rect x="38" y="20" width="14" height="3" rx="1.5" fill="url(#mobileNavGradient)" />
-            <rect x="38" y="27" width="11" height="3" rx="1.5" fill="url(#mobileNavGradient)" />
-            <rect x="38" y="34" width="8" height="3" rx="1.5" fill="url(#mobileNavGradient)" />
+            
+            <!-- Arco do headphone -->
+            <path d="M 25 32 Q 40 18, 55 32" stroke="url(#mobileNavGradient)" stroke-width="3" 
+                  fill="none" stroke-linecap="round"/>
+            
+            <!-- Almofada esquerda -->
+            <rect x="20" y="32" width="10" height="18" rx="5" fill="url(#mobileNavGradient)"/>
+            <path d="M 23 38 Q 25 40, 23 42 Q 25 44, 23 46" stroke="#e8b4a0" 
+                  stroke-width="1.5" fill="none" stroke-linecap="round" opacity="0.6"/>
+            
+            <!-- Almofada direita -->
+            <rect x="50" y="32" width="10" height="18" rx="5" fill="url(#mobileNavGradient)"/>
+            <path d="M 53 38 Q 55 40, 53 42 Q 55 44, 53 46" stroke="#e8b4a0" 
+                  stroke-width="1.5" fill="none" stroke-linecap="round" opacity="0.6"/>
+            
+            <!-- Ondas sonoras -->
+            <g opacity="0.5">
+              <path d="M 15 40 Q 12 40, 10 40" stroke="url(#mobileNavGradient)" 
+                    stroke-width="2" fill="none" stroke-linecap="round"/>
+              <path d="M 65 40 Q 68 40, 70 40" stroke="url(#mobileNavGradient)" 
+                    stroke-width="2" fill="none" stroke-linecap="round"/>
+            </g>
           </svg>
           <span class="logo-text">phona</span>
         </div>
@@ -609,7 +696,8 @@
           </span>
         </button>
 
-        <div class="processor-limit-note" role="note">
+        <!-- Nota para usuários não logados -->
+        <div class="processor-limit-note" role="note" id="guest-limit-note" style="display: none;">
           <div class="processor-limit-icon" aria-hidden="true">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
               <circle cx="12" cy="12" r="10" stroke-width="1.6"></circle>
@@ -620,6 +708,21 @@
           <div class="processor-limit-copy">
             <strong>Como funciona</strong>
             <span>Crie sua conta gratuita em 30 segundos e comece a processar músicas de até 20 minutos. É rápido e fácil!</span>
+          </div>
+        </div>
+
+        <!-- Nota de erro de duração -->
+        <div class="processor-limit-note" role="alert" id="duration-error-note" style="display: none; background: linear-gradient(135deg, #fff5f5 0%, #ffe8e8 100%); border: 1.5px solid #ff6b6b;">
+          <div class="processor-limit-icon" aria-hidden="true" style="color: #ff6b6b;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <circle cx="12" cy="12" r="10" stroke-width="1.6"></circle>
+              <path d="M12 8v4" stroke-width="1.8" stroke-linecap="round"></path>
+              <circle cx="12" cy="16" r="1" fill="currentColor"></circle>
+            </svg>
+          </div>
+          <div class="processor-limit-copy">
+            <strong style="color: #d63031;">Áudio muito longo</strong>
+            <span id="duration-error-message" style="color: #636e72;">O vídeo selecionado excede o limite de 20 minutos permitido no plano gratuito.</span>
           </div>
         </div>
 
@@ -683,20 +786,40 @@
     <div class="footer-content">
       <div class="footer-brand">
         <div class="footer-logo">
-          <svg class="logo-icon" width="28" height="28" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
-            <defs>
-              <linearGradient id="footerGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stop-color="#7B61FF" />
-                <stop offset="100%" stop-color="#00E0FF" />
-              </linearGradient>
-            </defs>
-            <circle cx="22" cy="42" r="8" fill="url(#footerGradient)" />
-            <path d="M 29 40 L 29 18 L 42 15 L 42 17 L 30 20 L 30 38 Z" fill="url(#footerGradient)" />
-            <rect x="38" y="20" width="14" height="3" rx="1.5" fill="url(#footerGradient)" />
-            <rect x="38" y="27" width="11" height="3" rx="1.5" fill="url(#footerGradient)" />
-            <rect x="38" y="34" width="8" height="3" rx="1.5" fill="url(#footerGradient)" />
-          </svg>
-          <span class="logo-text">phona</span>
+          <a href="/" style="display: flex; align-items: center; gap: 0.5rem; text-decoration: none; color: inherit;">
+            <svg class="logo-icon" width="32" height="32" viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg">
+              <defs>
+                <linearGradient id="footerNavGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stop-color="#c28c66" />
+                  <stop offset="50%" stop-color="#d4a378" />
+                  <stop offset="100%" stop-color="#e8b4a0" />
+                </linearGradient>
+              </defs>
+              
+              <!-- Arco do headphone -->
+              <path d="M 25 32 Q 40 18, 55 32" stroke="url(#footerNavGradient)" stroke-width="3" 
+                    fill="none" stroke-linecap="round"/>
+              
+              <!-- Almofada esquerda -->
+              <rect x="20" y="32" width="10" height="18" rx="5" fill="url(#footerNavGradient)"/>
+              <path d="M 23 38 Q 25 40, 23 42 Q 25 44, 23 46" stroke="#e8b4a0" 
+                    stroke-width="1.5" fill="none" stroke-linecap="round" opacity="0.6"/>
+              
+              <!-- Almofada direita -->
+              <rect x="50" y="32" width="10" height="18" rx="5" fill="url(#footerNavGradient)"/>
+              <path d="M 53 38 Q 55 40, 53 42 Q 55 44, 53 46" stroke="#e8b4a0" 
+                    stroke-width="1.5" fill="none" stroke-linecap="round" opacity="0.6"/>
+              
+              <!-- Ondas sonoras -->
+              <g opacity="0.5">
+                <path d="M 15 40 Q 12 40, 10 40" stroke="url(#footerNavGradient)" 
+                      stroke-width="2" fill="none" stroke-linecap="round"/>
+                <path d="M 65 40 Q 68 40, 70 40" stroke="url(#footerNavGradient)" 
+                      stroke-width="2" fill="none" stroke-linecap="round"/>
+              </g>
+            </svg>
+            <span class="logo-text">phona</span>
+          </a>
         </div>
         <p class="footer-tagline">A ferramenta preferida de milhares de criadores de conteúdo</p>
       </div>

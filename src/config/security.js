@@ -60,6 +60,27 @@ export const securityConfig = {
       ),
       max: toPositiveInteger(process.env.FREE_PROCESS_LIMIT_MAX, 8),
     },
+    validation: {
+      windowMs: toPositiveInteger(
+        process.env.VALIDATION_RATE_LIMIT_WINDOW_MS,
+        60 * 1000, // 1 minuto
+      ),
+      max: toPositiveInteger(process.env.VALIDATION_RATE_LIMIT_MAX, 10), // 10 validações por minuto
+    },
+    download: {
+      windowMs: toPositiveInteger(
+        process.env.DOWNLOAD_RATE_LIMIT_WINDOW_MS,
+        60 * 1000, // 1 minuto
+      ),
+      max: toPositiveInteger(process.env.DOWNLOAD_RATE_LIMIT_MAX, 30), // 30 downloads por minuto
+    },
+    subscription: {
+      windowMs: toPositiveInteger(
+        process.env.SUBSCRIPTION_RATE_LIMIT_WINDOW_MS,
+        60 * 1000, // 1 minuto
+      ),
+      max: toPositiveInteger(process.env.SUBSCRIPTION_RATE_LIMIT_MAX, 10), // 10 operações de assinatura por minuto
+    },
   },
 };
 

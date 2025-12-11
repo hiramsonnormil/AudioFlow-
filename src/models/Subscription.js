@@ -30,7 +30,7 @@ const SubscriptionSchema = new mongoose.Schema(
     },
     planType: {
       type: String,
-      enum: ["voz_pro", "voz_master"],
+      enum: ["voz_pro", "voz_master", "voz_plus_master"],
       default: "voz_pro",
     },
     status: {

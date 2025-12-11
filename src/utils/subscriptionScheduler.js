@@ -1,4 +1,5 @@
 import cron from "node-cron";
+import crypto from "crypto";
 import { Subscription } from "../models/Subscription.js";
 import { createPixCharge } from "../services/pushinpayService.js";
 import { buildPushinpayWebhookUrl } from "./webhook.js";
@@ -70,6 +71,7 @@ export function initSubscriptionScheduler() {
           }
 
           try {
+            const webhookToken = crypto.randomBytes(16).toString("hex");
             const pixResponse = await createPixCharge({
               value: subscription.monthlyAmount,
               webhookUrl,
@@ -78,6 +80,7 @@ export function initSubscriptionScheduler() {
                 subscriptionId: String(subscription._id),
                 userId: String(subscription.userId),
                 planType: subscription.planType,
+                webhookToken,
               },
             });
 
@@ -89,7 +92,10 @@ export function initSubscriptionScheduler() {
               pixId: pixResponse.id,
               value: subscription.monthlyAmount,
               status: "pending",
-              payload: pixResponse,
+              payload: {
+                ...pixResponse,
+                metadata: { ...(pixResponse?.metadata || {}), subscriptionId: String(subscription._id), userId: String(subscription.userId), planType: subscription.planType, webhookToken },
+              },
             });
             subscription.status = "past_due";
             await subscription.save();

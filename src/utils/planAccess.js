@@ -29,8 +29,28 @@ const PLAN_CONFIG = {
   },
   voz_master: {
     label: "Voz Master",
-    presets: null, // null => todos os presets habilitados
+    presets: [
+      "SLOWED",
+      "SLOWED_REVERB",
+      "SPEED_125",
+      "ULTRA_SLOWED",
+      "MUFFLED_SLOWED",
+      "MUFFLED_SPEED",
+      "DAYCORE",
+      "NIGHTCORE",
+      "PHONA",
+      "ECHO",
+      "REVERB",
+      "BASS_BOOST",
+      "ROBOT_VOICE",
+      "8D",
+    ],
     limit: { count: 60, windowMs: ONE_DAY_MS },
+  },
+  voz_plus_master: {
+    label: "Plus Master",
+    presets: null, // null => todos os presets habilitados (24 no total)
+    limit: { count: 120, windowMs: ONE_DAY_MS },
   },
 };
 

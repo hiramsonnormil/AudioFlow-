@@ -24,17 +24,34 @@ function scrollToProcessor() {
 window.scrollToSection = scrollToSection;
 window.scrollToProcessor = scrollToProcessor;
 
+// Estado do botão sticky
+let isScrollToTopMode = false;
+
 // Atualizar texto do sticky CTA baseado no estado de autenticação
 function updateStickyCTA() {
-  const stickyBtn = document.querySelector('.sticky-btn span:first-child');
-  if (stickyBtn) {
+  const stickyBtnText = document.querySelector('.sticky-btn-text');
+  if (stickyBtnText && !isScrollToTopMode) {
     if (isAuthenticated()) {
-      stickyBtn.textContent = 'Criar meu remix';
+      stickyBtnText.textContent = 'Criar meu remix';
     } else {
-      stickyBtn.textContent = 'Criar conta grátis';
+      stickyBtnText.textContent = 'Criar conta grátis';
     }
   }
 }
+
+// Função para lidar com clique no botão sticky
+function handleStickyBtnClick() {
+  if (isScrollToTopMode) {
+    // Modo scroll to top - volta ao topo
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  } else {
+    // Modo CTA - vai para o processador
+    scrollToProcessor();
+  }
+}
+
+// Exportar para uso global
+window.handleStickyBtnClick = handleStickyBtnClick;
 
 // Atualizar na inicialização
 updateStickyCTA();
@@ -46,11 +63,12 @@ window.addEventListener('storage', (e) => {
   }
 });
 
-// Sticky CTA visibility on scroll (otimizado com throttle)
+// Sticky CTA visibility and mode switching on scroll
 const stickyCta = document.querySelector(".sticky-cta");
+const stickyBtn = document.querySelector(".sticky-btn");
 const processorSection = document.getElementById("processor");
 
-if (stickyCta && processorSection) {
+if (stickyCta && stickyBtn && processorSection) {
   let ticking = false;
 
   window.addEventListener(
@@ -64,11 +82,26 @@ if (stickyCta && processorSection) {
             processorRect.bottom >= 0;
 
           if (isProcessorVisible) {
-            stickyCta.style.opacity = "0";
-            stickyCta.style.pointerEvents = "none";
-          } else {
+            // Usuário chegou no processador - transformar em scroll-to-top
+            isScrollToTopMode = true;
+            stickyBtn.classList.add('scroll-to-top');
             stickyCta.style.opacity = "1";
             stickyCta.style.pointerEvents = "all";
+          } else {
+            // Usuário saiu do processador
+            if (window.scrollY < processorRect.top) {
+              // Está acima do processador - modo CTA normal
+              isScrollToTopMode = false;
+              stickyBtn.classList.remove('scroll-to-top');
+              stickyCta.style.opacity = "1";
+              stickyCta.style.pointerEvents = "all";
+            } else {
+              // Está abaixo do processador - modo scroll-to-top
+              isScrollToTopMode = true;
+              stickyBtn.classList.add('scroll-to-top');
+              stickyCta.style.opacity = "1";
+              stickyCta.style.pointerEvents = "all";
+            }
           }
           ticking = false;
         });
@@ -528,18 +561,41 @@ function createCustomSelect(nativeSelect, presets) {
   const dropdown = document.createElement("div");
   dropdown.className = "custom-select-dropdown";
 
+  // Create tabs for Plus Master filtering
+  const tabsContainer = document.createElement("div");
+  tabsContainer.className = "preset-tabs";
+
+  const tabAll = document.createElement("button");
+  tabAll.className = "preset-tab active";
+  tabAll.textContent = "Todos os Filtros";
+  tabAll.dataset.filter = "all";
+
+  const tabPlusMaster = document.createElement("button");
+  tabPlusMaster.className = "preset-tab";
+  tabPlusMaster.textContent = "Plus Master";
+  tabPlusMaster.dataset.filter = "voz_plus_master";
+
+  tabsContainer.appendChild(tabAll);
+  tabsContainer.appendChild(tabPlusMaster);
+  dropdown.appendChild(tabsContainer);
+
+  // Create options container
+  const optionsContainer = document.createElement("div");
+  optionsContainer.className = "preset-options-container";
+
   // Add placeholder option
   const placeholderOption = document.createElement("div");
   placeholderOption.className = "custom-select-option placeholder";
   placeholderOption.textContent = "Selecione um efeito...";
   placeholderOption.dataset.value = "";
-  dropdown.appendChild(placeholderOption);
+  optionsContainer.appendChild(placeholderOption);
 
   // Add preset options
   presets.forEach((preset) => {
     const option = document.createElement("div");
     option.className = "custom-select-option";
     option.dataset.value = preset.id;
+    option.dataset.minPlan = preset.minPlan || "free";
 
     const optionIcon = document.createElement("span");
     optionIcon.className = "custom-select-option-icon";
@@ -549,9 +605,27 @@ function createCustomSelect(nativeSelect, presets) {
     optionText.className = "custom-select-option-text";
     optionText.textContent = `${preset.name} - ${preset.description} `;
 
+    // Add plan label badge
+    if (preset.planLabel) {
+      const planBadge = document.createElement("span");
+      planBadge.className = "preset-plan-badge";
+      planBadge.textContent = preset.planLabel;
+      planBadge.style.cssText = `
+        font-size: 0.65rem;
+        padding: 0.15rem 0.35rem;
+        border-radius: 4px;
+        margin-left: 0.5rem;
+        font-weight: 600;
+        background: rgba(194, 140, 102, 0.15);
+        color: #c28c66;
+        white-space: nowrap;
+      `;
+      optionText.appendChild(planBadge);
+    }
+
     option.appendChild(optionIcon);
     option.appendChild(optionText);
-    dropdown.appendChild(option);
+    optionsContainer.appendChild(option);
 
     // Click handler for option
     option.addEventListener("click", () => {
@@ -564,6 +638,39 @@ function createCustomSelect(nativeSelect, presets) {
         iconSpan,
         textSpan
       );
+    });
+  });
+
+  dropdown.appendChild(optionsContainer);
+
+  // Tab filtering logic - Only show Plus Master exclusives
+  const tabs = tabsContainer.querySelectorAll(".preset-tab");
+  tabs.forEach((tab) => {
+    tab.addEventListener("click", (e) => {
+      e.stopPropagation();
+
+      // Update active tab
+      tabs.forEach((t) => t.classList.remove("active"));
+      tab.classList.add("active");
+
+      const filter = tab.dataset.filter;
+      const options = optionsContainer.querySelectorAll(".custom-select-option:not(.placeholder)");
+
+      options.forEach((option) => {
+        const minPlan = option.dataset.minPlan;
+        
+        if (filter === "all") {
+          // Mostrar todos
+          option.style.display = "flex";
+        } else if (filter === "voz_plus_master") {
+          // Mostrar apenas os exclusivos Plus Master
+          if (minPlan === "voz_plus_master") {
+            option.style.display = "flex";
+          } else {
+            option.style.display = "none";
+          }
+        }
+      });
     });
   });
 

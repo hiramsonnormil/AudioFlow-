@@ -7,6 +7,8 @@ import { getToken } from "./auth/session.js";
 
 let currentSubscriptionId = null;
 let paymentCheckInterval = null;
+let currentPaymentPixId = null;
+let paymentCheckStartedAt = null;
 
 /**
  * Abrir modal de pagamento
@@ -57,6 +59,8 @@ function resetPaymentForms() {
   if (cardSuccess) cardSuccess.style.display = "none";
 
   currentSubscriptionId = null;
+  currentPaymentPixId = null;
+  paymentCheckStartedAt = null;
 }
 
 /**
@@ -117,8 +121,14 @@ async function handlePixPayment(e) {
       throw new Error(data.message || "Erro ao processar pagamento PIX");
     }
 
-    // Salvar subscription ID
+    // Salvar identificadores para validar o pagamento confirmado
     currentSubscriptionId = data.subscription.id;
+    currentPaymentPixId =
+      data.payment?.pixId ||
+      data.payment?.transactionId ||
+      data.payment?.id ||
+      data.payment?.transactionID ||
+      null;
 
     // Mostrar QR Code e código copia e cola
     const qrCodeImg = document.getElementById("pixQrCode");
@@ -154,6 +164,7 @@ async function handlePixPayment(e) {
     pixSuccess.style.display = "block";
 
     // Iniciar verificação periódica do status
+    paymentCheckStartedAt = Date.now();
     startPaymentStatusCheck();
   } catch (error) {
     console.error("❌ [PAYMENT] Erro ao criar pagamento PIX:", error);
@@ -246,6 +257,13 @@ async function handleCardPayment(e) {
         "Pagamento em processamento. Aguarde a confirmação...";
 
       // Iniciar verificação periódica
+      currentPaymentPixId =
+        data.payment?.pixId ||
+        data.payment?.transactionId ||
+        data.payment?.id ||
+        data.payment?.transactionID ||
+        null;
+      paymentCheckStartedAt = Date.now();
       startPaymentStatusCheck();
     }
   } catch (error) {
@@ -275,13 +293,43 @@ function startPaymentStatusCheck() {
       });
 
       const data = await response.json();
+      const subscription = data.subscription || {};
+      const subscriptionStatus = subscription.status ? String(subscription.status).toLowerCase() : "";
+      const lastPayment =
+        subscription.lastPayment ||
+        subscription.last_payment ||
+        data.lastPayment ||
+        data.payment ||
+        null;
+      const lastStatus = lastPayment?.status ? String(lastPayment.status).toLowerCase() : null;
+      const lastPixId =
+        lastPayment?.pixId ||
+        lastPayment?.pixID ||
+        lastPayment?.transactionId ||
+        lastPayment?.transactionID ||
+        lastPayment?.id ||
+        null;
+      const paidAtValue = lastPayment?.paidAt || lastPayment?.paid_at || null;
+      const paidAtMs = paidAtValue ? new Date(paidAtValue).getTime() : null;
+      const paidAtValid = Number.isFinite(paidAtMs);
+      const startedAt = paymentCheckStartedAt ?? Date.now();
+      const paidAfterStart = paidAtValid ? paidAtMs >= startedAt - 1000 : false;
+      const matchesTrackedPix = currentPaymentPixId && lastPixId
+        ? currentPaymentPixId === lastPixId
+        : false;
 
-      if (data.subscription.status === "active") {
-        // Pagamento confirmado!
+      const paymentConfirmed =
+        subscriptionStatus === "active" &&
+        lastStatus === "paid" &&
+        ((matchesTrackedPix && (paidAfterStart || !paidAtValid)) ||
+          (!currentPaymentPixId && paidAfterStart));
+
+      if (paymentConfirmed) {
         clearInterval(paymentCheckInterval);
         paymentCheckInterval = null;
+        currentPaymentPixId = null;
+        paymentCheckStartedAt = null;
 
-        // Mostrar mensagem de sucesso
         const pixSuccess = document.getElementById("pixPaymentSuccess");
         const cardSuccess = document.getElementById("cardPaymentSuccess");
 
@@ -295,7 +343,6 @@ function startPaymentStatusCheck() {
             "Pagamento confirmado! Sua assinatura Premium está ativa.";
         }
 
-        // Redirecionar após alguns segundos
         setTimeout(() => {
           window.location.reload();
         }, 3000);
