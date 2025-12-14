@@ -87,54 +87,33 @@ configurePassport();
 app.use(passport.initialize());
 
 // ===== PAGE ROUTES =====
-// Rota principal (index)
+// Rotas principais (clean URLs)
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "html", "index.html"));
 });
 
-// Página de processamento
 app.get("/process", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "html", "process.html"));
 });
 
-// Rota para compatibilidade com URLs antigas (process.html)
-app.get("/process.html", (req, res) => {
-  res.sendFile(path.join(__dirname, "public", "html", "process.html"));
-});
-
-
-// Página de processamento em lote
 app.get("/batch", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "html", "batch.html"));
 });
 
-// Página de planos
 app.get("/plans", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "html", "plans.html"));
 });
 
-app.get("/plans.html", (req, res) => {
-  res.redirect(301, "/plans");
-});
-
-// Página de conta
 app.get("/account", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "html", "account.html"));
 });
 
-app.get("/account.html", (req, res) => {
-  res.redirect(301, "/account");
+app.get("/recents", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "html", "recents.html"));
 });
 
-// ===== ROTAS DE COMPATIBILIDADE =====
-// Para manter compatibilidade com URLs antigas (.html)
-app.get("/index.html", (req, res) => {
-  res.sendFile(path.join(__dirname, "public", "html", "index.html"));
-});
-
-
-app.get("/batch.html", (req, res) => {
-  res.sendFile(path.join(__dirname, "public", "html", "batch.html"));
+app.get("/download", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "html", "download.html"));
 });
 
 // ===== STORAGE SETUP =====
@@ -220,7 +199,12 @@ app.use((err, req, res, next) => {
 });
 
 app.use((req, res) => {
-  res.status(404).json({ error: "Not found" });
+  // Se for uma requisição da API, retorna JSON
+  if (req.path.startsWith('/api')) {
+    return res.status(404).json({ error: "Not found" });
+  }
+  // Para outras rotas, mostra a página 404
+  res.status(404).sendFile(path.join(__dirname, "public", "html", "404.html"));
 });
 
 // ===== START SERVER =====
