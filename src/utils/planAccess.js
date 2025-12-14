@@ -29,7 +29,12 @@ const PLAN_CONFIG = {
   },
   voz_master: {
     label: "Voz Master",
-    presets: null, // null => todos os presets habilitados
+    presets: null, // null => todos os presets habilitados exceto plus_master
+    limit: { count: 60, windowMs: ONE_DAY_MS },
+  },
+  plano_plus_master: {
+    label: "Plano Plus Master",
+    presets: null, // null => TODOS os presets incluindo plus_master exclusivos
     limit: { count: 60, windowMs: ONE_DAY_MS },
   },
 };
@@ -38,6 +43,7 @@ const PLAN_ALIAS = {
   pro: "voz_pro",
   premium_30: "voz_master",
   business: "voz_master",
+  voz_plus_master: "plano_plus_master", // Alias para Plus Master
 };
 
 function getPlanKey(plan) {
@@ -61,9 +67,22 @@ export function isPresetAllowedForPlan(plan, presetId) {
   if (!normalizedPreset || !PRESETS[normalizedPreset]) {
     return false;
   }
+
+  // Presets exclusivos do Plus Master
+  const plusMasterOnlyPresets = [
+    'BABY_VOICE', 'DEEP_VOICE', 'VAPORWAVE_CLEAN', 
+    'RADIO_RETRO_AM', 'CRYSTAL_SPEED', 'TAPE_WARP',
+    'WHISPER_CORE', 'GHOST_REVERB', 'CHOIRIFY', 'SUBHARMONIC_BASS'
+  ];
+
+  // Se o preset é exclusivo do Plus Master, apenas esse plano pode usar
+  if (plusMasterOnlyPresets.includes(normalizedPreset)) {
+    return plan === 'plano_plus_master' || plan === 'voz_plus_master';
+  }
+
   const planInfo = getPlanInfo(plan);
   if (!planInfo.presets) {
-    return true; // todos os presets liberados
+    return true; // todos os presets liberados (exceto plus_master exclusivos já tratados acima)
   }
   return planInfo.presets.includes(normalizedPreset);
 }
@@ -103,8 +122,6 @@ export async function prepareUsageReservation(plan, userId) {
       await User.findByIdAndUpdate(userId, {
         $set: { usageHistory: updatedHistory }
       });
-
-      console.log(`[USAGE] ✅ Processamento registrado para user ${userId}. Total recente: ${updatedHistory.length}/${planInfo.limit.count}`);
     },
   };
 }

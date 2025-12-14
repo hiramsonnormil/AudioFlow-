@@ -20,6 +20,44 @@ export function saveSession({ token, user }) {
 }
 
 /**
+ * Sincronizar dados do usuário com o servidor
+ * Útil para garantir que o localStorage está atualizado
+ */
+export async function syncUserFromServer() {
+  const token = getToken();
+  if (!token) return null;
+
+  try {
+    const response = await fetch('/api/auth/session', {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    });
+
+    if (!response.ok) {
+      // Token inválido, limpar sessão
+      if (response.status === 401 || response.status === 404) {
+        clearSession();
+      }
+      return null;
+    }
+
+    const data = await response.json();
+    
+    if (data.user) {
+      // Atualizar localStorage com dados do servidor
+      localStorage.setItem(USER_KEY, JSON.stringify(data.user));
+      return data.user;
+    }
+    
+    return null;
+  } catch (error) {
+    console.error('Erro ao sincronizar usuário:', error);
+    return null;
+  }
+}
+
+/**
  * Obter token da sessão
  */
 export function getToken() {
