@@ -29,7 +29,7 @@ const PaymentSchema = new mongoose.Schema(
     },
     plan: {
       type: String,
-      enum: ["voz_plus_master", "voz_pro", "voz_master"],
+      enum: ["voz_plus_master", "voz_pro", "voz_master", "plano_plus_master"],
       required: true,
     },
     value: {
@@ -102,8 +102,6 @@ PaymentSchema.methods.markAsPaid = async function (paymentData = {}) {
   
   await this.save();
   
-  console.log(`[PAYMENT] Pagamento confirmado: ${this.transactionId} - R$ ${(this.value / 100).toFixed(2)}`);
-  
   // Ativar assinatura automaticamente
   await this.activateSubscription();
   
@@ -141,7 +139,6 @@ PaymentSchema.methods.activateSubscription = async function() {
     // Verificar sincronização com User
     const user = await User.findById(this.userId);
     if (user && user.plan !== this.plan) {
-      console.log(`[PAYMENT] Sincronizando plano do User ${user.email}: ${user.plan} -> ${this.plan}`);
       await user.updatePlanFromSubscription(subscription);
     }
     

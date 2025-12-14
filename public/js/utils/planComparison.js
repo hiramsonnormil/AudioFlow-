@@ -7,7 +7,7 @@ const PLAN_HIERARCHY = {
   free: 0,
   voz_pro: 1,
   voz_master: 2,
-  voz_plus_master: 3,
+  plano_plus_master: 3,
 };
 
 // Nomes amigáveis dos planos
@@ -15,7 +15,7 @@ const PLAN_NAMES = {
   free: 'Gratuito',
   voz_pro: 'Voz Pro',
   voz_master: 'Voz Master',
-  voz_plus_master: 'Voz Plus Master',
+  plano_plus_master: 'Plano Plus Master',
 };
 
 /**

@@ -139,7 +139,6 @@ export class PaymentService {
 
     // Idempotência: Se já está pago, ignorar
     if (payment.isPaid()) {
-      console.log(`[PaymentService] Payment ${transactionId} já está pago. Ignorando.`);
       return {
         alreadyProcessed: true,
         payment: payment.toObject(),
@@ -165,8 +164,6 @@ export class PaymentService {
         payerDocument,
       });
 
-      console.log(`[PaymentService] ✅ Pagamento ${transactionId} confirmado. Sincronização automática iniciada.`);
-
       // Recarregar dados atualizados
       await payment.populate('subscriptionId');
       const updatedUser = await User.findById(payment.userId);
@@ -190,8 +187,6 @@ export class PaymentService {
 
       // Cancelar subscription
       await subscription.cancel();
-
-      console.log(`[PaymentService] ❌ Pagamento ${transactionId} ${status}.`);
 
       return {
         success: false,
@@ -295,6 +290,7 @@ export class PaymentService {
       voz_plus_master: "voz_master",
       voz_pro: "voz_pro",
       voz_master: "voz_master",
+      plano_plus_master: "voz_master",
     };
     return mapping[plan] || "free";
   }

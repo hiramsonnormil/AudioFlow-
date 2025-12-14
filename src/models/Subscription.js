@@ -11,7 +11,7 @@ const SubscriptionSchema = new mongoose.Schema(
     },
     plan: {
       type: String,
-      enum: ["voz_plus_master", "voz_pro", "voz_master"],
+      enum: ["voz_plus_master", "voz_pro", "voz_master", "plano_plus_master"],
       required: true,
     },
     status: {
@@ -88,8 +88,6 @@ SubscriptionSchema.methods.activate = async function (durationDays = 30, payment
   // Sincronizar com User automaticamente
   await this.syncWithUser();
   
-  console.log(`[SUBSCRIPTION] Ativada: ${this.plan} para user ${this.userId}, expira em ${this.expiresAt}`);
-  
   return this;
 };
 
@@ -117,8 +115,6 @@ SubscriptionSchema.methods.cancel = async function () {
     await user.updatePlanFromSubscription(null);
   }
   
-  console.log(`[SUBSCRIPTION] Cancelada para user ${this.userId}`);
-  
   return this;
 };
 
@@ -132,8 +128,6 @@ SubscriptionSchema.methods.expire = async function () {
   if (user) {
     await user.updatePlanFromSubscription(null);
   }
-  
-  console.log(`[SUBSCRIPTION] Expirada para user ${this.userId}`);
   
   return this;
 };
@@ -158,8 +152,6 @@ SubscriptionSchema.methods.renew = async function (durationDays = 30, paymentId 
   
   await this.save();
   await this.syncWithUser();
-  
-  console.log(`[SUBSCRIPTION] Renovada: ${this.plan} para user ${this.userId}, nova expira\u00e7\u00e3o: ${this.expiresAt}`);
   
   return this;
 };

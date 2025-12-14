@@ -199,7 +199,8 @@ function updateModalWithPixData(data) {
 
   // Mapear nome e preço do plano
   const planName = data.planType === 'voz_pro' ? 'Voz Pro' : 
-                   data.planType === 'voz_plus_master' ? 'Voz Master' : 
+                   data.planType === 'voz_plus_master' ? 'Voz Master' :
+                   data.planType === 'plano_plus_master' ? 'Plano Plus Master' :
                    'Voz Master';
   
   // Calcular preço formatado a partir do valor em centavos
@@ -818,7 +819,8 @@ async function startSubscriptionFlow(planType) {
     const planMap = {
       'voz_pro': 'voz_pro',
       'voz_master': 'voz_master',
-      'voz_plus_master': 'voz_plus_master'
+      'voz_plus_master': 'voz_plus_master',
+      'plano_plus_master': 'plano_plus_master'
     };
 
     const plan = planMap[planType] || planType;
@@ -950,7 +952,8 @@ async function fetchCurrentPlan() {
           const planMap = {
             'voz_plus_master': 'voz_master',
             'voz_pro': 'voz_pro',
-            'voz_master': 'voz_master'
+            'voz_master': 'voz_master',
+            'plano_plus_master': 'voz_master'
           };
           const plan = planMap[activePayment.subscriptionId.plan] || 'free';
 

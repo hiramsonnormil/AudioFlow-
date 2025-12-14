@@ -29,15 +29,22 @@ export class PixController {
         });
       }
 
-      // Mapear valor do plano
+      // Mapear valor do plano (3 planos)
       const planPrices = {
-        voz_plus_master: parseInt(process.env.SUBSCRIPTION_VOZ_PLUS_MASTER_PRICE_CENTS, 10),
-        voz_pro: parseInt(process.env.SUBSCRIPTION_VOZ_PRO_PRICE_CENTS || "2990", 10),
-        voz_master: parseInt(process.env.SUBSCRIPTION_VOZ_MASTER_PRICE_CENTS || "100", 10),
+        voz_pro: parseInt(process.env.SUBSCRIPTION_VOZ_PRO_PRICE_CENTS || "1490", 10),
+        voz_master: parseInt(process.env.SUBSCRIPTION_VOZ_MASTER_PRICE_CENTS || "2990", 10),
+        plano_plus_master: parseInt(process.env.SUBSCRIPTION_PLANO_PLUS_MASTER_PRICE_CENTS || "4999", 10),
       };
 
+      console.log(`[PixController] Criando PIX para plano: ${plan}, valor: ${planPrices[plan]}`);
+
       const value = planPrices[plan];
-      if (!value) {
+      if (!value || isNaN(value)) {
+        console.error(`[PixController] ❌ Plano inválido ou sem preço: ${plan}`, { 
+          planRecebido: plan,
+          valorEncontrado: value,
+          planosDisponiveis: Object.keys(planPrices)
+        });
         return res.status(400).json({
           success: false,
           error: "Plano inválido",

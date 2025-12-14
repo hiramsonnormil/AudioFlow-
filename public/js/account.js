@@ -3,30 +3,34 @@
  * Mostra informações do plano, próximas cobranças e histórico
  */
 
-import { getToken, getUser, isAuthenticated } from './auth/session.js';
+import { getToken, getUser, isAuthenticated, syncUserFromServer } from './auth/session.js';
 
 const planNames = {
   free: 'Gratuito',
   voz_pro: 'Voz Pro',
-  voz_master: 'Voz Master'
+  voz_master: 'Voz Master',
+  plano_plus_master: 'Plano Plus Master'
 };
 
 const planIcons = {
   free: '🎧',
   voz_pro: '⭐',
-  voz_master: '👑'
+  voz_master: '👑',
+  plano_plus_master: '💎'
 };
 
 const planDescriptions = {
   free: 'Plano básico para experimentar',
   voz_pro: 'Processamento ilimitado + recursos avançados',
-  voz_master: 'Tudo do Pro + prioridade máxima'
+  voz_master: 'Tudo do Pro + prioridade máxima',
+  plano_plus_master: 'Acesso premium completo com todos os recursos'
 };
 
 const planPricing = {
   free: 0,
-  voz_pro: 1490,
-  voz_master: 150
+  voz_pro: 1490, // R$ 14,90
+  voz_master: 2990, // R$ 29,90
+  plano_plus_master: 4999 // R$ 49,99
 };
 
 async function fetchAccountData() {
@@ -46,7 +50,13 @@ async function fetchAccountData() {
     throw new Error('Erro ao carregar dados da conta');
   }
 
-  return response.json();
+  const data = await response.json();
+  
+  // Sincronizar localStorage com dados do servidor
+  // Isso garante que as informações estão sempre atualizadas
+  await syncUserFromServer();
+  
+  return data;
 }
 
 function formatDate(dateString) {
@@ -201,7 +211,7 @@ function renderAccountPage(accountData) {
 
     paymentHistorySection = `
       <div class="account-card">
-        <h2>📜 Histórico de Pagamentos</h2>
+        <h2>📜 Histórico de Pagamentos</h2>3
         <div class="payment-history-list">
           ${historyItems}
         </div>

@@ -146,6 +146,116 @@ export class AudioProcessingService {
       ].join(",");
     }
 
+    // ===== PRESETS PLUS MASTER =====
+    if (preset === "BABY_VOICE") {
+      // Voz aguda fofinha estilo TikTok: Pitch +35%, formant leve e EQ cristalina
+      return [
+        `asetrate=44100*1.35`,
+        `aresample=44100`,
+        `equalizer=f=200:t=h:width=200:g=-3`,
+        `equalizer=f=3000:t=h:width=2000:g=4`,
+        `afftdn=nf=-25`,
+        `loudnorm=I=-14:TP=-1.0`,
+      ].join(",");
+    }
+
+    if (preset === "DEEP_VOICE") {
+      // Voz grave cinematográfica: Pitch -20%, corte suave nos agudos e compressão limpa
+      return [
+        `asetrate=44100*0.80`,
+        `aresample=44100`,
+        `lowpass=f=6000`,
+        `acompressor=threshold=-20dB:ratio=2:attack=5:release=50`,
+        `loudnorm=I=-14:TP=-1.0`,
+      ].join(",");
+    }
+
+    if (preset === "VAPORWAVE_CLEAN") {
+      // Vaporwave suave: Tempo 0.80, pitch -4%, equalização vintage
+      return [
+        `asetrate=44100*0.96`,
+        `aresample=44100`,
+        `rubberband=tempo=0.80:pitch=1.0`,
+        `equalizer=f=100:t=h:width=100:g=6`,
+        `equalizer=f=800:t=h:width=400:g=-3`,
+        `afftdn=nf=-22`,
+        `loudnorm=I=-14:TP=-1.0`,
+      ].join(",");
+    }
+
+    if (preset === "RADIO_RETRO_AM") {
+      // Som de rádio AM antigo: Bandpass 300–3500Hz + distorção leve
+      return [
+        `highpass=f=300`,
+        `lowpass=f=3500`,
+        `acompressor=threshold=-20dB:ratio=2:attack=5:release=50`,
+        `loudnorm=I=-18:TP=-1:LRA=11`,
+      ].join(",");
+    }
+
+    if (preset === "CRYSTAL_SPEED") {
+      // Speed Up cristalino: Tempo 1.35× sem distorção + brilho limpo
+      return [
+        `rubberband=tempo=1.35:pitch=1.0`,
+        `equalizer=f=3500:t=h:width=2500:g=5`,
+        `afftdn=nf=-25`,
+        `loudnorm=I=-14:TP=-1.0`,
+      ].join(",");
+    }
+
+    if (preset === "TAPE_WARP") {
+      // Simulação de fita antiga: Wow/flutter, pitch drift e saturação vintage
+      return [
+        `rubberband=tempo=1.00:pitch=1.00`,
+        `aecho=0.02:0.3:50:0.15`,
+        `acompressor=threshold=-30dB:ratio=3:attack=2:release=30`,
+        `loudnorm=I=-14:TP=-1.0`,
+      ].join(",");
+    }
+
+    if (preset === "WHISPER_CORE") {
+      // Sussurro etéreo: Gate agressivo + brilho + reverb infinito
+      return [
+        `afftdn=nf=-30`,
+        `highpass=f=200`,
+        `equalizer=f=6000:t=h:width=3000:g=6`,
+        `aecho=0.8:0.9:2000:0.5`,
+        `loudnorm=I=-14:TP=-1.0`,
+      ].join(",");
+    }
+
+    if (preset === "GHOST_REVERB") {
+      // Reverb fantasma: Predelay absurdo + decay muito longo + corte de agudos
+      return [
+        `aecho=0.6:0.7:1200:0.5`,
+        `lowpass=f=4000`,
+        `aecho=0.8:0.7:5000:0.6`,
+        `loudnorm=I=-14:TP=-1.0`,
+      ].join(",");
+    }
+
+    if (preset === "CHOIRIFY") {
+      // Coro sintético: Chorus + micro desafinação + expansão estéreo
+      return [
+        `asplit=3[a][b][c]`,
+        `[b]asetrate=44100*1.0005,aresample=44100[bp]`,
+        `[c]asetrate=44100*0.9995,aresample=44100[cp]`,
+        `[a][bp][cp]amix=inputs=3:weights=1 1 1`,
+        `chorus=0.6:0.8:50:0.4:0.25:2`,
+        `loudnorm=I=-14:TP=-1.0`,
+      ].join(";");
+    }
+
+    if (preset === "SUBHARMONIC_BASS") {
+      // Grave monstruoso: Geração de sub-harmônicos com compressão segura
+      return [
+        `bass=g=8:f=80`,
+        `acompressor=threshold=-40dB:ratio=3:attack=1:release=100`,
+        `afftdn=nf=-20`,
+        `loudnorm=I=-14:TP=-1.0`,
+      ].join(",");
+    }
+
     // Default fallback
     return `loudnorm=I=-14:TP=-1.0`;
   }
