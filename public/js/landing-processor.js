@@ -164,6 +164,26 @@ async function startProcessing(url, presetName) {
     return;
   }
 
+  // Validar se o usuário tem acesso ao preset selecionado
+  const user = JSON.parse(localStorage.getItem('phona:user') || '{}');
+  const userPlan = user?.plan || 'free';
+
+  // Presets exclusivos do Plus Master
+  const plusMasterPresets = [
+    'BABY_VOICE', 'DEEP_VOICE', 'VAPORWAVE_CLEAN', 
+    'RADIO_RETRO_AM', 'CRYSTAL_SPEED', 'TAPE_WARP',
+    'WHISPER_CORE', 'GHOST_REVERB', 'CHOIRIFY', 'SUBHARMONIC_BASS'
+  ];
+
+  // Se o preset é Plus Master e o usuário não tem o plano
+  if (plusMasterPresets.includes(presetName) && userPlan !== 'plano_plus_master') {
+    // Importar e mostrar modal de upgrade
+    import('./utils/planModal.js').then(module => {
+      module.showPlanModal('Este preset exclusivo está disponível apenas no Plano Plus Master. 🟨');
+    });
+    return;
+  }
+
   // Mostrar loading no botão
   processBtn.disabled = true;
   processBtn.innerHTML = `

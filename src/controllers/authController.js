@@ -61,7 +61,6 @@ export const authController = {
       console.log("[SIGNUP] Email normalizado:", normalizedEmail);
 
       if (!sanitizedUsername || !normalizedEmail || !password) {
-        console.log("[SIGNUP] Campos faltando:", { sanitizedUsername, normalizedEmail, hasPassword: !!password });
         return res.status(400).json({ error: "missing_fields" });
       }
 
@@ -97,8 +96,6 @@ export const authController = {
         password: hash,
         plan: "free",
       });
-
-      console.log("[SIGNUP] Usuário criado:", user._id);
 
       const token = signToken(user);
       setAuthCookie(res, token);
