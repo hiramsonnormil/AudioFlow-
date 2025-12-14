@@ -24,8 +24,6 @@ router.post('/upload-test', async (req, res) => {
     const jobId = req.body.jobId || `job-${Date.now()}`;
     const preset = req.body.preset || 'test-preset';
     
-    console.log(`[R2 Test] Iniciando teste de upload para usuário: ${userId}`);
-    
     // Para teste, vamos criar um arquivo temporário fake
     // Em produção, este seria o arquivo gerado pelo ffmpeg
     const testContent = Buffer.from(`Teste de áudio - Job: ${jobId} - Timestamp: ${new Date().toISOString()}`);
@@ -33,8 +31,6 @@ router.post('/upload-test', async (req, res) => {
     
     // Cria arquivo temporário de teste
     await fs.writeFile(localPath, testContent);
-    console.log(`[R2 Test] Arquivo temporário criado: ${localPath}`);
-    
     // Define a chave no formato para usuário free: free/<userId>/<jobId>.mp3
     const key = `free/${userId}/${jobId}.mp3`;
     
@@ -81,8 +77,6 @@ router.get('/recent-free', async (req, res) => {
     // Pega userId do token ou query param para teste
     const userId = req.user?.id || req.query.userId || 'test-user-123';
     
-    console.log(`[R2 Test] Listando processamentos recentes para: ${userId}`);
-    
     // Busca objetos válidos (menos de 1h) do usuário no R2
     const objects = await r2.listFreeUserObjects(userId);
     
@@ -124,8 +118,6 @@ router.post('/cleanup', async (req, res) => {
   try {
     const userId = req.user?.id || req.body.userId || 'test-user-123';
     
-    console.log(`[R2 Test] Iniciando limpeza manual para: ${userId}`);
-    
     const result = await r2.cleanupExpiredFreeObjects(userId);
     
     res.json({
@@ -160,8 +152,6 @@ router.delete('/delete/:key(*)', async (req, res) => {
         error: 'Key do objeto é obrigatória',
       });
     }
-    
-    console.log(`[R2 Test] Deletando objeto: ${key}`);
     
     await r2.deleteObject(key);
     

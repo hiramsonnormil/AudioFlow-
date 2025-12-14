@@ -95,7 +95,7 @@ export const PRESETS = {
     description: "Voz robótica metálica sintética",
     enabled: true,
   },
-  EIGHT_D: {
+  "8D": {
     id: "8D",
     name: "8D",
     icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10" stroke-dasharray="2 4"/><circle cx="12" cy="12" r="6" stroke-dasharray="2 4"/><circle cx="12" cy="12" r="2"/></svg>',

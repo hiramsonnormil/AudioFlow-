@@ -112,7 +112,12 @@ body {
 /* ==========================================
    TYPOGRAPHY
    ========================================== */
-h1, h2, h3, h4, h5, h6 {
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
   font-family: var(--font-display);
   font-weight: 700;
   line-height: 1.2;
@@ -357,10 +362,21 @@ a:hover {
   justify-content: space-between;
 }
 
-.gap-xs { gap: var(--space-xs); }
-.gap-sm { gap: var(--space-sm); }
-.gap-md { gap: var(--space-md); }
-.gap-lg { gap: var(--space-lg); }
+.gap-xs {
+  gap: var(--space-xs);
+}
+
+.gap-sm {
+  gap: var(--space-sm);
+}
+
+.gap-md {
+  gap: var(--space-md);
+}
+
+.gap-lg {
+  gap: var(--space-lg);
+}
 
 .text-center {
   text-align: center;
@@ -422,24 +438,29 @@ a:hover {
 }
 
 @keyframes spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .skeleton {
-  background: linear-gradient(
-    90deg,
-    var(--bg-card) 25%,
-    var(--bg-secondary) 50%,
-    var(--bg-card) 75%
-  );
+  background: linear-gradient(90deg,
+      var(--bg-card) 25%,
+      var(--bg-secondary) 50%,
+      var(--bg-card) 75%);
   background-size: 200% 100%;
   animation: shimmer 1.5s infinite;
   border-radius: var(--radius);
 }
 
 @keyframes shimmer {
-  0% { background-position: 200% 0; }
-  100% { background-position: -200% 0; }
+  0% {
+    background-position: 200% 0;
+  }
+
+  100% {
+    background-position: -200% 0;
+  }
 }
 
 /* ==========================================
@@ -466,23 +487,157 @@ a:hover {
 /* ==========================================
    RESPONSIVE
    ========================================== */
+
+/* Large Desktop */
+@media (min-width: 1441px) {
+  .container {
+    max-width: 1400px;
+  }
+}
+
+/* Desktop */
+@media (max-width: 1440px) {
+  :root {
+    --fs-5xl: 2.75rem;
+    --fs-4xl: 2rem;
+  }
+}
+
+/* Tablet */
+@media (max-width: 1024px) {
+  :root {
+    --fs-5xl: 2.5rem;
+    --fs-4xl: 1.875rem;
+    --fs-3xl: 1.625rem;
+    --space-xl: 2.5rem;
+    --space-2xl: 3.5rem;
+    --space-3xl: 5rem;
+  }
+
+  .container {
+    padding: 0 var(--space-md);
+  }
+
+  /* Adjust button sizes for better touch targets */
+  .btn {
+    min-height: 44px;
+  }
+}
+
+/* Mobile Landscape / Small Tablet */
 @media (max-width: 768px) {
   :root {
     --fs-5xl: 2.25rem;
     --fs-4xl: 1.875rem;
     --fs-3xl: 1.5rem;
+    --fs-2xl: 1.375rem;
     --space-lg: 1.5rem;
     --space-xl: 2rem;
     --space-2xl: 3rem;
+    --space-3xl: 4rem;
   }
 
   .container {
     padding: 0 var(--space-sm);
   }
+
+  /* Stack flex layouts vertically */
+  .flex {
+    flex-direction: column;
+  }
+
+  /* Full width buttons on mobile */
+  .btn-primary,
+  .btn-secondary {
+    width: 100%;
+    justify-content: center;
+  }
+
+  /* Larger touch targets */
+  .btn {
+    min-height: 48px;
+    padding: 1rem 1.5rem;
+  }
+
+  .btn-sm {
+    min-height: 44px;
+    padding: 0.75rem 1.25rem;
+  }
+
+  /* Card adjustments */
+  .card {
+    padding: var(--space-md);
+  }
+
+  /* Form inputs - larger for mobile */
+  .form-input,
+  .form-select,
+  .form-textarea {
+    padding: 1rem;
+    font-size: 1rem;
+    /* Prevent zoom on iOS */
+  }
+}
+
+/* Mobile Portrait */
+@media (max-width: 480px) {
+  :root {
+    --fs-5xl: 2rem;
+    --fs-4xl: 1.625rem;
+    --fs-3xl: 1.375rem;
+    --fs-2xl: 1.25rem;
+    --fs-xl: 1.125rem;
+    --space-md: 1.25rem;
+    --space-lg: 1.25rem;
+    --space-xl: 1.75rem;
+    --space-2xl: 2.5rem;
+    --space-3xl: 3.5rem;
+  }
+
+  .container {
+    padding: 0 1rem;
+  }
+
+  /* Smaller cards on very small screens */
+  .card {
+    padding: var(--space-sm);
+    border-radius: var(--radius);
+  }
+
+  /* Adjust button text size */
+  .btn {
+    font-size: 0.9375rem;
+  }
+
+  /* Compact form groups */
+  .form-group {
+    margin-bottom: var(--space-sm);
+  }
+}
+
+/* Small Mobile */
+@media (max-width: 320px) {
+  :root {
+    --fs-5xl: 1.75rem;
+    --fs-4xl: 1.5rem;
+    --fs-3xl: 1.25rem;
+    --space-sm: 0.75rem;
+    --space-md: 1rem;
+  }
+
+  .container {
+    padding: 0 0.75rem;
+  }
+
+  .btn {
+    padding: 0.875rem 1.25rem;
+    font-size: 0.875rem;
+  }
 }
 
 /* Reduced motion */
 @media (prefers-reduced-motion: reduce) {
+
   *,
   *::before,
   *::after {

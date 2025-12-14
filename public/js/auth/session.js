@@ -17,7 +17,6 @@ export function saveSession({ token, user }) {
   if (user) {
     localStorage.setItem(USER_KEY, JSON.stringify(user));
   }
-  console.log('✅ Sessão salva no localStorage');
 }
 
 /**
@@ -58,8 +57,6 @@ export function clearSession() {
   
   // Também limpar job temporário do plano Free
   localStorage.removeItem('phona:free:downloadJob');
-  
-  console.log('🚪 Sessão limpa - usuário deslogado');
 }
 
 /**
@@ -88,6 +85,34 @@ export function getUserPlan() {
   return user?.plan || 'free';
 }
 
+export async function restoreSessionFromCookie() {
+  try {
+    const response = await fetch('/api/auth/session', {
+      method: 'GET',
+      credentials: 'include',
+      headers: {
+        Accept: 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      return false;
+    }
+
+    const data = await response.json();
+
+    if (data?.token && data?.user) {
+      saveSession({ token: data.token, user: data.user });
+      return true;
+    }
+
+    return false;
+  } catch (err) {
+    console.error('Failed to restore session from cookie:', err);
+    return false;
+  }
+}
+
 export default {
   saveSession,
   getToken,
@@ -97,4 +122,5 @@ export default {
   getUserInitial,
   isFreeUser,
   getUserPlan,
+  restoreSessionFromCookie,
 };

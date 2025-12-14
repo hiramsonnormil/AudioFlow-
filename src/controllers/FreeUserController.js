@@ -11,7 +11,18 @@
 
 import { AudioProcessingService } from '../services/AudioProcessingService.js';
 import { YouTubeService } from '../services/YouTubeService.js';
+import { isValidPreset } from '../models/Preset.js';
+import {
+  MAX_AUDIO_DURATION_MINUTES,
+  isDurationTooLong,
+  buildDurationLimitMessage,
+} from '../config/audioLimits.js';
 import * as r2 from '../../storage/r2.js';
+import {
+  getUserIdentity,
+  sanitizePresetInput,
+  sanitizeUrlInput,
+} from '../config/security.js';
 
 export class FreeUserController {
   constructor() {
@@ -26,8 +37,10 @@ export class FreeUserController {
    */
   async processAudio(req, res) {
     try {
-      const { url, preset } = req.body;
-      const userId = req.user?.id || 'anonymous'; // Pega do token JWT ou usa anonymous
+      const url = sanitizeUrlInput(req.body?.url);
+      const preset = sanitizePresetInput(req.body?.preset);
+      const identitySource = req.user?.id || req.headers['x-user-id'] || req.ip || 'anonymous';
+      const { storageKey: userId } = getUserIdentity(identitySource);
       const jobId = `job_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
       // Validações
@@ -45,13 +58,37 @@ export class FreeUserController {
         });
       }
 
-      console.log(`[${jobId}] Iniciando processamento free - User: ${userId}, Preset: ${preset}`);
+      if (!isValidPreset(preset)) {
+        return res.status(400).json({
+          success: false,
+          error: 'invalid_preset'
+        });
+      }
+
+      if (!this.youtubeService.isYouTubeUrl(url)) {
+        return res.status(400).json({
+          success: false,
+          error: 'url_not_supported'
+        });
+      }
 
       // 1. Busca metadados do vídeo
-      const metadata = await this.youtubeService.getMetadata(url);
+      const metadata = await this.youtubeService.getMetadata(url, jobId);
       const duration = typeof metadata.duration === 'number' 
         ? metadata.duration 
         : parseFloat(metadata.duration) || 0;
+
+      if (isDurationTooLong(duration)) {
+        console.warn(
+          `[${jobId}] Duração ${duration.toFixed(2)}s excede limite (${MAX_AUDIO_DURATION_MINUTES}min)`
+        );
+        return res.status(400).json({
+          success: false,
+          error: 'audio_too_long',
+          message: buildDurationLimitMessage(duration),
+          maxDurationMinutes: MAX_AUDIO_DURATION_MINUTES,
+        });
+      }
 
       // 2. Obtém stream de áudio
       const audioStream = this.youtubeService.getAudioStream(url, jobId);
@@ -65,8 +102,6 @@ export class FreeUserController {
         duration,
         metadata.title
       );
-
-      console.log(`[${jobId}] Processamento concluído com sucesso`);
 
       // 4. Retorna URL pública do R2
       res.json({
@@ -97,9 +132,8 @@ export class FreeUserController {
    */
   async getRecentProcessing(req, res) {
     try {
-      const userId = req.user?.id || req.query.userId || 'anonymous';
-
-      console.log(`[FreeUserController] Listando processamentos recentes - User: ${userId}`);
+      const identitySource = req.user?.id || req.query.userId || req.ip || 'anonymous';
+      const { storageKey: userId } = getUserIdentity(identitySource);
 
       // Busca objetos válidos no R2 (menos de 1h)
       const objects = await r2.listFreeUserObjects(userId);
@@ -140,9 +174,8 @@ export class FreeUserController {
    */
   async cleanupExpired(req, res) {
     try {
-      const userId = req.user?.id || req.body.userId || 'anonymous';
-
-      console.log(`[FreeUserController] Limpando objetos expirados - User: ${userId}`);
+      const identitySource = req.user?.id || req.body?.userId || req.ip || 'anonymous';
+      const { storageKey: userId } = getUserIdentity(identitySource);
 
       const result = await r2.cleanupExpiredFreeObjects(userId);
 

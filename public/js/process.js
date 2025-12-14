@@ -1,3 +1,6 @@
+import { getToken, clearSession } from './auth/session.js';
+import { openModal } from './auth/modal-auth.js';
+
 // DOM Elements
 const barInner = document.getElementById("barInner");
 const statusText = document.getElementById("statusText");
@@ -19,41 +22,62 @@ const playerProgressBar = document.getElementById("playerProgressBar");
 
 let pollId = null;
 let lastProgress = -1;
+let loginPromptDisplayed = false;
+let userTier = 'free'; // tier do usuário (free ou premium)
 
-// Verificar autenticação
-const token = localStorage.getItem('phona:token');
-if (!token) {
-  console.warn('⚠️ [PROCESS] Usuário não autenticado, redirecionando...');
-  window.location.href = '/html/login.html?redirect=' + encodeURIComponent(window.location.pathname + window.location.search);
-}
+const initialToken = getToken();
+initializeProcessPage(initialToken);
 
-// Obter ID do job da URL
-const params = new URLSearchParams(window.location.search);
-const jobId = params.get("id");
+function initializeProcessPage(token) {
+  if (!token) {
+    console.warn('⚠️ [PROCESS] Usuário não autenticado, exibindo modal de login');
+    promptLogin('Faça login para acompanhar o processamento.');
+    return;
+  }
 
-console.log("Job ID:", jobId);
-console.log("🔐 [PROCESS] Token presente:", !!token);
+  const params = new URLSearchParams(window.location.search);
+  const jobId = params.get("id");
 
-if (!jobId) {
-  showError("Job ID não encontrado. Retorne ao início.");
-} else {
-  // Tentar usar thumbnail precarregada da sessão anterior
+  if (!jobId) {
+    showError("Job ID não encontrado. Retorne ao início.");
+    return;
+  }
+
   const prefetchedThumbUrl = sessionStorage.getItem("prefetchedThumbUrl");
   if (prefetchedThumbUrl) {
     thumbnail.src = prefetchedThumbUrl;
     thumbnail.classList.remove("loading-placeholder");
-    console.log("Using prefetched thumbnail");
   }
 
-  // Iniciar polling do status
   startPoll(jobId);
+}
+
+function promptLogin(message, options = {}) {
+  if (statusText) {
+    statusText.textContent = 'Login necessário';
+  }
+
+  if (message) {
+    showError(message);
+  }
+
+  if (options.clearSession) {
+    clearSession();
+  }
+
+  if (loginPromptDisplayed) {
+    return;
+  }
+
+  loginPromptDisplayed = true;
+  setTimeout(() => openModal('login'), 100);
 }
 
 // Cleanup
 window.addEventListener("beforeunload", () => {
   if (pollId) clearInterval(pollId);
   if (expirationCountdownInterval) clearInterval(expirationCountdownInterval);
-  
+
   // Limpar blob URLs para liberar memória
   if (audioPreview.src && audioPreview.src.startsWith('blob:')) {
     URL.revokeObjectURL(audioPreview.src);
@@ -84,28 +108,29 @@ function startPoll(id) {
 
   pollId = setInterval(async () => {
     try {
-      // Obter token do localStorage
-      const token = localStorage.getItem('phona:token');
-      
+      const token = getToken();
+
       const statusUrl = `/status/${id}`;
       const headers = {};
       if (token) {
         headers['Authorization'] = `Bearer ${token}`;
       }
-      
+
       const r = await fetch(statusUrl, { headers });
       if (!r.ok) {
         if (r.status === 401) {
           clearInterval(pollId);
-          showError("Sessão expirada. Por favor, faça login novamente.");
-          setTimeout(() => {
-            window.location.href = '/html/login.html';
-          }, 2000);
+          promptLogin("Sessão expirada. Por favor, faça login novamente.", { clearSession: true });
           return;
         }
         throw new Error("status fetch failed");
       }
       const j = await r.json();
+      
+      // Capturar tier do usuário
+      if (j.tier) {
+        userTier = j.tier;
+      }
 
       // Precarregar thumbnail na primeira chamada bem-sucedida (se não foi feito ainda)
       if (!thumbPreloaded && !thumbnail.src) {
@@ -140,8 +165,8 @@ function startPoll(id) {
         lastProgress = j.progress;
       }
 
-      // Carregar título
-      if (j.title && titleEl.textContent === "Processando...") {
+      // Carregar título (substituir placeholders)
+      if (j.title && (titleEl.textContent === "Processando..." || titleEl.textContent === "Criando seu remix...")) {
         titleEl.textContent = j.title;
       }
 
@@ -153,26 +178,17 @@ function startPoll(id) {
           progressPercent.textContent = "100%";
         }
 
-        console.log("\n===========================================");
-        console.log("JOB DONE RESPONSE:");
-        console.log("Job ID:", j.id);
-        console.log("Title:", j.title);
-        console.log("Filename:", j.filename);
-        console.log("Output URL:", j.output);
-        console.log("File exists on server:", j.fileExists);
-        console.log("File size:", j.fileSize);
-        console.log("Expires in:", j.expiresIn, "ms");
-        console.log("Is expired:", j.isExpired);
-        console.log("===========================================\n");
+        // Garantir que o título está correto
+        if (j.title) {
+          titleEl.textContent = j.title;
+        }
 
         // Usar nome formatado do backend ou gerar localmente
         const downloadName = j.downloadFilename || j.filename || generateDownloadFilename(j.title, j.preset || 'custom');
 
-        console.log("Loading audio with authentication...");
-
         // Carregar áudio com autenticação via fetch e criar blob URL
         loadAudioWithAuth(id, downloadName, j.expiresIn, j.isExpired);
-        
+
         // Iniciar countdown de expiração se houver tempo restante
         if (j.expiresIn !== undefined) {
           startExpirationCountdown(j.expiresIn, j.isExpired);
@@ -208,18 +224,18 @@ function generateDownloadFilename(title, preset) {
       .toLowerCase()
       .substring(0, 50) // Limita tamanho
       .trim();
-    
+
     if (!musicName || musicName === '') {
       musicName = 'audio';
     }
   }
-  
+
   // Preset aplicado
   const presetFormatted = (preset || 'custom').toLowerCase().replace(/\s+/g, '-');
-  
+
   // Data do processamento (formato: YYYYMMDD)
   const processDate = new Date().toISOString().split('T')[0].replace(/-/g, '');
-  
+
   return `${musicName}-${presetFormatted}-${processDate}.mp3`;
 }
 
@@ -227,39 +243,39 @@ function startExpirationCountdown(expiresInMs, isExpired) {
   if (expirationCountdownInterval) {
     clearInterval(expirationCountdownInterval);
   }
-  
+
   if (isExpired) {
     handleExpiration();
     return;
   }
-  
+
   let remainingMs = expiresInMs;
-  
+
+  // Criar e exibir aviso inicialmente
+  updateExpirationDisplay(remainingMs);
+
   expirationCountdownInterval = setInterval(() => {
     remainingMs -= 1000;
-    
+
     if (remainingMs <= 0) {
       clearInterval(expirationCountdownInterval);
       handleExpiration();
       return;
     }
-    
-    // Atualizar visual do tempo restante (opcional - pode adicionar elemento para mostrar)
+
+    // Atualizar visual do tempo restante
     updateExpirationDisplay(remainingMs);
   }, 1000);
-  
-  // Atualizar inicialmente
-  updateExpirationDisplay(remainingMs);
 }
 
 function formatTimeRemaining(ms) {
   if (ms <= 0) return 'Expirado';
-  
+
   const totalSeconds = Math.floor(ms / 1000);
   const hours = Math.floor(totalSeconds / 3600);
   const minutes = Math.floor((totalSeconds % 3600) / 60);
   const seconds = totalSeconds % 60;
-  
+
   if (hours > 0) {
     return `${hours}h ${minutes}m ${seconds}s`;
   } else if (minutes > 0) {
@@ -272,23 +288,34 @@ function formatTimeRemaining(ms) {
 function updateExpirationDisplay(remainingMs) {
   // Adicionar elemento de aviso de expiração se não existir
   let expirationWarning = document.getElementById('expiration-warning');
-  if (!expirationWarning && remainingMs > 0) {
+  if (!expirationWarning) {
     expirationWarning = document.createElement('div');
     expirationWarning.id = 'expiration-warning';
     expirationWarning.className = 'expiration-warning';
-    
+
     const infoSection = document.querySelector('.info-section');
     if (infoSection) {
-      infoSection.insertBefore(expirationWarning, infoSection.firstChild.nextSibling);
+      // Inserir após o header de música
+      const musicHeader = infoSection.querySelector('.music-header');
+      if (musicHeader && musicHeader.nextSibling) {
+        infoSection.insertBefore(expirationWarning, musicHeader.nextSibling);
+      } else {
+        infoSection.insertBefore(expirationWarning, infoSection.firstChild.nextSibling);
+      }
     }
   }
-  
+
   if (expirationWarning) {
     const timeStr = formatTimeRemaining(remainingMs);
+    const isPremium = userTier === 'premium';
     const isWarning = remainingMs < 20 * 60 * 1000; // menos de 20 min
     const isDanger = remainingMs < 5 * 60 * 1000; // menos de 5 min
+
+    // Premium: ícone de estrela e estilo diferenciado
+    const icon = isPremium ? '🌟' : '⏱️';
+    const premiumClass = isPremium ? ' premium' : '';
     
-    expirationWarning.className = 'expiration-warning' + 
+    expirationWarning.className = 'expiration-warning' + premiumClass +
       (isDanger ? ' danger' : isWarning ? ' warning' : '');
     expirationWarning.innerHTML = `
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -296,7 +323,7 @@ function updateExpirationDisplay(remainingMs) {
         <line x1="12" y1="8" x2="12" y2="12"/>
         <line x1="12" y1="16" x2="12.01" y2="16"/>
       </svg>
-      <span>⏱️ Expira em: <strong>${timeStr}</strong></span>
+      <span>${icon} Expira em: <strong>${timeStr}</strong></span>
     `;
   }
 }
@@ -310,20 +337,20 @@ function handleExpiration() {
     downloadLink.style.opacity = '0.5';
     downloadLink.textContent = '⏰ Download Expirado';
   }
-  
+
   // Mostrar aviso de expiração
   let expirationWarning = document.getElementById('expiration-warning');
   if (!expirationWarning) {
     expirationWarning = document.createElement('div');
     expirationWarning.id = 'expiration-warning';
     expirationWarning.className = 'expiration-warning expired-alert';
-    
+
     const infoSection = document.querySelector('.info-section');
     if (infoSection) {
       infoSection.insertBefore(expirationWarning, infoSection.firstChild.nextSibling);
     }
   }
-  
+
   expirationWarning.className = 'expiration-warning expired-alert';
   expirationWarning.innerHTML = `
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -333,13 +360,13 @@ function handleExpiration() {
     </svg>
     <span><strong>⚠️ Download Expirado</strong> - O arquivo não está mais disponível</span>
   `;
-  
+
   // Atualizar status
   const statusText = document.getElementById('statusText');
   if (statusText) {
     statusText.textContent = 'Expirado';
   }
-  
+
   // Pausar áudio se estiver tocando
   const audioPreview = document.getElementById('audioPreview');
   if (audioPreview) {
@@ -349,58 +376,54 @@ function handleExpiration() {
 
 async function loadAudioWithAuth(jobId, downloadName, expiresInMs, isExpired) {
   try {
-    const token = localStorage.getItem('phona:token');
+    const token = getToken();
     const audioUrl = `/file/${jobId}`;
-    
-    console.log("Fetching audio from:", audioUrl);
-    
+
+    if (!token) {
+      promptLogin("Faça login para baixar o áudio processado.");
+      return;
+    }
+
     // Fetch com autenticação
     const response = await fetch(audioUrl, {
       headers: {
         'Authorization': `Bearer ${token}`
       }
     });
-    
+
+    if (response.status === 401) {
+      promptLogin("Sessão expirada. Faça login novamente.", { clearSession: true });
+      return;
+    }
+
     if (!response.ok) {
       throw new Error(`HTTP ${response.status}`);
     }
-    
-    console.log("Audio fetched successfully, creating blob...");
-    
+
     // Criar blob do áudio
     const blob = await response.blob();
     const blobUrl = URL.createObjectURL(blob);
-    
-    console.log("Blob URL created:", blobUrl);
-    
+
     // Limpar áudio anterior e suas URLs
     if (audioPreview.src && audioPreview.src.startsWith('blob:')) {
       URL.revokeObjectURL(audioPreview.src);
     }
-    
+
     audioPreview.pause();
     audioPreview.src = "";
     audioPreview.load();
-    
+
     // Configurar novo áudio
     setTimeout(() => {
       audioPreview.src = blobUrl;
       audioPreview.load();
-      
-      audioPreview.oncanplay = () => {
-        console.log("Audio ready to play");
-      };
-      
+
       audioPreview.onerror = (e) => {
         console.error("Audio error:", e);
         showError("Erro ao reproduzir áudio.");
       };
-      
-      audioPreview.onloadeddata = () => {
-        console.log("Audio data loaded successfully");
-      };
     }, 100);
-    
+
     // Configurar botão de download (só se não estiver expirado)
     if (!isExpired && expiresInMs > 0) {
       downloadLink.href = blobUrl;
@@ -421,9 +444,7 @@ async function loadAudioWithAuth(jobId, downloadName, expiresInMs, isExpired) {
     } else {
       handleExpiration();
     }
-    
-    console.log("Audio and download configured");
-    
+
   } catch (err) {
     console.error("Error loading audio:", err);
     showError("Erro ao carregar áudio: " + err.message);

@@ -6,7 +6,12 @@
 import { spawn } from "child_process";
 import path from "path";
 import fs from "fs";
+import {
+  isDurationTooLong,
+  buildDurationLimitMessage,
+} from "../config/audioLimits.js";
 import * as r2 from "../../storage/r2.js";
+import { getUserIdentity } from "../config/security.js";
 
 export class AudioProcessingService {
   constructor(storagePath) {
@@ -202,7 +207,6 @@ export class AudioProcessingService {
 
       ff.on("close", (code) => {
         if (code === 0) {
-          console.log(`[${jobId}] ffmpeg completed successfully`);
           resolve({ success: true, file: outputPath });
         } else {
           const errorMsg = `ffmpeg exit code ${code}: ${ffStderr.slice(-500)}`;
@@ -217,11 +221,11 @@ export class AudioProcessingService {
   }
 
   /**
-   * Processa áudio e faz upload para R2 (usuário free)
+   * Processa áudio e faz upload para R2
    * 
    * Fluxo completo:
    * 1. Gera arquivo temporário com FFmpeg em /tmp
-   * 2. Faz upload para R2 no caminho free/<userId>/<jobId>.mp3
+   * 2. Faz upload para R2 no caminho <tier>/<userId>/<jobId>.mp3
    * 3. Deleta arquivo temporário local
    * 4. Retorna URL pública do R2
    * 
@@ -231,30 +235,56 @@ export class AudioProcessingService {
    * @param {string} preset - Nome do preset aplicado
    * @param {number} durationSec - Duração do áudio em segundos
    * @param {string} title - Título do arquivo (metadata)
+   * @param {string} userPlan - Plano do usuário (free, voz_pro, voz_master)
    * @returns {Promise<{publicUrl: string, key: string, localPath: string}>}
    */
-  async processAndUploadToR2(inputStream, jobId, userId, preset, durationSec, title = 'audio') {
+  async processAndUploadToR2(inputStream, jobId, userId, preset, durationSec, title = 'audio', userPlan = 'free') {
     let tempPath = null;
 
     try {
-      console.log(`[${jobId}] Iniciando processamento com upload para R2`);
+      const normalizedDuration =
+        typeof durationSec === 'number' && Number.isFinite(durationSec)
+          ? durationSec
+          : parseFloat(durationSec) || 0;
+
+      if (isDurationTooLong(normalizedDuration)) {
+        console.warn(
+          `[${jobId}] Abortado: duração ${normalizedDuration.toFixed(2)}s acima do limite`
+        );
+        throw new Error(buildDurationLimitMessage(normalizedDuration));
+      }
 
       // 1. Gera arquivo temporário
       const filename = `${jobId}.mp3`;
       tempPath = path.join('/tmp', filename);
 
       // 2. Processa áudio com FFmpeg (salva em /tmp)
-      const audioFilterStr = this.buildAudioFilter(preset, durationSec);
-      await this.processAudio(inputStream, tempPath, audioFilterStr, durationSec, jobId);
+      const audioFilterStr = this.buildAudioFilter(preset, normalizedDuration);
+      await this.processAudio(
+        inputStream,
+        tempPath,
+        audioFilterStr,
+        normalizedDuration,
+        jobId
+      );
 
       if (!fs.existsSync(tempPath)) {
         throw new Error('FFmpeg não gerou o arquivo de saída');
       }
 
-      console.log(`[${jobId}] Arquivo processado: ${tempPath}`);
-
-      // 3. Define a chave no R2 (estrutura: free/<userId>/<jobId>.mp3)
-      const r2Key = `free/${userId}/${filename}`;
+      // 3. Define a chave no R2 (estrutura: <tier>/<userId>/<jobId>.mp3)
+      const safeUserFolder =
+        typeof userId === "string" && /^[a-z0-9_-]+$/i.test(userId)
+          ? userId
+          : getUserIdentity("anonymous").storageKey;
+      
+      // Determinar tier baseado no plano
+      const tier = (userPlan === 'voz_pro' || userPlan === 'voz_master' || userPlan === 'premium_30') 
+        ? 'premium' 
+        : 'free';
+      
+      const r2Key = `${tier}/${safeUserFolder}/${filename}`;
+      console.log(`[R2] Upload para: ${r2Key} (plano: ${userPlan})`);
 
       // 4. Faz upload para R2
       const uploadResult = await r2.uploadFile(tempPath, r2Key, {
@@ -263,8 +293,6 @@ export class AudioProcessingService {
         preset,
         title,
       });
-
-      console.log(`[${jobId}] Upload concluído: ${uploadResult.publicUrl}`);
 
       // 5. Deleta arquivo temporário local
       await r2.deleteLocalFile(tempPath);
@@ -278,7 +306,6 @@ export class AudioProcessingService {
     } catch (error) {
       // Em caso de erro, tenta limpar o arquivo temporário
       if (tempPath && fs.existsSync(tempPath)) {
-        console.log(`[${jobId}] Limpando arquivo temporário após erro`);
         await r2.deleteLocalFile(tempPath).catch(() => { });
       }
       throw error;

@@ -80,10 +80,6 @@ export class YouTubeService {
             ? `https://i.ytimg.com/vi/${videoId}/maxresdefault.jpg`
             : null;
 
-          console.log(
-            `[${jobId}] Metadata: "${title}" (${duration.toFixed(2)}s)`
-          );
-
           resolve({ title, duration, thumbnail, videoId });
         } catch (e) {
           console.error(`[${jobId}] Error parsing metadata:`, e.message);
@@ -112,7 +108,6 @@ export class YouTubeService {
 
     if (this.cookiesPath && fs.existsSync(this.cookiesPath)) {
       baseArgs.push("--cookies", this.cookiesPath);
-      console.log(`[${jobId}] Using cookies file`);
     }
 
     baseArgs.push(url);

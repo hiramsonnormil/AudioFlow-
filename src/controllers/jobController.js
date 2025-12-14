@@ -5,8 +5,24 @@ import { jobQueueService } from "../services/JobQueueService.js";
 import { youtubeService } from "../services/YouTubeService.js";
 import { AudioProcessingService } from "../services/AudioProcessingService.js";
 import { isValidPreset } from "../models/Preset.js";
+import { User } from "../models/User.js";
+import {
+  MAX_AUDIO_DURATION_MINUTES,
+  isDurationTooLong,
+  buildDurationLimitMessage,
+} from "../config/audioLimits.js";
 import { STORAGE } from "../utils/storage.js";
 import * as r2 from "../../storage/r2.js";
+import {
+  getUserIdentity,
+  sanitizePresetInput,
+  sanitizeUrlInput,
+} from "../config/security.js";
+import {
+  getPlanDisplayName,
+  isPresetAllowedForPlan,
+  prepareUsageReservation,
+} from "../utils/planAccess.js";
 
 const audioService = new AudioProcessingService(() => STORAGE.base);
 
@@ -21,13 +37,49 @@ export const jobController = {
   async createJob(req, res) {
     try {
       const user = req.user; // from authRequired
-      const { url, preset } = req.body || {};
+      const url = sanitizeUrlInput(req.body?.url);
+      const preset = sanitizePresetInput(req.body?.preset);
 
       if (!url || !preset) return res.status(400).json({ error: "missing_fields" });
       if (!isValidPreset(preset)) return res.status(400).json({ error: "invalid_preset" });
 
+      let userPlan = user?.plan || "free";
+      if (user?._id) {
+        const userRecord = await User.findById(user._id).select("plan");
+        if (userRecord?.plan) {
+          userPlan = userRecord.plan;
+        }
+      }
+
+      if (!isPresetAllowedForPlan(userPlan, preset)) {
+        return res.status(403).json({
+          error: "preset_not_available",
+          message: `O preset solicitado não faz parte do ${getPlanDisplayName(userPlan)}.`,
+        });
+      }
+
+      const userSource = user?.email || user?._id || req.ip || "anonymous";
+      const userIdentity = getUserIdentity(userSource);
+      
+      // Verificar limite de uso (banco de dados) - requer autenticação
+      if (!user?._id) {
+        return res.status(401).json({
+          error: "authentication_required",
+          message: "Você precisa estar autenticado para processar áudios"
+        });
+      }
+      
+      const usageReservation = await prepareUsageReservation(userPlan, user._id);
+      if (!usageReservation.allowed) {
+        return res.status(429).json({
+          error: "plan_limit_reached",
+          message: "Limite de processamentos do plano atingido. Tente novamente mais tarde.",
+          retryAt: usageReservation.retryAt?.toISOString() || null,
+        });
+      }
+
       // Free plan: in-memory only
-      if (user?.plan !== "free") {
+      if (userPlan !== "free") {
         // future: persist job
       }
 
@@ -37,16 +89,45 @@ export const jobController = {
       }
 
       const jobId = nanoid(10);
+      const metadata = await youtubeService.getMetadata(url, jobId);
+      const duration =
+        typeof metadata.duration === "number"
+          ? metadata.duration
+          : parseFloat(metadata.duration) || 0;
+
+      if (isDurationTooLong(duration)) {
+        console.warn(
+          `[${jobId}] Audio duration ${duration.toFixed(
+            2
+          )}s exceeds limit (${MAX_AUDIO_DURATION_MINUTES}min)`
+        );
+        return res.status(400).json({
+          error: "audio_too_long",
+          message: buildDurationLimitMessage(duration),
+          maxDurationMinutes: MAX_AUDIO_DURATION_MINUTES,
+        });
+      }
+
       const job = jobQueueService.createJob(jobId);
       job.in = url;
-      job.metadata.preset = preset;
-      // Usar email como identificador do usuário
-      job.userId = user?.email || user?._id || 'anonymous';
-      job.metadata.userId = job.userId;
+      job.metadata = {
+        ...job.metadata,
+        ...metadata,
+        preset,
+        duration,
+        youtubeUrl: url,
+        plan: userPlan,
+      };
+      job.userId = userIdentity.storageKey;
+      job.metadata.userStorageKey = userIdentity.storageKey;
+      job.metadata.userReference = userIdentity.reference;
 
       jobQueueService.enqueueJob(jobId);
       // background processing
       process.nextTick(() => jobController._processQueue());
+
+      // Registrar uso no banco de dados
+      await usageReservation.commit();
 
       return res.status(201).json({ jobId });
     } catch (err) {
@@ -76,7 +157,6 @@ export const jobController = {
 
     // Se o job tem URL do R2, redireciona direto
     if (job.out && job.out.startsWith('http')) {
-      console.log(`[${id}] Redirecting to R2: ${job.out}`);
       return res.redirect(job.out);
     }
 
@@ -145,18 +225,38 @@ export const jobController = {
 
       // metadata
       job.status = "EXTRACTING";
-      const metadata = await youtubeService.getMetadata(url, jobId);
-      job.metadata = { ...job.metadata, ...metadata };
-      const duration = typeof metadata.duration === "number" ? metadata.duration : parseFloat(metadata.duration) || 0;
+      if (!job.metadata) {
+        job.metadata = {};
+      }
+
+      if (!job.metadata.title || !job.metadata.duration) {
+        const fetchedMetadata = await youtubeService.getMetadata(url, jobId);
+        job.metadata = { ...job.metadata, ...fetchedMetadata };
+      }
+
+      const duration = typeof job.metadata.duration === "number"
+        ? job.metadata.duration
+        : parseFloat(job.metadata.duration) || 0;
+
+      job.metadata.duration = duration;
+      job.metadata.youtubeUrl = job.metadata.youtubeUrl || url;
+
+      if (isDurationTooLong(duration)) {
+        console.warn(
+          `[${jobId}] Abortando: duração ${duration.toFixed(
+            2
+          )}s acima do limite (${MAX_AUDIO_DURATION_MINUTES}min)`
+        );
+        throw new Error(buildDurationLimitMessage(duration));
+      }
 
       // process com upload para R2 (novo fluxo)
       job.status = "PROCESSING";
-      console.log(`[${jobId}] Processando com upload para R2`);
       
       const audioStream = youtubeService.getAudioStream(url, jobId);
       
       // Obter userId do contexto (se disponível)
-      const userId = job.userId || 'anonymous';
+      const userId = job.userId || "anonymous";
       
       // Processar e fazer upload para R2
       const r2Result = await audioService.processAndUploadToR2(
@@ -165,15 +265,13 @@ export const jobController = {
         userId,
         preset,
         duration,
-        metadata.title
+        job.metadata?.title
       );
 
       // Atualizar job com informações do R2
       job.out = r2Result.publicUrl; // URL pública do R2
       job.r2Key = r2Result.key; // Chave no R2
       job.filename = path.basename(r2Result.key);
-
-      console.log(`[${jobId}] Upload concluído: ${r2Result.publicUrl}`);
 
       jobQueueService.completeJob(jobId);
     } catch (err) {
