@@ -1,4 +1,4 @@
-import { getToken, getUserInitial, clearSession } from './auth/session.js';
+import { getToken, getUserInitial, clearSession, syncUserFromServer } from './auth/session.js';
 import { setupOpenModalListeners } from './auth/modal-auth.js';
 import { confirmLogout } from './confirm-modal.js';
 
@@ -69,6 +69,9 @@ async function setupAuthState() {
     const mobileRecentsLink = document.getElementById('mobile-nav-recents');
 
     if (token) {
+        // Sincronizar dados do usuário com o servidor
+        await syncUserFromServer();
+        
         // Logged in - Desktop
         if (loginBtn) loginBtn.style.display = 'none';
         if (signupBtn) signupBtn.style.display = 'none';
@@ -223,10 +226,36 @@ async function fetchAndDisplayUserPlan(token) {
         const data = await response.json();
         const plan = data.user?.plan || 'free';
 
+        // Sincronizar localStorage com dados do servidor
+        if (data.user) {
+            const currentUser = localStorage.getItem('phona:user');
+            if (currentUser) {
+                try {
+                    const userObj = JSON.parse(currentUser);
+                    // Atualizar apenas se os dados mudaram
+                    if (userObj.email !== data.user.email || userObj.plan !== data.user.plan || userObj.username !== data.user.username) {
+                        const updatedUser = {
+                            ...userObj,
+                            _id: data.user._id || userObj._id,
+                            username: data.user.username,
+                            email: data.user.email,
+                            plan: data.user.plan
+                        };
+                        localStorage.setItem('phona:user', JSON.stringify(updatedUser));
+                    }
+                } catch (e) {
+                    // Se falhar ao parsear, criar novo objeto
+                    localStorage.setItem('phona:user', JSON.stringify(data.user));
+                }
+            }
+        }
+
         const planConfig = {
-            free: { icon: '🆓', label: 'Free', color: '#999' },
-            voz_pro: { icon: '⭐', label: 'Pro', color: '#a78bfa' },
-            voz_master: { icon: '👑', label: 'Master', color: '#fbbf24' }
+            free: { icon: 'F', label: 'Free', color: '#999' },
+            voz_pro: { icon: 'P', label: 'Pro', color: '#a78bfa' },
+            voz_master: { icon: 'M', label: 'Master', color: '#fbbf24' },
+            voz_plus_master: { icon: 'M', label: 'Master', color: '#fbbf24' },
+            plano_plus_master: { icon: 'PM', label: 'Plus Master', color: '#fbbf24' }
         };
 
         const config = planConfig[plan] || planConfig.free;

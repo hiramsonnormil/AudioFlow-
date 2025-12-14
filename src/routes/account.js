@@ -50,8 +50,6 @@ router.post("/sync-plan", async (req, res) => {
     // Atualizar o plano do User
     await User.findByIdAndUpdate(userId, { plan: subscription.plan });
 
-    console.log(`[SYNC] Plano sincronizado: ${user.email} -> ${subscription.plan}`);
-
     return res.json({ 
       success: true, 
       message: "Plano sincronizado com sucesso",
@@ -88,8 +86,6 @@ router.get("/status", async (req, res) => {
       return res.status(404).json({ error: "user_not_found" });
     }
 
-    console.log(`[ACCOUNT] Usuário encontrado: ${user.email}, Plano no User: ${user.plan}`);
-
     // Buscar assinatura ativa (que ainda não expirou)
     const subscription = await Subscription.findOne({
       userId: user._id,
@@ -106,11 +102,9 @@ router.get("/status", async (req, res) => {
 
     // Sincronizar o plano do User se necessário (AUTO-SYNC)
     if (subscription && user.plan !== subscription.plan) {
-      console.log(`[ACCOUNT] AUTO-SYNC: Sincronizando plano do usuário ${user._id}: ${user.plan} -> ${subscription.plan}`);
       await User.findByIdAndUpdate(user._id, { plan: subscription.plan });
     } else if (!subscription && user.plan !== "free") {
       // Se não tem assinatura ativa mas o user não está como free, corrigir
-      console.log(`[ACCOUNT] AUTO-SYNC: Nenhuma assinatura ativa, definindo como free para ${user._id}`);
       await User.findByIdAndUpdate(user._id, { plan: "free" });
     }
 
