@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>404 - Página não encontrada | phona</title>
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="/assets/icons/favicon.svg" />
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --copper: #c28c66;
+            --copper-light: #d4a378;
+            --copper-dark: #a67351;
+            --peach: #e8b4a0;
+            --charcoal: #1a1a1a;
+            --bg-primary: #0d0d0d;
+            --bg-secondary: #161616;
+            --bg-card: #1f1f1f;
+            --text-primary: #f5f1ed;
+            --text-secondary: #a8a29e;
+            --text-muted: #6b6763;
+            --font-display: "Space Grotesk", "Inter", sans-serif;
+            --font-body: "Inter", -apple-system, sans-serif;
+        }
+
+        body {
+            font-family: var(--font-body);
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Background Effect */
+        body::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle at 50% 50%, rgba(194, 140, 102, 0.08) 0%, transparent 50%);
+            animation: pulse 8s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 0.3; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(1.1); }
+        }
+
+        .container {
+            text-align: center;
+            padding: 2rem;
+            max-width: 600px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            margin-bottom: 3rem;
+        }
+
+        .logo-icon {
+            width: 40px;
+            height: 40px;
+        }
+
+        .logo-text {
+            font-family: var(--font-display);
+            font-size: 1.5rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--copper) 0%, var(--peach) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .error-code {
+            font-family: var(--font-display);
+            font-size: 10rem;
+            font-weight: 700;
+            line-height: 1;
+            margin-bottom: 1.5rem;
+            background: linear-gradient(135deg, var(--copper) 0%, var(--peach) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-shadow: 0 0 80px rgba(194, 140, 102, 0.3);
+        }
+
+        h1 {
+            font-family: var(--font-display);
+            font-size: 2rem;
+            margin-bottom: 1rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        p {
+            font-size: 1.1rem;
+            margin-bottom: 2.5rem;
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 1rem 2rem;
+            background: linear-gradient(135deg, var(--copper) 0%, var(--peach) 100%);
+            color: var(--charcoal);
+            text-decoration: none;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 1rem;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 4px 16px rgba(194, 140, 102, 0.3);
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(194, 140, 102, 0.4);
+        }
+
+        .links {
+            margin-top: 3rem;
+            display: flex;
+            gap: 1.5rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .link {
+            color: var(--copper-light);
+            text-decoration: none;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            font-size: 0.95rem;
+            font-weight: 500;
+            position: relative;
+        }
+
+        .link::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background: var(--copper);
+            transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .link:hover {
+            color: var(--copper);
+        }
+
+        .link:hover::after {
+            width: 100%;
+        }
+
+        @media (max-width: 768px) {
+            .error-code {
+                font-size: 6rem;
+            }
+
+            h1 {
+                font-size: 1.5rem;
+            }
+
+            p {
+                font-size: 1rem;
+            }
+
+            .links {
+                gap: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="logo">
+            <svg class="logo-icon" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                    <linearGradient id="logoGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" stop-color="#c28c66" />
+                        <stop offset="100%" stop-color="#e8b4a0" />
+                    </linearGradient>
+                </defs>
+                <circle cx="22" cy="42" r="8" fill="url(#logoGradient)" />
+                <path d="M 29 40 L 29 18 L 42 15 L 42 17 L 30 20 L 30 38 Z" fill="url(#logoGradient)" />
+                <rect x="38" y="20" width="14" height="3" rx="1.5" fill="url(#logoGradient)" />
+                <rect x="38" y="27" width="11" height="3" rx="1.5" fill="url(#logoGradient)" />
+                <rect x="38" y="34" width="8" height="3" rx="1.5" fill="url(#logoGradient)" />
+            </svg>
+            <span class="logo-text">phona</span>
+        </div>
+        
+        <div class="error-code">404</div>
+        <h1>Página não encontrada</h1>
+        <p>A página que você está procurando não existe ou foi movida.</p>
+        <a href="/" class="btn">Voltar para o início</a>
+        
+        <div class="links">
+            <a href="/process" class="link">Processar áudio</a>
+            <a href="/batch" class="link">Lote</a>
+            <a href="/plans" class="link">Planos</a>
+            <a href="/account" class="link">Conta</a>
+        </div>
+    </div>
+</body>
+</html>
