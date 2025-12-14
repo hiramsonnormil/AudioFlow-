@@ -195,13 +195,13 @@ function handleLogout() {
  */
 function validateForm(url, preset) {
   if (!url) {
-    alert('Por favor, insira o link do YouTube');
+    alert('Por favor, insira o link do YouTube ou YouTube Music');
     audioUrlInput.focus();
     return false;
   }
 
-  if (!url.includes('youtube.com') && !url.includes('youtu.be')) {
-    alert('Por favor, insira um link válido do YouTube');
+  if (!url.includes('youtube.com') && !url.includes('youtu.be') && !url.includes('music.youtube.com')) {
+    alert('Por favor, insira um link válido do YouTube ou YouTube Music');
     audioUrlInput.focus();
     return false;
   }

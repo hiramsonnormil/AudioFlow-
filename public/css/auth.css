@@ -196,6 +196,17 @@
   background: var(--border);
 }
 
+/* Google OAuth Button - Uses primary button style */
+.google-recovery-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.google-recovery-btn svg {
+  flex-shrink: 0;
+}
+
 /* Error message */
 .auth-error {
   padding: var(--space-md);
@@ -218,6 +229,7 @@
     opacity: 0;
     transform: translateY(-10px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -305,6 +317,7 @@
     opacity: 0;
     transform: translateY(20px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);

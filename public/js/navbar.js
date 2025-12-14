@@ -1,4 +1,6 @@
 import { getToken, getUserInitial, clearSession } from './auth/session.js';
+import { setupOpenModalListeners } from './auth/modal-auth.js';
+import { confirmLogout } from './confirm-modal.js';
 
 async function initNavbar() {
     const placeholder = document.getElementById('navbar-placeholder');
@@ -17,8 +19,14 @@ async function initNavbar() {
         // Setup auth state
         setupAuthState();
 
+        // Ensure modal triggers work after navbar injection
+        setupOpenModalListeners();
+
         // Setup event listeners
         setupEventListeners();
+
+        // Setup mobile menu
+        setupMobileMenu();
 
     } catch (error) {
         console.error('Error initializing navbar:', error);
@@ -47,15 +55,21 @@ function setupActiveState() {
     });
 }
 
-function setupAuthState() {
+async function setupAuthState() {
     const token = getToken();
     const loginBtn = document.getElementById('openLoginBtn');
     const signupBtn = document.getElementById('openSignupBtn');
     const userMenu = document.getElementById('nav-user-menu');
     const recentsLink = document.getElementById('nav-recents');
 
+    // Mobile elements
+    const mobileLoginBtn = document.getElementById('mobile-openLoginBtn');
+    const mobileSignupBtn = document.getElementById('mobile-openSignupBtn');
+    const mobileUserMenu = document.getElementById('mobile-nav-user-menu');
+    const mobileRecentsLink = document.getElementById('mobile-nav-recents');
+
     if (token) {
-        // Logged in
+        // Logged in - Desktop
         if (loginBtn) loginBtn.style.display = 'none';
         if (signupBtn) signupBtn.style.display = 'none';
         if (userMenu) {
@@ -65,20 +79,61 @@ function setupAuthState() {
             if (initialEl) initialEl.textContent = initial;
         }
         if (recentsLink) recentsLink.style.display = 'block';
+
+        // Logged in - Mobile
+        if (mobileLoginBtn) mobileLoginBtn.style.display = 'none';
+        if (mobileSignupBtn) mobileSignupBtn.style.display = 'none';
+        if (mobileUserMenu) {
+            mobileUserMenu.style.display = 'block';
+            const initial = getUserInitial();
+            const mobileInitialEl = mobileUserMenu.querySelector('.mobile-user-initial');
+            if (mobileInitialEl) mobileInitialEl.textContent = initial;
+        }
+        if (mobileRecentsLink) mobileRecentsLink.style.display = 'flex';
+
+        // Fetch and display user plan
+        await fetchAndDisplayUserPlan(token);
     } else {
-        // Logged out
+        // Logged out - Desktop
         if (loginBtn) loginBtn.style.display = 'block';
         if (signupBtn) signupBtn.style.display = 'block';
         if (userMenu) userMenu.style.display = 'none';
         if (recentsLink) recentsLink.style.display = 'none';
+
+        // Logged out - Mobile
+        if (mobileLoginBtn) mobileLoginBtn.style.display = 'flex';
+        if (mobileSignupBtn) mobileSignupBtn.style.display = 'flex';
+        if (mobileUserMenu) mobileUserMenu.style.display = 'none';
+        if (mobileRecentsLink) mobileRecentsLink.style.display = 'none';
     }
 }
 
 function setupEventListeners() {
+    // Desktop logout
     const logoutBtn = document.getElementById('logoutBtn');
     if (logoutBtn) {
-        logoutBtn.addEventListener('click', (e) => {
+        logoutBtn.addEventListener('click', async (e) => {
             e.preventDefault();
+
+            // Mostrar modal de confirmação bonito
+            const confirmed = await confirmLogout();
+            if (!confirmed) return;
+
+            clearSession();
+            window.location.href = '/';
+        });
+    }
+
+    // Mobile logout
+    const mobileLogoutBtn = document.getElementById('mobile-logoutBtn');
+    if (mobileLogoutBtn) {
+        mobileLogoutBtn.addEventListener('click', async (e) => {
+            e.preventDefault();
+
+            // Mostrar modal de confirmação bonito
+            const confirmed = await confirmLogout();
+            if (!confirmed) return;
+
             clearSession();
             window.location.href = '/';
         });
@@ -92,6 +147,108 @@ function setupEventListeners() {
 
     // Dispatch event that navbar is ready
     window.dispatchEvent(new CustomEvent('navbar-loaded'));
+}
+
+function setupMobileMenu() {
+    const hamburgerBtn = document.getElementById('hamburgerBtn');
+    const mobileMenu = document.getElementById('mobileMenu');
+    const mobileMenuOverlay = document.getElementById('mobileMenuOverlay');
+    const mobileNavLinks = document.querySelectorAll('.mobile-nav-link');
+
+    if (!hamburgerBtn || !mobileMenu || !mobileMenuOverlay) return;
+
+    // Toggle menu function
+    function toggleMobileMenu() {
+        const isActive = mobileMenu.classList.contains('active');
+
+        if (isActive) {
+            closeMobileMenu();
+        } else {
+            openMobileMenu();
+        }
+    }
+
+    function openMobileMenu() {
+        hamburgerBtn.classList.add('active');
+        mobileMenu.classList.add('active');
+        mobileMenuOverlay.classList.add('active');
+        hamburgerBtn.setAttribute('aria-expanded', 'true');
+        document.body.style.overflow = 'hidden'; // Prevent body scroll
+    }
+
+    function closeMobileMenu() {
+        hamburgerBtn.classList.remove('active');
+        mobileMenu.classList.remove('active');
+        mobileMenuOverlay.classList.remove('active');
+        hamburgerBtn.setAttribute('aria-expanded', 'false');
+        document.body.style.overflow = ''; // Restore body scroll
+    }
+
+    // Hamburger button click
+    hamburgerBtn.addEventListener('click', toggleMobileMenu);
+
+    // Overlay click to close
+    mobileMenuOverlay.addEventListener('click', closeMobileMenu);
+
+    // Close menu when clicking on a link
+    mobileNavLinks.forEach(link => {
+        link.addEventListener('click', () => {
+            closeMobileMenu();
+        });
+    });
+
+    // Close menu on ESC key
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && mobileMenu.classList.contains('active')) {
+            closeMobileMenu();
+        }
+    });
+
+    // Close menu on window resize to desktop size
+    window.addEventListener('resize', () => {
+        if (window.innerWidth > 768 && mobileMenu.classList.contains('active')) {
+            closeMobileMenu();
+        }
+    });
+}
+
+async function fetchAndDisplayUserPlan(token) {
+    try {
+        const response = await fetch('/api/auth/session', {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+
+        if (!response.ok) return;
+
+        const data = await response.json();
+        const plan = data.user?.plan || 'free';
+
+        const planConfig = {
+            free: { icon: '🆓', label: 'Free', color: '#999' },
+            voz_pro: { icon: '⭐', label: 'Pro', color: '#a78bfa' },
+            voz_master: { icon: '👑', label: 'Master', color: '#fbbf24' }
+        };
+
+        const config = planConfig[plan] || planConfig.free;
+
+        // Desktop badge
+        const desktopBadge = document.getElementById('nav-user-plan-badge');
+        if (desktopBadge && plan !== 'free') {
+            desktopBadge.textContent = `${config.icon} ${config.label}`;
+            desktopBadge.style.background = `${config.color}20`;
+            desktopBadge.style.color = config.color;
+            desktopBadge.style.border = `1px solid ${config.color}40`;
+        }
+
+        // Mobile badge
+        const mobileBadge = document.getElementById('mobile-nav-user-plan-badge');
+        if (mobileBadge && plan !== 'free') {
+            mobileBadge.textContent = `${config.icon} ${config.label}`;
+            mobileBadge.style.color = config.color;
+        }
+    } catch (error) {
+        console.error('Erro ao buscar plano do usuário:', error);
+    }
 }
 
 // Export for manual init if needed

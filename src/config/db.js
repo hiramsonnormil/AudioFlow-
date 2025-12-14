@@ -11,7 +11,7 @@ export async function connectDB(uri) {
     const conn = await mongoose.connect(mongoUri, {
       dbName: undefined,
     });
-    console.log(`[DB] Connected to MongoDB: ${conn.connection.host}`);
+    console.info(`[DB] Connected to MongoDB: ${conn.connection.host}`);
     return conn;
   } catch (err) {
     console.error("[DB] Mongo connection error:", err.message);

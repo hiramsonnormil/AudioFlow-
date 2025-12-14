@@ -1,3 +1,5 @@
+import { showPlanModal } from "./utils/planModal.js";
+
 const form = document.getElementById("form");
 const urlEl = document.getElementById("url");
 const presetEl = document.getElementById("preset");
@@ -119,7 +121,6 @@ function createCustomSelect(nativeSelect, presets) {
     // Criar custom select com ícones
     createCustomSelect(presetEl, presets);
 
-    console.log(`✅ Loaded ${presets.length} presets`);
   } catch (error) {
     console.error("Error loading presets:", error);
     if (presetEl.options.length === 0) {
@@ -144,13 +145,14 @@ function extractVideoId(url) {
   return null;
 }
 
-// Função para validar URL do YouTube
+// Função para validar URL do YouTube e YouTube Music
 function isValidYouTubeUrl(url) {
   try {
     const urlObj = new URL(url);
     return (
       urlObj.hostname.includes("youtube.com") ||
-      urlObj.hostname.includes("youtu.be")
+      urlObj.hostname.includes("youtu.be") ||
+      urlObj.hostname.includes("music.youtube.com")
     );
   } catch (e) {
     return false;
@@ -179,21 +181,17 @@ function prefetchThumbnail() {
   }
 
   // Prefetch da thumbnail
-  console.log("Prefetching thumbnail for video:", videoId);
   const thumbUrl = `https://i.ytimg.com/vi/${videoId}/maxresdefault.jpg`;
 
   const img = new Image();
   img.onload = () => {
-    console.log("Thumbnail prefetched successfully");
     sessionStorage.setItem("prefetchedVideoId", videoId);
     sessionStorage.setItem("prefetchedThumbUrl", thumbUrl);
   };
   img.onerror = () => {
-    console.log("maxresdefault failed, trying hqdefault");
     const fallbackUrl = `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`;
     const imgFallback = new Image();
     imgFallback.onload = () => {
-      console.log("Fallback thumbnail prefetched");
       sessionStorage.setItem("prefetchedVideoId", videoId);
       sessionStorage.setItem("prefetchedThumbUrl", fallbackUrl);
     };
@@ -220,28 +218,12 @@ if (urlEl) {
   const processBtn = document.getElementById("processBtn");
   const presetSelect = document.getElementById("presetSelect");
 
-  console.log("🔍 Prefetch init - Elements found:", {
-    youtubeUrlInput: !!youtubeUrlInput,
-    processBtn: !!processBtn,
-    presetSelect: !!presetSelect
-  });
-
   if (youtubeUrlInput && processBtn) {
-    console.log("✅ Attaching hover event to processBtn");
-    
     const prefetchFromMainForm = () => {
-      console.log("🎯 Prefetch triggered!");
       const url = youtubeUrlInput.value?.trim();
-
-      console.log("📋 Current values:", {
-        url: url,
-        preset: presetSelect?.value,
-        isValidUrl: isValidYouTubeUrl(url)
-      });
 
       // Validar URL e preset antes de tentar prefetch
       if (!url || !isValidYouTubeUrl(url)) {
-        console.log("❌ Invalid URL, skipping prefetch");
         // Marcar campo como inválido visualmente (opcional)
         youtubeUrlInput.classList.add("input-error");
         return;
@@ -250,7 +232,6 @@ if (urlEl) {
       }
 
       if (presetSelect && !presetSelect.value) {
-        console.log("❌ Preset not selected, skipping prefetch");
         presetSelect.classList.add("input-error");
         return;
       } else if (presetSelect) {
@@ -259,18 +240,9 @@ if (urlEl) {
 
       const videoId = extractVideoId(url);
       if (!videoId) {
-        console.log("❌ Could not extract videoId");
         return;
       }
 
-      // REMOVIDO: Verificação de cache para forçar novo prefetch a cada hover
-      // const cachedVideoId = sessionStorage.getItem("prefetchedVideoId");
-      // if (cachedVideoId === videoId) { ... }
-
-      console.log(
-        "🚀 Prefetching thumbnail (validated) from landing page for video:",
-        videoId
-      );
       const thumbUrl = `https://i.ytimg.com/vi/${videoId}/maxresdefault.jpg`;
 
       // Salvar OTIMISTICAMENTE para garantir que chegue na próxima página
@@ -280,19 +252,16 @@ if (urlEl) {
 
       const img = new Image();
       img.onload = () => {
-        console.log("✅ Landing page thumbnail prefetched successfully");
         // Já salvo otimisticamente
       };
       img.onerror = () => {
-        console.log("⚠️ maxresdefault failed, trying hqdefault");
         const fallbackUrl = `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`;
-        
+
         // Atualizar com fallback se falhar
         sessionStorage.setItem("prefetchedThumbUrl", fallbackUrl);
-        
+
         const imgFallback = new Image();
         imgFallback.onload = () => {
-          console.log("✅ Landing page fallback thumbnail prefetched");
         };
         imgFallback.src = fallbackUrl;
       };
@@ -302,7 +271,6 @@ if (urlEl) {
     // Adicionar eventos ao botão principal (hover/focus)
     processBtn.addEventListener("mouseover", prefetchFromMainForm);
     processBtn.addEventListener("focus", prefetchFromMainForm);
-    console.log("✅ Event listeners attached to processBtn");
 
     // Adicionar eventos ao input URL
     youtubeUrlInput.addEventListener("blur", prefetchFromMainForm);
@@ -313,8 +281,6 @@ if (urlEl) {
       presetSelect.addEventListener("change", prefetchFromMainForm);
       presetSelect.addEventListener("blur", prefetchFromMainForm);
     }
-  } else {
-    console.warn("⚠️ Could not find elements for prefetch initialization");
   }
 })();
 
@@ -337,7 +303,6 @@ if (form && startBtn) {
         const videoId = extractVideoId(url);
         if (videoId) {
           const thumbUrl = `https://i.ytimg.com/vi/${videoId}/maxresdefault.jpg`;
-          console.log("💾 Saving thumbnail to session storage on submit:", videoId);
           sessionStorage.setItem("prefetchedVideoId", videoId);
           sessionStorage.setItem("prefetchedThumbUrl", thumbUrl);
         }
@@ -357,13 +322,36 @@ if (form && startBtn) {
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ url, preset }),
       });
-      const j = await r.json();
-      if (!r.ok) throw new Error(j.error || "server error");
+
+      let payload = null;
+      try {
+        payload = await r.json();
+      } catch (parseError) {
+        console.warn("⚠️ Falha ao interpretar resposta do servidor:", parseError);
+      }
+
+      if (!r.ok) {
+        const errorCode = payload?.error;
+        const message = payload?.message || payload?.error || "Erro ao iniciar processamento";
+        
+        if (errorCode === 'preset_not_available' || errorCode === 'plan_limit_reached') {
+          startBtn.disabled = false;
+          startBtn.innerHTML = '<span class="btn-text">Processar</span>';
+          showPlanModal(message);
+          return;
+        }
+        
+        throw new Error(message);
+      }
+
+      if (!payload || !payload.id) {
+        throw new Error("Resposta inesperada do servidor. Tente novamente.");
+      }
 
       // Transição suave para página de processamento
-      transitionToProcessPage(j.id);
+      transitionToProcessPage(payload.id);
     } catch (err) {
-      showError("Erro: " + err.message);
+      showError(err.message || "Erro ao processar áudio. Tente novamente.");
       startBtn.disabled = false;
       startBtn.innerHTML = '<span class="btn-text">Processar</span>';
     }

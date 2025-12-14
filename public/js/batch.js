@@ -1,3 +1,5 @@
+import { showPlanModal } from './utils/planModal.js';
+
 // Gerenciador de fila em massa
 class BatchQueueManager {
   constructor() {
@@ -89,14 +91,15 @@ function cleanUrl(url) {
     .trim();
 }
 
-// Validar URL do YouTube
+// Validar URL do YouTube e YouTube Music
 function isValidYouTubeUrl(url) {
   try {
     const cleanedUrl = cleanUrl(url);
     const urlObj = new URL(cleanedUrl);
     return (
       urlObj.hostname.includes("youtube.com") ||
-      urlObj.hostname.includes("youtu.be")
+      urlObj.hostname.includes("youtu.be") ||
+      urlObj.hostname.includes("music.youtube.com")
     );
   } catch (e) {
     return false;
@@ -159,25 +162,16 @@ addUrlBtn.addEventListener("click", () => {
 
   if (added > 0) {
     updateUrlList();
-    console.log(
-      `✅ ${added} URL${added > 1 ? "s" : ""} adicionada${
-        added > 1 ? "s" : ""
-      }${
-        skipped > 0 ? ` | ❌ ${skipped} inválida${skipped > 1 ? "s" : ""}` : ""
-      }`
-    );
   }
 
   if (skipped > 0 && added === 0) {
     showError(
-      `❌ ${skipped} URL${skipped > 1 ? "s" : ""} inválida${
-        skipped > 1 ? "s" : ""
+      `❌ ${skipped} URL${skipped > 1 ? "s" : ""} inválida${skipped > 1 ? "s" : ""
       }`
     );
   } else if (skipped > 0 && added > 0) {
     showError(
-      `✅ ${added} adicionada${added > 1 ? "s" : ""} | ❌ ${skipped} inválida${
-        skipped > 1 ? "s" : ""
+      `✅ ${added} adicionada${added > 1 ? "s" : ""} | ❌ ${skipped} inválida${skipped > 1 ? "s" : ""
       }`
     );
   }
@@ -217,14 +211,32 @@ batchStartBtn.addEventListener("click", async () => {
         body: JSON.stringify({ url, preset }),
       });
 
-      if (!r.ok) {
-        const j = await r.json();
-        throw new Error(j.error || "server error");
+      let payload = null;
+      try {
+        payload = await r.json();
+      } catch (parseError) {
+        console.warn("⚠️ Falha ao interpretar resposta do servidor:", parseError);
       }
 
-      const j = await r.json();
-      manager.jobs.set(j.id, {
-        id: j.id,
+      if (!r.ok) {
+        const errorCode = payload?.error;
+        const message = payload?.message || payload?.error || "server error";
+        
+        if (errorCode === 'preset_not_available' || errorCode === 'plan_limit_reached') {
+          batchStartBtn.disabled = false;
+          showPlanModal(message);
+          return;
+        }
+        
+        throw new Error(message);
+      }
+
+      if (!payload || !payload.id) {
+        throw new Error("Resposta inesperada do servidor");
+      }
+
+      manager.jobs.set(payload.id, {
+        id: payload.id,
         url,
         status: "PENDING",
         progress: 0,
@@ -319,20 +331,20 @@ function createJobCard(job) {
     job.status === "DONE"
       ? "done"
       : job.status === "ERROR"
-      ? "error"
-      : "processing";
+        ? "error"
+        : "processing";
   const statusText =
     job.status === "PENDING"
       ? "Aguardando"
       : job.status === "DOWNLOADING"
-      ? "Baixando"
-      : job.status === "EXTRACTING"
-      ? "Extraindo"
-      : job.status === "PROCESSING"
-      ? "Processando"
-      : job.status === "DONE"
-      ? "Concluído"
-      : "Erro";
+        ? "Baixando"
+        : job.status === "EXTRACTING"
+          ? "Extraindo"
+          : job.status === "PROCESSING"
+            ? "Processando"
+            : job.status === "DONE"
+              ? "Concluído"
+              : "Erro";
 
   const progressPercent = Math.min(100, Math.max(0, job.progress || 0));
 
@@ -350,20 +362,18 @@ function createJobCard(job) {
         <span>${progressPercent}%</span>
         ${job.filename ? `<span>📁 ${escapeHtml(job.filename)}</span>` : ""}
       </div>
-      ${
+      ${job.error
+      ? `<div style="margin-top: 8px; padding: 8px; background: hsl(0, 70%, 20%); border-radius: 3px; font-size: 0.85rem; color: hsl(0, 100%, 80%);">${escapeHtml(
         job.error
-          ? `<div style="margin-top: 8px; padding: 8px; background: hsl(0, 70%, 20%); border-radius: 3px; font-size: 0.85rem; color: hsl(0, 100%, 80%);">${escapeHtml(
-              job.error
-            )}</div>`
-          : ""
-      }
-      ${
-        job.status === "DONE"
-          ? `<div class="job-footer">
+      )}</div>`
+      : ""
+    }
+      ${job.status === "DONE"
+      ? `<div class="job-footer">
                <button class="job-download-btn" data-job-id="${job.id}">⬇️ Download</button>
              </div>`
-          : ""
-      }
+      : ""
+    }
     </div>
   `;
 }
