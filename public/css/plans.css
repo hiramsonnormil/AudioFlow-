@@ -265,6 +265,18 @@ body {
   border-color: var(--copper);
 }
 
+/* Animação de pulso para botões de upgrade */
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(32, 201, 120, 0.7);
+  }
+  50% {
+    transform: scale(1.02);
+    box-shadow: 0 0 20px 5px rgba(32, 201, 120, 0.3);
+  }
+}
+
 /* FAQ Section */
 .plans-faq {
   max-width: 800px;

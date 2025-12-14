@@ -5,6 +5,7 @@
 
 import { isAuthenticated, getUser } from "./auth/session.js";
 import { openModal } from "./auth/modal-auth.js";
+import { isValidUpgrade, arePlansEqual, isPlanLower, getPlanName } from "./utils/planComparison.js";
 
 // Estado do modal de pagamento
 let paymentModal = null;
@@ -88,6 +89,17 @@ function createPaymentModal() {
       }
     }
     
+    @keyframes slideDown {
+      from {
+        opacity: 0;
+        transform: translate(-50%, -20px);
+      }
+      to {
+        opacity: 1;
+        transform: translate(-50%, 0);
+      }
+    }
+    
     @keyframes spin {
       to { transform: rotate(360deg); }
     }
@@ -148,23 +160,50 @@ function closePaymentModal() {
 }
 
 /**
+ * Mostrar erro de validação de plano
+ */
+function showPlanValidationError(message) {
+  const errorDiv = document.createElement('div');
+  errorDiv.style.cssText = `
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: linear-gradient(135deg, #ff4d4d, #cc0000);
+    color: white;
+    padding: 1rem 1.5rem;
+    border-radius: 12px;
+    box-shadow: 0 8px 32px rgba(255, 77, 77, 0.4);
+    z-index: 10000;
+    max-width: 500px;
+    width: 90%;
+    font-weight: 600;
+    animation: slideDown 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  `;
+  errorDiv.textContent = message;
+  
+  document.body.appendChild(errorDiv);
+  
+  setTimeout(() => {
+    errorDiv.style.animation = 'slideUp 0.3s cubic-bezier(0.4, 0, 0.2, 1)';
+    setTimeout(() => errorDiv.remove(), 300);
+  }, 5000);
+}
+
+/**
  * Atualizar conteúdo do modal com dados do Pix
  */
 function updateModalWithPixData(data) {
   const content = document.getElementById('paymentModalContent');
   if (!content) return;
 
-  // Se for upgrade, usar o plano de destino (requestedPlan)
-  const targetPlan = data.isUpgrade ? data.requestedPlan : data.planType;
-  const planName = targetPlan === 'voz_pro' ? 'Voz Pro' : 'Voz Master';
+  // Mapear nome e preço do plano
+  const planName = data.planType === 'voz_pro' ? 'Voz Pro' : 
+                   data.planType === 'voz_plus_master' ? 'Voz Master' : 
+                   'Voz Master';
   
-  // Se for upgrade, mostrar o valor proporcional
-  let planPrice;
-  if (data.isUpgrade) {
-    planPrice = `R$ ${(data.upgradeAmount / 100).toFixed(2).replace('.', ',')}`;
-  } else {
-    planPrice = targetPlan === 'voz_pro' ? 'R$ 14,90' : 'R$ 1,50';
-  }
+  // Calcular preço formatado a partir do valor em centavos
+  const planPrice = `R$ ${(data.value / 100).toFixed(2).replace('.', ',')}`;
 
   content.innerHTML = `
     <div style="text-align: center;">
@@ -195,41 +234,7 @@ function updateModalWithPixData(data) {
         color: #a8a29e;
         margin: 0 0 0.5rem;
         font-size: 1rem;
-      ">${planName}${data.isUpgrade ? ' (Upgrade)' : ''} - ${planPrice}${data.isUpgrade ? ` (${data.daysRemaining} dias)` : '/mês'}</p>
-      
-      ${data.isUpgrade ? `
-        <div style="
-          background: rgba(34, 197, 94, 0.1);
-          border: 1px solid rgba(34, 197, 94, 0.3);
-          border-radius: 12px;
-          padding: 1rem;
-          margin: 1rem 0;
-          display: flex;
-          align-items: flex-start;
-          gap: 0.75rem;
-          text-align: left;
-        ">
-          <div style="font-size: 1.75rem;">📈</div>
-          <div style="flex: 1;">
-            <div style="
-              color: #22c55e;
-              font-weight: 700;
-              font-size: 1rem;
-              margin-bottom: 0.5rem;
-            ">Upgrade Imediato</div>
-            <div style="
-              color: #a8a29e;
-              font-size: 0.85rem;
-              line-height: 1.5;
-            ">
-              • Você está fazendo upgrade para <strong>${planName}</strong><br/>
-              • Valor proporcional aos <strong>${data.daysRemaining} dias</strong> restantes<br/>
-              • Upgrade será ativado <strong>imediatamente</strong> após o pagamento<br/>
-              • Sua próxima cobrança será no valor normal do plano
-            </div>
-          </div>
-        </div>
-      ` : ''}
+      ">${planName} - ${planPrice}/mês</p>
       
       ${data.reused ? `
         <div style="
@@ -482,47 +487,182 @@ function updateModalWithPixData(data) {
   const closeBtn = document.getElementById('closePaymentBtn');
   closeBtn?.addEventListener('click', closePaymentModal);
 
-  // Iniciar polling do status
-  startStatusPolling(data.userId, data.subscriptionId);
-}
-
-/**
- * Polling para verificar status do pagamento
- */
-function startStatusPolling(userId, subscriptionId) {
-  if (statusPollingInterval) {
-    clearInterval(statusPollingInterval);
-  }
-
-  statusPollingInterval = setInterval(async () => {
+  // Adicionar botão "Já paguei" para consulta manual
+  const alreadyPaidBtn = document.createElement('button');
+  alreadyPaidBtn.id = 'alreadyPaidBtn';
+  alreadyPaidBtn.textContent = 'Já paguei - Verificar agora';
+  alreadyPaidBtn.style.cssText = `
+    width: 100%;
+    padding: 1rem;
+    margin-top: 0.5rem;
+    background: linear-gradient(135deg, #3b82f6, #2563eb);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+  `;
+  
+  // Adicionar informação sobre verificação automática
+  const autoCheckInfo = document.createElement('p');
+  autoCheckInfo.style.cssText = `
+    margin-top: 1rem;
+    text-align: center;
+    font-size: 0.875rem;
+    color: #78716c;
+  `;
+  autoCheckInfo.innerHTML = '🔄 <strong>Verificação automática ativa</strong><br>Não precisa clicar em nada, o pagamento será confirmado automaticamente';
+  
+  alreadyPaidBtn.addEventListener('click', async () => {
+    alreadyPaidBtn.disabled = true;
+    alreadyPaidBtn.textContent = 'Verificando...';
+    
     try {
-      const response = await fetch(`/api/subscriptions/${userId}/status`, {
+      const response = await fetch(`/api/pix/check/${data.transactionId}`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('phona:token')}`
         }
       });
 
-      if (!response.ok) return;
+      const result = await response.json();
 
-      const data = await response.json();
-
-      if (data.status === 'active') {
-        // Atualizar plano no localStorage imediatamente
+      if (result.success && result.data?.status === 'paid') {
+        console.log('✅ Pagamento confirmado via botão manual!');
+        
         const user = getUser();
-        if (user && data.planType) {
-          user.plan = data.planType;
+        if (user && result.data.payment?.subscriptionId?.plan) {
+          const planMap = {
+            'voz_plus_master': 'voz_plus_master',
+            'voz_pro': 'voz_pro',
+            'voz_master': 'voz_master'
+          };
+          const newPlan = planMap[result.data.payment.subscriptionId.plan] || 'free';
+          user.plan = newPlan;
           localStorage.setItem('phona:user', JSON.stringify(user));
-          console.log('✅ Plano atualizado no localStorage:', data.planType);
+          console.log('✅ Plano atualizado:', newPlan);
+        }
+        
+        // Parar polling se estiver ativo
+        if (statusPollingInterval) {
+          clearInterval(statusPollingInterval);
+          statusPollingInterval = null;
         }
         
         showSuccessMessage();
-        clearInterval(statusPollingInterval);
-        statusPollingInterval = null;
+      } else {
+        alreadyPaidBtn.textContent = 'Pagamento ainda não confirmado';
+        setTimeout(() => {
+          alreadyPaidBtn.textContent = 'Já paguei - Verificar agora';
+          alreadyPaidBtn.disabled = false;
+        }, 3000);
       }
     } catch (error) {
-      console.error('Erro ao verificar status:', error);
+      console.error('Erro ao verificar pagamento:', error);
+      alreadyPaidBtn.textContent = 'Erro - Tente novamente';
+      setTimeout(() => {
+        alreadyPaidBtn.textContent = 'Já paguei - Verificar agora';
+        alreadyPaidBtn.disabled = false;
+      }, 3000);
     }
-  }, 3000); // Check a cada 3 segundos
+  });
+
+  closeBtn?.parentElement?.insertBefore(alreadyPaidBtn, closeBtn);
+  closeBtn?.parentElement?.insertBefore(autoCheckInfo, closeBtn);
+
+  // Iniciar polling automático do status (verifica a cada 3 segundos)
+  startStatusPolling(data.transactionId);
+}
+
+/**
+ * Polling para verificar status do pagamento
+ * Verifica periodicamente se o pagamento foi confirmado
+ */
+function startStatusPolling(transactionId) {
+  // Limpar polling existente se houver
+  if (statusPollingInterval) {
+    clearInterval(statusPollingInterval);
+  }
+
+  let pollCount = 0;
+  const maxPolls = 600; // 30 minutos (600 * 3 segundos)
+
+  console.log('🔄 Polling iniciado - verificando pagamento a cada 3 segundos');
+
+  statusPollingInterval = setInterval(async () => {
+    pollCount++;
+
+    // Parar após 30 minutos
+    if (pollCount >= maxPolls) {
+      clearInterval(statusPollingInterval);
+      statusPollingInterval = null;
+      console.warn('⏰ Polling timeout - 30 minutos excedidos');
+      return;
+    }
+
+    try {
+      // Chamar endpoint específico para verificar este pagamento
+      const response = await fetch(`/api/pix/check/${transactionId}`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('phona:token')}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      const result = await response.json();
+      
+      // Se recebeu erro 429, apenas aguardar próximo intervalo
+      if (!response.ok && response.status === 429) {
+        if (pollCount % 10 === 0) {
+          console.log('[Polling] Rate limit atingido, aguardando...');
+        }
+        return;
+      }
+      
+      if (!response.ok) {
+        console.warn('[Polling] Erro na resposta:', response.status, result);
+        return;
+      }
+      
+      console.log('[Polling] Resposta recebida:', result);
+
+      // Se pagamento foi confirmado
+      if (result.success && result.data?.status === 'paid') {
+        console.log('🎉 PAGAMENTO CONFIRMADO AUTOMATICAMENTE!', result.data);
+
+        // Parar o polling
+        clearInterval(statusPollingInterval);
+        statusPollingInterval = null;
+
+        // Atualizar plano no localStorage
+        const user = getUser();
+        if (user && result.data.payment?.subscriptionId?.plan) {
+          const planMap = {
+            'voz_plus_master': 'voz_plus_master',
+            'voz_pro': 'voz_pro',
+            'voz_master': 'voz_master'
+          };
+          const newPlan = planMap[result.data.payment.subscriptionId.plan] || 'free';
+          user.plan = newPlan;
+          localStorage.setItem('phona:user', JSON.stringify(user));
+          console.log('✅ Plano atualizado automaticamente:', newPlan);
+        }
+        
+        // Mostrar mensagem de sucesso
+        showSuccessMessage();
+      } else {
+        // Log para debug
+        if (pollCount % 5 === 0) {
+          console.log(`[Polling ${pollCount}/${maxPolls}] Status: ${result.data?.status || 'pending'}`);
+        }
+      }
+    } catch (error) {
+      // Erro silencioso, apenas log a cada 20 tentativas
+      if (pollCount % 20 === 0) {
+        console.warn('[Polling] Erro ao verificar:', error.message);
+      }
+    }
+  }, 3000); // Verificar a cada 3 segundos
 }
 
 /**
@@ -553,20 +693,28 @@ function showSuccessMessage() {
         font-size: 1.75rem;
         font-weight: 700;
         margin: 0 0 1rem;
-        color: #f5f1ed;
-      ">Pagamento Confirmado!</h2>
+        color: #20c978;
+      ">🎉 Pagamento Confirmado!</h2>
       
       <p style="
         color: #a8a29e;
-        margin: 0 0 2rem;
+        margin: 0 0 0.5rem;
         line-height: 1.6;
       ">
-        Sua assinatura foi ativada com sucesso.<br>
-        Aproveite todos os recursos do seu plano!
+        Sua assinatura foi ativada com sucesso!<br>
+        Aproveite todos os recursos do seu plano.
+      </p>
+      
+      <p style="
+        color: #78716c;
+        font-size: 0.875rem;
+        margin: 0 0 2rem;
+      ">
+        ✅ Detectado automaticamente pelo sistema
       </p>
 
       <button 
-        onclick="window.location.href='/html/index.html'"
+        id="successContinueBtn"
         style="
           width: 100%;
           padding: 1rem;
@@ -576,10 +724,25 @@ function showSuccessMessage() {
           border-radius: 12px;
           font-weight: 600;
           cursor: pointer;
+          transition: all 0.2s;
         "
       >Começar a usar</button>
     </div>
   `;
+  
+  // Adicionar event listener ao botão
+  const continueBtn = document.getElementById('successContinueBtn');
+  if (continueBtn) {
+    continueBtn.addEventListener('click', () => {
+      window.location.href = '/html/index.html';
+    });
+  }
+  
+  // Auto-redirecionar após 5 segundos
+  setTimeout(() => {
+    console.log('🔄 Redirecionando para página principal...');
+    window.location.reload();
+  }, 5000);
 }
 
 /**
@@ -651,66 +814,69 @@ async function startSubscriptionFlow(planType) {
       throw new Error('Usuário não encontrado');
     }
 
-    const response = await fetch('/api/subscriptions', {
+    // Mapear nome do plano para o formato esperado pelo backend
+    const planMap = {
+      'voz_pro': 'voz_pro',
+      'voz_master': 'voz_master',
+      'voz_plus_master': 'voz_plus_master'
+    };
+
+    const plan = planMap[planType] || planType;
+
+    // Chamar novo endpoint PIX
+    const response = await fetch('/api/pix/create', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${localStorage.getItem('phona:token')}`
       },
       body: JSON.stringify({
-        userId: user._id,
-        email: user.email,
-        planType
+        plan: plan
       })
     });
 
-    const data = await response.json();
+    const result = await response.json();
 
     if (!response.ok) {
-      // Tratar erros específicos
-      if (data.error === 'downgrade_not_allowed') {
-        showErrorMessage(`
-          ⚠️ Downgrade não permitido<br><br>
-          Você está no plano <strong>${data.currentPlan === 'voz_pro' ? 'Voz Pro' : 'Voz Master'}</strong> e tentou mudar para <strong>${data.requestedPlan === 'voz_pro' ? 'Voz Pro' : 'Voz Master'}</strong>.<br><br>
-          Para fazer downgrade, entre em contato com o suporte.
-        `);
-        return;
-      }
-
-      if (data.error === 'plan_already_active') {
-        showErrorMessage(`
-          Você já possui o plano <strong>${data.currentPlan === 'voz_pro' ? 'Voz Pro' : 'Voz Master'}</strong> ativo!<br><br>
-          Válido até: <strong>${new Date(data.nextBillingDate).toLocaleDateString('pt-BR')}</strong>
-        `);
-        return;
+      const errorMessage = result.error || 'Erro ao criar cobrança PIX';
+      
+      // Mostrar mensagem amigável para erros de validação de plano
+      if (errorMessage.includes('já possui uma assinatura ativa') || 
+          errorMessage.includes('não é possível fazer downgrade') ||
+          errorMessage.includes('Não é possível fazer downgrade')) {
+        showPlanValidationError(errorMessage);
+        throw new Error(errorMessage);
       }
       
-      throw new Error(data.message || data.error || 'Erro ao criar assinatura');
+      throw new Error(errorMessage);
     }
 
-    // Mensagem apropriada dependendo do tipo de operação
-    if (data.isUpgrade) {
-      console.log('📈 Upgrade solicitado:', {
-        from: data.planType,
-        to: data.requestedPlan,
-        amount: data.upgradeAmount,
-        daysRemaining: data.daysRemaining
-      });
-    } else if (data.pending || data.reused) {
-      console.log('♻️ Reutilizando PIX pendente existente');
-    } else {
-      console.log('🆕 Novo código PIX gerado');
+    if (!result.success || !result.data) {
+      throw new Error('Resposta inválida do servidor');
     }
 
-    console.log('Dados recebidos do backend:', {
-      planType: data.planType || data.requestedPlan,
-      isUpgrade: data.isUpgrade,
-      pending: data.pending,
-      reused: data.reused,
-      hasQrCode: !!data.pixQrCodeBase64,
-      hasCopyPaste: !!data.pixCopyAndPaste
+    const data = result.data;
+
+    console.log('🆕 Cobrança PIX criada:', {
+      transactionId: data.transactionId,
+      value: data.value,
+      plan: plan
     });
-    updateModalWithPixData(data);
+
+    // Adaptar dados para o formato que o modal espera
+    const modalData = {
+      userId: user._id,
+      subscriptionId: data.subscriptionId,
+      transactionId: data.transactionId,
+      planType: plan,
+      value: data.value, // Valor em centavos
+      pixQrCodeBase64: data.qrCodeBase64,
+      pixCopyAndPaste: data.qrCode,
+      isUpgrade: false,
+      reused: false
+    };
+
+    updateModalWithPixData(modalData);
 
   } catch (error) {
     console.error('Erro ao iniciar assinatura:', error);
@@ -760,7 +926,9 @@ async function fetchCurrentPlan() {
 
   try {
     const token = localStorage.getItem('phona:token');
-    const response = await fetch(`/api/subscriptions/${user._id}`, {
+    
+    // Buscar pagamentos do usuário para verificar assinatura ativa
+    const response = await fetch('/api/pix/payments', {
       headers: {
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json'
@@ -768,21 +936,39 @@ async function fetchCurrentPlan() {
     });
 
     if (response.ok) {
-      const data = await response.json();
+      const result = await response.json();
       
-      // Atualizar o plano no localStorage se mudou
-      if (data.planType && user.plan !== data.planType) {
-        user.plan = data.planType;
-        localStorage.setItem('phona:user', JSON.stringify(user));
-        console.log(`✅ Plano atualizado: ${data.planType}`);
-      }
+      if (result.success && result.data) {
+        // Procurar pagamento pago com assinatura ativa
+        const activePayment = result.data.find(p => 
+          p.status === 'paid' && 
+          p.subscriptionId?.status === 'active' &&
+          new Date(p.subscriptionId.expiresAt) > new Date()
+        );
 
-      return {
-        plan: data.planType || user.plan || 'free',
-        status: data.status,
-        active: data.active,
-        nextBillingDate: data.nextBillingDate
-      };
+        if (activePayment) {
+          const planMap = {
+            'voz_plus_master': 'voz_master',
+            'voz_pro': 'voz_pro',
+            'voz_master': 'voz_master'
+          };
+          const plan = planMap[activePayment.subscriptionId.plan] || 'free';
+
+          // Atualizar o plano no localStorage se mudou
+          if (user.plan !== plan) {
+            user.plan = plan;
+            localStorage.setItem('phona:user', JSON.stringify(user));
+            console.log(`✅ Plano atualizado: ${plan}`);
+          }
+
+          return {
+            plan: plan,
+            status: 'active',
+            active: true,
+            nextBillingDate: activePayment.subscriptionId.expiresAt
+          };
+        }
+      }
     }
   } catch (error) {
     console.error('Erro ao buscar plano atual:', error);
@@ -827,14 +1013,47 @@ async function showCurrentPlan() {
   currentCard.style.position = 'relative';
   currentCard.appendChild(badge);
 
-  // Mudar texto do botão
+  // Mudar texto do botão do plano atual
   const button = currentCard.querySelector('.plan-card__cta');
   if (button && currentPlan !== 'free') {
-    // Sempre desabilitar o botão do plano atual (ativo ou não)
     button.textContent = planInfo.active ? 'Plano Ativo' : 'Plano Atual';
     button.disabled = true;
     button.style.opacity = '0.6';
     button.style.cursor = 'not-allowed';
+  }
+
+  // Desabilitar botões de planos inferiores ao atual (se houver assinatura ativa)
+  if (planInfo.active) {
+    const allPlanCards = document.querySelectorAll('[data-plan]');
+    
+    allPlanCards.forEach(card => {
+      const planType = card.getAttribute('data-plan');
+      const cardButton = card.querySelector('.plan-card__cta');
+      
+      if (!cardButton || planType === 'free') return;
+      
+      // Se é o mesmo plano ou inferior, desabilitar
+      if (arePlansEqual(planType, currentPlan) || isPlanLower(planType, currentPlan)) {
+        cardButton.textContent = arePlansEqual(planType, currentPlan) 
+          ? 'Plano Ativo' 
+          : 'Não Disponível';
+        cardButton.disabled = true;
+        cardButton.style.opacity = '0.5';
+        cardButton.style.cursor = 'not-allowed';
+        cardButton.style.filter = 'grayscale(0.5)';
+        
+        // Adicionar tooltip explicativo
+        cardButton.title = arePlansEqual(planType, currentPlan)
+          ? 'Você já possui este plano ativo'
+          : `Não é possível fazer downgrade de ${getPlanName(currentPlan)} para ${getPlanName(planType)}`;
+      }
+      // Se é upgrade válido, destacar
+      else if (isValidUpgrade(currentPlan, planType)) {
+        cardButton.textContent = '✨ Fazer Upgrade';
+        cardButton.style.background = 'linear-gradient(135deg, #20c978, #17a85f)';
+        cardButton.style.animation = 'pulse 2s infinite';
+      }
+    });
   }
 
   // Mostrar data de renovação se disponível
