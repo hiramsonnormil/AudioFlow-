@@ -1,0 +1,103 @@
+{
+  "buildCommand": "echo 'Static build'",
+  "outputDirectory": "public",
+  "cleanUrls": true,
+  "trailingSlash": false,
+  "rewrites": [
+    {
+      "source": "/api/:path*",
+      "destination": "https://your-backend-domain.com/api/:path*"
+    }
+  ],
+  "routes": [
+    {
+      "src": "^/assets/(.*)",
+      "dest": "/assets/$1"
+    },
+    {
+      "src": "^/css/(.*)",
+      "dest": "/css/$1"
+    },
+    {
+      "src": "^/js/(.*)",
+      "dest": "/js/$1"
+    },
+    {
+      "src": "^/html/(.*)",
+      "dest": "/html/$1"
+    },
+    {
+      "src": "^/$",
+      "dest": "/html/index.html"
+    },
+    {
+      "src": "^/process$",
+      "dest": "/html/process.html"
+    },
+    {
+      "src": "^/download$",
+      "dest": "/html/download.html"
+    },
+    {
+      "src": "^/recents$",
+      "dest": "/html/recents.html"
+    },
+    {
+      "src": "^/batch$",
+      "dest": "/html/batch.html"
+    },
+    {
+      "src": "^/account$",
+      "dest": "/html/account.html"
+    },
+    {
+      "src": "^/plans$",
+      "dest": "/html/plans.html"
+    },
+    {
+      "src": "^/(.*)",
+      "dest": "/html/404.html"
+    }
+  ],
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        },
+        {
+          "key": "X-Frame-Options",
+          "value": "DENY"
+        },
+        {
+          "key": "X-XSS-Protection",
+          "value": "1; mode=block"
+        },
+        {
+          "key": "Referrer-Policy",
+          "value": "strict-origin-when-cross-origin"
+        }
+      ]
+    },
+    {
+      "source": "/assets/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ]
+    },
+    {
+      "source": "/(css|js)/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ]
+    }
+  ]
+}

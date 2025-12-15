@@ -177,6 +177,26 @@ function setupPasswordToggle(input, button) {
 }
 
 /**
+ * Verificar parâmetros da URL e abrir modal se necessário
+ */
+function checkUrlParams() {
+  const urlParams = new URLSearchParams(window.location.search);
+  const shouldSignup = urlParams.get('signup');
+  const plan = urlParams.get('plan');
+
+  if (shouldSignup === 'true' && !isAuthenticated()) {
+    // Abrir modal de signup automaticamente
+    setTimeout(() => {
+      openModal('signup');
+    }, 300);
+
+    // Limpar os parâmetros da URL sem recarregar a página
+    const cleanUrl = window.location.pathname + window.location.hash;
+    window.history.replaceState({}, document.title, cleanUrl);
+  }
+}
+
+/**
  * Handle Login
  */
 async function handleLogin(e) {
@@ -460,6 +480,9 @@ function init() {
       signupConfirmPassword.setCustomValidity('');
     }
   });
+
+  // Verificar parâmetros da URL para abrir modal automaticamente
+  checkUrlParams();
 }
 
 // Executar quando DOM estiver pronto

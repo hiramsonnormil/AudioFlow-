@@ -19,7 +19,7 @@ body.account-page {
   position: absolute;
   inset: -40% -20% auto;
   height: 120%;
-  background: radial-gradient(ellipse at center, rgba(123, 97, 255, 0.35) 0%, rgba(0, 0, 0, 0) 60%);
+  background: radial-gradient(ellipse at center, rgba(194, 140, 102, 0.35) 0%, rgba(232, 180, 160, 0.15) 40%, rgba(0, 0, 0, 0) 70%);
   filter: blur(20px);
   opacity: 0.75;
   z-index: 0;
@@ -51,13 +51,13 @@ body.account-page {
   align-items: center;
   gap: 0.5rem;
   padding: 0.45rem 1.15rem;
-  background: rgba(123, 97, 255, 0.15);
-  border: 1px solid rgba(123, 97, 255, 0.35);
+  background: rgba(194, 140, 102, 0.15);
+  border: 1px solid rgba(194, 140, 102, 0.35);
   border-radius: 999px;
   font-weight: 600;
   font-size: 0.85rem;
   letter-spacing: 0.01em;
-  color: #d0c7ff;
+  color: var(--peach);
 }
 
 .account-title {
@@ -66,6 +66,13 @@ body.account-page {
   line-height: 1.05;
   margin: 0;
   letter-spacing: -0.02em;
+}
+
+.account-title-accent {
+  background: linear-gradient(135deg, var(--copper-light), var(--peach));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
 .account-subtitle {
@@ -123,7 +130,7 @@ body.account-page {
   position: absolute;
   inset: 0;
   background: radial-gradient(circle at 20% 20%, rgba(194, 140, 102, 0.18), transparent 55%),
-              radial-gradient(circle at 80% 10%, rgba(123, 97, 255, 0.12), transparent 45%);
+              radial-gradient(circle at 80% 10%, rgba(232, 180, 160, 0.12), transparent 45%);
   opacity: 0.45;
   pointer-events: none;
   z-index: 0;
@@ -139,7 +146,7 @@ body.account-page {
   background: linear-gradient(90deg,
     transparent,
     rgba(194, 140, 102, 0.4) 45%,
-    rgba(123, 97, 255, 0.35) 55%,
+    rgba(232, 180, 160, 0.35) 55%,
     transparent
   );
   opacity: 0;
@@ -249,15 +256,15 @@ body.account-page {
 }
 
 .plan-badge.voz_pro {
-  background: linear-gradient(135deg, rgba(123, 97, 255, 0.25), rgba(147, 51, 234, 0.3));
-  color: #b794f6;
-  border: 1.5px solid rgba(123, 97, 255, 0.4);
-  box-shadow: 0 4px 16px rgba(123, 97, 255, 0.3);
+  background: linear-gradient(135deg, rgba(194, 140, 102, 0.25), rgba(212, 163, 116, 0.3));
+  color: var(--copper-light);
+  border: 1.5px solid rgba(194, 140, 102, 0.4);
+  box-shadow: 0 4px 16px rgba(194, 140, 102, 0.3);
 }
 
 .plan-badge.voz_pro:hover {
   transform: scale(1.05);
-  box-shadow: 0 6px 20px rgba(123, 97, 255, 0.4);
+  box-shadow: 0 6px 20px rgba(194, 140, 102, 0.4);
 }
 
 .plan-badge.voz_master {

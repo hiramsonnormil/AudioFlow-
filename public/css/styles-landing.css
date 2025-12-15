@@ -60,6 +60,31 @@
   will-change: auto;
 }
 
+/* Prevent CLS with aspect ratio and sizing */
+img, video, iframe, svg {
+  max-width: 100%;
+  height: auto;
+}
+
+/* System font fallback to prevent FOIT */
+@font-face {
+  font-family: 'Inter-fallback';
+  src: local('Arial');
+  ascent-override: 90%;
+  descent-override: 22%;
+  line-gap-override: 0%;
+  size-adjust: 107%;
+}
+
+@font-face {
+  font-family: 'Space Grotesk-fallback';
+  src: local('Arial');
+  ascent-override: 95%;
+  descent-override: 25%;
+  line-gap-override: 0%;
+  size-adjust: 100%;
+}
+
 .hero-bg,
 .waveform-canvas,
 .hero-grain {
@@ -72,7 +97,7 @@ html {
 }
 
 body {
-  font-family: var(--font-body);
+  font-family: var(--font-body), 'Inter-fallback', -apple-system, BlinkMacSystemFont, sans-serif;
   background: var(--bg-primary);
   color: var(--text-primary);
   line-height: 1.6;
@@ -91,6 +116,8 @@ body {
   right: 2rem;
   z-index: 90;
   transition: opacity 0.3s var(--ease-smooth);
+  contain: layout style paint;
+  will-change: opacity;
 }
 
 .sticky-btn {
@@ -120,10 +147,13 @@ body {
 .pulse-dot {
   width: 8px;
   height: 8px;
+  min-width: 8px;
+  min-height: 8px;
   background: white;
   border-radius: 50%;
   animation: pulse-dot 2s ease-in-out infinite;
   transform: translateZ(0);
+  will-change: opacity;
 }
 
 @keyframes pulse-dot {
@@ -144,9 +174,11 @@ body {
 .hero {
   position: relative;
   min-height: 90vh;
+  height: 90vh;
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  contain: layout style paint;
 }
 
 .hero-bg {
@@ -187,11 +219,13 @@ body {
   justify-content: space-between;
   align-items: center;
   padding: 1rem 4rem;
+  height: 72px;
   background: rgba(13, 13, 13, 0.8);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   border-bottom: 1px solid var(--border);
   transition: all 0.3s var(--ease-smooth);
+  contain: layout style;
 }
 
 .nav-logo {
@@ -208,9 +242,12 @@ body {
   color: var(--copper);
   width: 32px;
   height: 32px;
+  min-width: 32px;
+  min-height: 32px;
   display: flex;
   align-items: center;
   justify-content: center;
+  flex-shrink: 0;
 }
 
 .logo-text {
@@ -329,6 +366,7 @@ body {
   justify-content: center;
   padding: 2rem 2rem;
   text-align: center;
+  contain: layout style;
 }
 
 .hero-badge {
@@ -362,6 +400,7 @@ body {
   line-height: 1.1;
   letter-spacing: -0.03em;
   margin-bottom: 1rem;
+  min-height: 0.1em;
   background: linear-gradient(180deg,
       var(--text-primary) 0%,
       var(--text-secondary) 100%);
@@ -459,6 +498,7 @@ body {
   max-width: 700px;
   width: 100%;
   margin: 0 auto;
+  contain: layout style;
 }
 
 .mockup-player {
@@ -1700,6 +1740,18 @@ section {
   background: rgba(194, 140, 102, 0.05);
   border: 1px solid var(--border);
   border-radius: 12px;
+  min-height: 120px;
+  transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+
+.status-container[style*="display: none"] {
+  visibility: hidden;
+  opacity: 0;
+  height: 0;
+  min-height: 0;
+  padding: 0;
+  margin: 0;
+  overflow: hidden;
 }
 
 .status-content {
@@ -1757,6 +1809,18 @@ section {
   background: rgba(194, 140, 102, 0.05);
   border: 1px solid var(--border-hover);
   border-radius: 12px;
+  min-height: 200px;
+  transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+
+.result-container[style*="display: none"] {
+  visibility: hidden;
+  opacity: 0;
+  height: 0;
+  min-height: 0;
+  padding: 0;
+  margin: 0;
+  overflow: hidden;
 }
 
 .result-header {
