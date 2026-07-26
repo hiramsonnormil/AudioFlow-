@@ -1,6 +1,3 @@
-import { getToken, clearSession } from './auth/session.js';
-import { openModal } from './auth/modal-auth.js';
-
 // DOM Elements
 const barInner = document.getElementById("barInner");
 const statusText = document.getElementById("statusText");
@@ -22,19 +19,30 @@ const playerProgressBar = document.getElementById("playerProgressBar");
 
 let pollId = null;
 let lastProgress = -1;
-let loginPromptDisplayed = false;
-let userTier = 'free'; // tier do usuário (free ou premium)
+let userTier = 'premium'; // always premium locally
 
-const initialToken = getToken();
-initializeProcessPage(initialToken);
+initializeProcessPage();
 
-function initializeProcessPage(token) {
-  if (!token) {
-    console.warn('⚠️ [PROCESS] Usuário não autenticado, exibindo modal de login');
-    promptLogin('Faça login para acompanhar o processamento.');
-    return;
+async function loadNavbar() {
+  try {
+    const response = await fetch('/html/navbar.html');
+    if (response.ok) {
+      const html = await response.text();
+      const placeholder = document.getElementById('navbar-placeholder');
+      if (placeholder) {
+        placeholder.innerHTML = html;
+        if (window.initNavbar) {
+          window.initNavbar();
+        }
+      }
+    }
+  } catch (error) {
+    console.error('Erro ao carregar navbar:', error);
   }
+}
 
+function initializeProcessPage() {
+  loadNavbar();
   const params = new URLSearchParams(window.location.search);
   const jobId = params.get("id");
 
@@ -49,28 +57,22 @@ function initializeProcessPage(token) {
     thumbnail.classList.remove("loading-placeholder");
   }
 
+  const generateVideoBtn = document.getElementById("generateVideoBtn");
+  if (generateVideoBtn) {
+    generateVideoBtn.addEventListener("click", async () => {
+      try {
+        generateVideoBtn.disabled = true;
+        const res = await fetch(`/api/process/${jobId}/video`, { method: "POST" });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || "Erro ao iniciar vídeo");
+      } catch (err) {
+        showError("❌ " + err.message);
+        generateVideoBtn.disabled = false;
+      }
+    });
+  }
+
   startPoll(jobId);
-}
-
-function promptLogin(message, options = {}) {
-  if (statusText) {
-    statusText.textContent = 'Login necessário';
-  }
-
-  if (message) {
-    showError(message);
-  }
-
-  if (options.clearSession) {
-    clearSession();
-  }
-
-  if (loginPromptDisplayed) {
-    return;
-  }
-
-  loginPromptDisplayed = true;
-  setTimeout(() => openModal('login'), 100);
 }
 
 // Cleanup
@@ -108,21 +110,10 @@ function startPoll(id) {
 
   pollId = setInterval(async () => {
     try {
-      const token = getToken();
-
       const statusUrl = `/status/${id}`;
-      const headers = {};
-      if (token) {
-        headers['Authorization'] = `Bearer ${token}`;
-      }
-
-      const r = await fetch(statusUrl, { headers });
+      const r = await fetch(statusUrl);
+      
       if (!r.ok) {
-        if (r.status === 401) {
-          clearInterval(pollId);
-          promptLogin("Sessão expirada. Por favor, faça login novamente.", { clearSession: true });
-          return;
-        }
         throw new Error("status fetch failed");
       }
       const j = await r.json();
@@ -186,8 +177,8 @@ function startPoll(id) {
         // Usar nome formatado do backend ou gerar localmente
         const downloadName = j.downloadFilename || j.filename || generateDownloadFilename(j.title, j.preset || 'custom');
 
-        // Carregar áudio com autenticação via fetch e criar blob URL
-        loadAudioWithAuth(id, downloadName, j.expiresIn, j.isExpired);
+        // Carregar áudio
+        loadAudio(id, downloadName, j.expiresIn, j.isExpired);
 
         // Iniciar countdown de expiração se houver tempo restante
         if (j.expiresIn !== undefined) {
@@ -201,6 +192,48 @@ function startPoll(id) {
         const errorText = j.error || "processing failed";
         showError("❌ Erro: " + errorText);
         statusText.textContent = "Erro ao processar";
+      }
+
+      // Video Status updates
+      if (j.status === "DONE") {
+        const videoSection = document.getElementById("videoSection");
+        const generateVideoBtn = document.getElementById("generateVideoBtn");
+        const downloadVideoLink = document.getElementById("downloadVideoLink");
+        const videoProgressWrapper = document.getElementById("videoProgressWrapper");
+        const videoBarInner = document.getElementById("videoBarInner");
+        const videoStatusText = document.getElementById("videoStatusText");
+        const videoProgressPercent = document.getElementById("videoProgressPercent");
+        const videoErrorMsg = document.getElementById("videoErrorMsg");
+
+        videoSection.classList.remove("hidden");
+
+        if (!j.videoStatus || j.videoStatus === "PENDING") {
+          generateVideoBtn.classList.remove("hidden");
+          downloadVideoLink.classList.add("hidden");
+          videoProgressWrapper.classList.add("hidden");
+        } else if (j.videoStatus === "PROCESSING") {
+          generateVideoBtn.classList.add("hidden");
+          downloadVideoLink.classList.add("hidden");
+          videoProgressWrapper.classList.remove("hidden");
+          
+          const vProg = j.videoProgress || 0;
+          videoBarInner.style.width = vProg + "%";
+          videoProgressPercent.textContent = vProg + "%";
+          videoStatusText.textContent = "Renderizando Vídeo...";
+        } else if (j.videoStatus === "DONE") {
+          generateVideoBtn.classList.add("hidden");
+          videoProgressWrapper.classList.add("hidden");
+          downloadVideoLink.classList.remove("hidden");
+          
+          const videoName = j.filename ? j.filename.replace('.mp3', '_tiktok.mp4') : `${j.id}_tiktok.mp4`;
+          downloadVideoLink.href = `/file/${id}/video`;
+          downloadVideoLink.download = videoName;
+        } else if (j.videoStatus === "ERROR") {
+          generateVideoBtn.classList.remove("hidden");
+          videoProgressWrapper.classList.add("hidden");
+          videoErrorMsg.classList.remove("hidden");
+          videoErrorMsg.textContent = "❌ " + (j.videoError || "Erro ao renderizar vídeo");
+        }
       }
     } catch (err) {
       console.error("Polling error:", err);
@@ -374,27 +407,11 @@ function handleExpiration() {
   }
 }
 
-async function loadAudioWithAuth(jobId, downloadName, expiresInMs, isExpired) {
+async function loadAudio(jobId, downloadName, expiresInMs, isExpired) {
   try {
-    const token = getToken();
     const audioUrl = `/file/${jobId}`;
 
-    if (!token) {
-      promptLogin("Faça login para baixar o áudio processado.");
-      return;
-    }
-
-    // Fetch com autenticação
-    const response = await fetch(audioUrl, {
-      headers: {
-        'Authorization': `Bearer ${token}`
-      }
-    });
-
-    if (response.status === 401) {
-      promptLogin("Sessão expirada. Faça login novamente.", { clearSession: true });
-      return;
-    }
+    const response = await fetch(audioUrl);
 
     if (!response.ok) {
       throw new Error(`HTTP ${response.status}`);
@@ -425,7 +442,9 @@ async function loadAudioWithAuth(jobId, downloadName, expiresInMs, isExpired) {
     }, 100);
 
     // Configurar botão de download (só se não estiver expirado)
-    if (!isExpired && expiresInMs > 0) {
+    if (isExpired) {
+      handleExpiration();
+    } else {
       downloadLink.href = blobUrl;
       downloadLink.download = downloadName;
       downloadLink.classList.remove("hidden");
@@ -434,15 +453,13 @@ async function loadAudioWithAuth(jobId, downloadName, expiresInMs, isExpired) {
       downloadLink.style.opacity = '1';
       downloadLink.textContent = "Baixar Áudio";
       downloadLink.onclick = (e) => {
-        // Verificar novamente antes de permitir download
-        if (expiresInMs <= 0) {
+        // Verificar novamente antes de permitir download (se tiver timer)
+        if (expiresInMs !== undefined && expiresInMs <= 0) {
           e.preventDefault();
           handleExpiration();
           return false;
         }
       };
-    } else {
-      handleExpiration();
     }
 
   } catch (err) {

@@ -114,6 +114,26 @@
             </svg>
             🎵 Baixar Meu Remix
           </a>
+
+          <!-- Video Generation Section -->
+          <div class="video-section mt-4 hidden" id="videoSection">
+            <button id="generateVideoBtn" class="download-btn video-btn">
+              🎬 Exportar para TikTok/Reels
+            </button>
+            <a id="downloadVideoLink" class="download-btn hidden" style="background: #E8A567; color: #111;" download aria-label="Download do vídeo processado">
+              ⬇️ Baixar Vídeo
+            </a>
+            <div id="videoProgressWrapper" class="progress-wrapper hidden" style="margin-top: 1rem;">
+              <div class="progress-bar">
+                <div id="videoBarInner" class="progress-fill" style="background: #E8A567;"></div>
+              </div>
+              <div class="progress-info">
+                <span id="videoStatusText" class="progress-label">Renderizando vídeo...</span>
+                <span id="videoProgressPercent" class="progress-percent">0%</span>
+              </div>
+            </div>
+            <div id="videoErrorMsg" class="process-alert hidden" style="margin-top: 1rem;"></div>
+          </div>
         </div>
       </div>
     </div>
@@ -261,7 +281,6 @@
   </div>
 
   <script type="module" src="/js/navbar.js"></script>
-  <script type="module" src="/js/auth/modal-auth.js"></script>
   <script type="module" src="/js/process.js"></script>
 </body>
 

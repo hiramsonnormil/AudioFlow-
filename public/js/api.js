@@ -19,11 +19,6 @@ async function request(endpoint, options = {}) {
     ...options,
   };
 
-  // Adicionar token se existir (usando localStorage para persistência)
-  const token = localStorage.getItem('phona:token');
-  if (token) {
-    config.headers['Authorization'] = `Bearer ${token}`;
-  }
 
   try {
     const response = await fetch(url, config);
@@ -50,23 +45,6 @@ async function request(endpoint, options = {}) {
     console.error(`API Error [${endpoint}]:`, error);
     throw error;
   }
-}
-
-/**
- * API de Autenticação
- */
-export async function apiLogin(email, password) {
-  return request('/api/auth/login', {
-    method: 'POST',
-    body: JSON.stringify({ email, password }),
-  });
-}
-
-export async function apiSignup(username, email, password) {
-  return request('/api/auth/signup', {
-    method: 'POST',
-    body: JSON.stringify({ username, email, password }),
-  });
 }
 
 /**
@@ -178,9 +156,6 @@ export function getErrorMessage(error) {
       'invalid_preset': 'Preset inválido selecionado',
       'url_not_supported': 'URL não suportada. Use links do YouTube',
       'not_found': 'Recurso não encontrado',
-      'unauthorized': 'Você precisa fazer login',
-      'signup_failed': error.data?.message || 'Erro ao criar conta. Tente novamente.',
-      'login_failed': error.data?.message || 'Erro ao fazer login. Tente novamente.',
     };
     
     return errorMap[error.data.error] || error.data.error;
@@ -194,8 +169,6 @@ export function getErrorMessage(error) {
 }
 
 export default {
-  apiLogin,
-  apiSignup,
   apiCreateJob,
   apiGetJobStatus,
   apiGetJobDownload,

@@ -4,9 +4,9 @@
  */
 
 import express from 'express';
-import { authRequired } from '../middleware/authRequired.js';
-import { User } from '../models/User.js';
+import fs from 'fs';
 import * as r2 from '../../storage/r2.js';
+import { jobQueueService } from '../services/JobQueueService.js';
 
 const router = express.Router();
 
@@ -18,41 +18,66 @@ console.log('[RECENTS DEBUG] Funções disponíveis em r2:', Object.keys(r2));
  * Lista os processamentos recentes do usuário logado
  * Requer autenticação
  */
-router.get('/recent-processings', authRequired, async (req, res) => {
+router.get('/recent-processings', async (req, res) => {
   try {
-    const userSource = req.user.email || req.user._id;
+    const userSource = req.ip;
     
-    if (!userSource || userSource === 'anonymous') {
-      return res.status(401).json({ 
-        error: 'unauthorized',
-        message: 'Você precisa estar logado para ver seus processamentos'
-      });
-    }
-
-    // Buscar plano atualizado do banco de dados
-    let userPlan = 'free';
-    if (req.user._id) {
-      const userRecord = await User.findById(req.user._id).select('plan');
-      if (userRecord?.plan) {
-        userPlan = userRecord.plan;
-      }
-    }
-
+    let userPlan = 'premium';
+    const tier = 'premium';
+    
     // Importar getUserIdentity para obter o storageKey correto
     const { getUserIdentity } = await import('../config/security.js');
     const { storageKey } = getUserIdentity(userSource);
 
-    // Determinar tier baseado no plano atualizado
-    const tier = (userPlan === 'voz_pro' || userPlan === 'voz_master' || userPlan === 'premium_30')
-      ? 'premium'
-      : 'free';
-
     console.log(`[RECENTS] User: ${userSource}, Plano: ${userPlan}, Tier: ${tier}, StorageKey: ${storageKey}`);
 
-    // Buscar em ambas as pastas para garantir
-    const freeObjects = await r2.listUserObjects(storageKey, 'free');
-    const premiumObjects = await r2.listUserObjects(storageKey, 'premium');
-    const objects = [...freeObjects, ...premiumObjects];
+    let freeObjects = [];
+    let premiumObjects = [];
+    let isLocalFallback = false;
+    
+    try {
+      // Buscar em ambas as pastas para garantir
+      freeObjects = await r2.listUserObjects(storageKey, 'free');
+      premiumObjects = await r2.listUserObjects(storageKey, 'premium');
+    } catch (err) {
+      console.warn(`[RECENTS] Fallback local - R2 desabilitado: ${err.message}`);
+      isLocalFallback = true;
+    }
+    
+    let objects = [];
+    
+    if (isLocalFallback) {
+      // Retorna os jobs locais da memória
+      const now = Date.now();
+      const ONE_HOUR = 60 * 60 * 1000;
+      
+      for (const [id, job] of jobQueueService.jobs.entries()) {
+        if (job.status === "DONE" && job.out && fs.existsSync(job.out)) {
+          const objectAge = now - job.completedAt;
+          if (objectAge <= ONE_HOUR) {
+            let size = 0;
+            try { size = fs.statSync(job.out).size; } catch(e){}
+            
+            objects.push({
+              key: job.id,
+              fileName: `${job.id}.mp3`,
+              jobId: job.id,
+              size: size,
+              createdAt: new Date(job.completedAt).toISOString(),
+              expiresIn: ONE_HOUR - objectAge,
+              preset: job.metadata?.preset || 'CUSTOM',
+              title: job.metadata?.title || 'Áudio Local',
+              tier: 'local'
+            });
+          }
+        }
+      }
+      
+      // Ordena do mais recente para o mais antigo
+      objects.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    } else {
+      objects = [...freeObjects, ...premiumObjects];
+    }
     // Retorna os objetos com informações adicionais
     const processings = objects.map(obj => {
       const processing = {

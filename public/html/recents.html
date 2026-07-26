@@ -271,9 +271,56 @@
     </div>
   </div>
 
+  <!-- Global Audio Player -->
+  <div class="global-player" id="globalPlayer">
+    <div class="player-content">
+      <div class="player-info">
+        <div class="player-thumb placeholder" id="playerThumb"></div>
+        <div class="player-details">
+          <div class="player-title" id="playerTitle">Nenhuma música tocando</div>
+          <div class="player-preset" id="playerPreset">-</div>
+        </div>
+      </div>
+      
+      <div class="player-controls-wrapper">
+        <div class="player-controls">
+          <button class="control-btn" id="playerPrevBtn" aria-label="Anterior">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/>
+            </svg>
+          </button>
+          
+          <button class="control-btn play-pause-btn" id="playerPlayBtn" aria-label="Play/Pause">
+            <svg class="play-icon" width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M8 5v14l11-7z" />
+            </svg>
+            <svg class="pause-icon hidden" width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z" />
+            </svg>
+          </button>
+          
+          <button class="control-btn" id="playerNextBtn" aria-label="Próxima">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/>
+            </svg>
+          </button>
+        </div>
+        
+        <div class="player-progress-container">
+          <span class="player-time" id="playerCurrentTime">0:00</span>
+          <div class="player-progress-bar-bg" id="playerProgressBarBg">
+            <div class="player-progress-bar-fill" id="playerProgressBarFill"></div>
+          </div>
+          <span class="player-time" id="playerDuration">0:00</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <audio id="globalAudioElement"></audio>
+
   <script type="module" src="/js/landing-animations.js"></script>
   <script type="module" src="/js/navbar-auth.js"></script>
-  <script type="module" src="/js/auth/modal-auth.js"></script>
   <script type="module" src="/js/recents.js"></script>
 </body>
 

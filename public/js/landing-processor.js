@@ -1,11 +1,7 @@
 /**
  * PHONA Landing Page Processor
- * Gerencia o processamento de áudio na landing page com proteção de autenticação
+ * Gerencia o processamento de áudio na landing page (Versão Local)
  */
-
-import { isAuthenticated } from './auth/session.js';
-import { openModal } from './auth/modal-auth.js';
-import { showPlanModal } from './utils/planModal.js';
 
 // Elementos (serão inicializados no init)
 let processBtn;
@@ -14,57 +10,36 @@ let presetSelect;
 let statusContainer;
 
 /**
- * Inicializar proteção do botão de processar
+ * Inicializar
  */
 function init() {
-  // Capturar elementos do DOM
   processBtn = document.getElementById('processBtn');
   youtubeUrlInput = document.getElementById('youtubeUrl');
   presetSelect = document.getElementById('presetSelect');
   statusContainer = document.getElementById('statusContainer');
 
   if (!processBtn) {
-    console.warn('⚠️ [LANDING] Botão #processBtn não encontrado');
     return;
   }
 
-  // Verificar se foi redirecionado por falta de autenticação
-  const urlParams = new URLSearchParams(window.location.search);
-  if (urlParams.get('requireAuth') === 'true') {
-    // Abrir modal de login automaticamente
-    setTimeout(() => {
-      showAuthRequiredMessage();
-      setTimeout(() => {
-        openModal('login');
-      }, 100);
-    }, 500);
-
-    // Limpar parâmetro da URL
-    window.history.replaceState({}, document.title, '/');
-  }
-
-  // Carregar presets disponíveis
   loadPresets();
 
-  // IMPORTANTE: Remover todos os event listeners existentes clonando o botão
   const newBtn = processBtn.cloneNode(true);
   processBtn.parentNode.replaceChild(newBtn, processBtn);
-
-  // Atualizar referência
   const cleanBtn = document.getElementById('processBtn');
 
-  // Adicionar nosso event listener com captura (fase de captura executa primeiro)
   cleanBtn.addEventListener('click', (e) => {
     handleProcessClick(e);
   }, true);
 
-  // Permitir Enter no input de URL
   youtubeUrlInput?.addEventListener('keypress', (e) => {
     if (e.key === 'Enter') {
       e.preventDefault();
       handleProcessClick(e);
     }
   });
+
+  updateUI();
 }
 
 /**
@@ -72,9 +47,7 @@ function init() {
  */
 async function loadPresets() {
   if (!presetSelect) return;
-
   try {
-    // Presets disponíveis (mesmo sem autenticação, só para visualização)
     const presets = [
       { value: 'SLOWED', label: '🌙 Slowed (0.88x)' },
       { value: 'SLOWED_REVERB', label: '🌊 Slowed + Reverb' },
@@ -91,41 +64,22 @@ async function loadPresets() {
       { value: 'ROBOT_VOICE', label: '🤖 Robot Voice' },
       { value: '8D', label: '🎧 8D Audio' },
     ];
-
     presetSelect.innerHTML = presets
       .map(p => `<option value="${p.value}">${p.label}</option>`)
       .join('');
-
-    // Selecionar primeiro preset por padrão
     presetSelect.selectedIndex = 0;
   } catch (error) {
-    console.error('Erro ao carregar presets:', error);
     presetSelect.innerHTML = '<option value="">Erro ao carregar presets</option>';
   }
 }
 
-/**
- * Lidar com clique no botão de processar
- */
 function handleProcessClick(e) {
-  // IMPORTANTE: Prevenir qualquer comportamento padrão
   if (e) {
     e.preventDefault();
     e.stopPropagation();
     e.stopImmediatePropagation();
   }
 
-  // Verificar se está autenticado
-  if (!isAuthenticated()) {
-    // Mostrar mensagem e abrir modal de login
-    showAuthRequiredMessage();
-    setTimeout(() => {
-      openModal('login');
-    }, 100);
-    return false; // Importante: retornar false para prevenir propagação
-  }
-
-  // Se está autenticado, validar campos
   const url = youtubeUrlInput?.value?.trim();
   const preset = presetSelect?.value;
 
@@ -147,143 +101,54 @@ function handleProcessClick(e) {
     return false;
   }
 
-  // Processar áudio diretamente na landing page
   startProcessing(url, preset);
   return false;
 }
 
-/**
- * Iniciar processamento do áudio
- */
 async function startProcessing(url, presetName) {
-  const token = localStorage.getItem('phona:token');
-
-  if (!token) {
-    showError('Sessão expirada. Faça login novamente.');
-    openModal('login');
-    return;
-  }
-
-  // Validar se o usuário tem acesso ao preset selecionado
-  const user = JSON.parse(localStorage.getItem('phona:user') || '{}');
-  const userPlan = user?.plan || 'free';
-
-  // Presets exclusivos do Plus Master
-  const plusMasterPresets = [
-    'BABY_VOICE', 'DEEP_VOICE', 'VAPORWAVE_CLEAN', 
-    'RADIO_RETRO_AM', 'CRYSTAL_SPEED', 'TAPE_WARP',
-    'WHISPER_CORE', 'GHOST_REVERB', 'CHOIRIFY', 'SUBHARMONIC_BASS'
-  ];
-
-  // Se o preset é Plus Master e o usuário não tem o plano
-  if (plusMasterPresets.includes(presetName) && userPlan !== 'plano_plus_master') {
-    // Importar e mostrar modal de upgrade
-    import('./utils/planModal.js').then(module => {
-      module.showPlanModal('Este preset exclusivo está disponível apenas no Plano Plus Master. 🟨');
-    });
-    return;
-  }
-
-  // Mostrar loading no botão
   processBtn.disabled = true;
   processBtn.innerHTML = `
     <span class="btn-spinner"></span>
     <span class="btn-text">Processando...</span>
   `;
 
-  // Mostrar container de status
   if (statusContainer) {
     statusContainer.style.display = 'block';
     document.getElementById('statusText').textContent = 'Iniciando processamento...';
   }
 
   try {
-    // Preparar headers
-    const headers = {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${token}`
-    };
-
-    // Preparar body
-    const body = {
-      url: url,
-      preset: presetName
-    };
-
-    // Enviar requisição para criar job
     const response = await fetch('/process', {
       method: 'POST',
-      headers: headers,
-      body: JSON.stringify(body)
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ url: url, preset: presetName })
     });
 
     let data = null;
-
     try {
       data = await response.json();
-    } catch (parseError) {
-      console.warn('⚠️ [LANDING] Falha ao ler JSON da resposta:', parseError);
-    }
+    } catch (parseError) {}
 
     if (!response.ok) {
-      const errorCode = data?.error;
-      const errorMessage = data?.message || data?.error || 'Erro ao iniciar processamento';
-      
-      if (errorCode === 'preset_not_available') {
-        processBtn.disabled = false;
-        updateUIBasedOnAuth();
-        if (statusContainer) statusContainer.style.display = 'none';
-        showPlanModal(errorMessage || 'Este efeito não está disponível no seu plano atual.');
-        return;
-      }
-      
-      if (errorCode === 'plan_limit_reached') {
-        processBtn.disabled = false;
-        updateUIBasedOnAuth();
-        if (statusContainer) statusContainer.style.display = 'none';
-        showPlanModal(errorMessage || 'Você atingiu o limite de processamentos do seu plano.');
-        return;
-      }
-      
-      throw new Error(errorMessage);
+      throw new Error(data?.message || data?.error || 'Erro ao iniciar processamento');
     }
 
     if (!data || !data.id) {
       throw new Error('Resposta inesperada do servidor. Tente novamente.');
     }
 
-    // Redirecionar para página de processo com o jobId
     window.location.href = `/html/process.html?id=${data.id}`;
-
   } catch (error) {
     console.error('❌ [LANDING] Erro ao processar:', error);
-
-    // Esconder status container
-    if (statusContainer) {
-      statusContainer.style.display = 'none';
-    }
-
-    // Restaurar botão
+    if (statusContainer) statusContainer.style.display = 'none';
     processBtn.disabled = false;
-    updateUIBasedOnAuth();
-
-    // Mostrar erro
+    updateUI();
     showError(error.message || 'Erro ao processar áudio. Tente novamente.');
-
-    // Se erro de autenticação, fazer logout
-    if (error.message?.includes('autenticação') || error.message?.includes('token')) {
-      setTimeout(() => {
-        localStorage.removeItem('phona:token');
-        localStorage.removeItem('phona:user');
-        openModal('login');
-      }, 2000);
-    }
   }
 }
 
-/**
- * Validar URL do YouTube e YouTube Music
- */
 function isValidYouTubeUrl(url) {
   const patterns = [
     /^(https?:\/\/)?(www\.)?(youtube\.com\/watch\?v=|youtu\.be\/)[\w-]+/,
@@ -291,109 +156,38 @@ function isValidYouTubeUrl(url) {
     /^(https?:\/\/)?music\.youtube\.com\/watch\?v=[\w-]+/,
     /^(https?:\/\/)?music\.youtube\.com\/watch\?.*v=[\w-]+/
   ];
-
   return patterns.some(pattern => pattern.test(url));
 }
 
-/**
- * Mostrar mensagem de autenticação necessária
- */
-function showAuthRequiredMessage() {
-  // Criar toast/notificação
-  const message = document.createElement('div');
-  message.className = 'auth-required-toast';
-  message.innerHTML = `
-    <div class="toast-icon">🔒</div>
-    <div class="toast-content">
-      <strong>Login necessário</strong>
-      <p>Faça login para processar áudio</p>
-    </div>
-  `;
-
-  document.body.appendChild(message);
-
-  // Animar entrada
-  setTimeout(() => message.classList.add('show'), 10);
-
-  // Remover após 3s
-  setTimeout(() => {
-    message.classList.remove('show');
-    setTimeout(() => message.remove(), 300);
-  }, 3000);
-}
-
-/**
- * Mostrar erro no campo
- */
 function showError(message) {
-  // Criar elemento de erro se não existir
   let errorEl = document.querySelector('.processor-error');
-
   if (!errorEl) {
     errorEl = document.createElement('div');
     errorEl.className = 'processor-error';
     processBtn?.parentElement?.insertBefore(errorEl, processBtn);
   }
-
   errorEl.textContent = message;
   errorEl.style.display = 'block';
-
-  // Remover após 5s
   setTimeout(() => {
     errorEl.style.display = 'none';
   }, 5000);
 }
 
-/**
- * Atualizar UI baseado no estado de autenticação
- */
-function updateUIBasedOnAuth() {
-  const isLoggedIn = isAuthenticated();
-
+function updateUI() {
   if (processBtn) {
-    if (isLoggedIn) {
-      processBtn.innerHTML = `
-        <span class="btn-text">Processar áudio</span>
-        <span class="btn-icon">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-            <path
-              d="M5 12h14m-7-7 7 7-7 7"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            />
-          </svg>
-        </span>
-      `;
-    } else {
-      processBtn.innerHTML = `
-        <span class="btn-text">Fazer login para processar</span>
-        <span class="btn-icon">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-            <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-            <polyline points="10 17 15 12 10 7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-            <line x1="15" y1="12" x2="3" y2="12" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
-        </span>
-      `;
-    }
+    processBtn.innerHTML = `
+      <span class="btn-text">Processar áudio</span>
+      <span class="btn-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+          <path d="M5 12h14m-7-7 7 7-7 7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+        </svg>
+      </span>
+    `;
   }
 }
 
-// Inicializar quando DOM estiver pronto
 if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', () => {
-    init();
-    updateUIBasedOnAuth();
-  });
+  document.addEventListener('DOMContentLoaded', init);
 } else {
   init();
-  updateUIBasedOnAuth();
 }
-
-// Escutar mudanças no storage (login/logout em outra aba)
-window.addEventListener('storage', (e) => {
-  if (e.key === 'phona_session' || e.key === null) {
-    updateUIBasedOnAuth();
-  }
-});

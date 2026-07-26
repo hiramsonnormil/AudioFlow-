@@ -4,9 +4,8 @@
  */
 
 import express from 'express';
-import { authRequired } from '../middleware/authRequired.js';
+
 import { S3Client, GetObjectCommand, HeadObjectCommand } from '@aws-sdk/client-s3';
-import { User } from '../models/User.js';
 import path from 'path';
 
 const router = express.Router();
@@ -31,10 +30,10 @@ function getR2Client() {
  * GET /api/download/:key
  * Faz proxy do download do R2 (para contornar problemas de CORS)
  */
-router.get('/download/:key(*)', authRequired, async (req, res) => {
+router.get('/download/:key(*)', async (req, res) => {
   try {
     const key = decodeURIComponent(req.params.key);
-    const userSource = req.user.email || req.user._id;
+    const userSource = req.ip;
     
     // Obter storageKey do usuário (hash para organizar no R2)
     const { getUserIdentity } = await import('../config/security.js');
