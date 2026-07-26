@@ -22,6 +22,12 @@ export class Job {
     this.createdAt = new Date();
     this.startedAt = null;
     this.completedAt = null;
+    
+    // Video features
+    this.videoStatus = null; // null, PENDING, PROCESSING, DONE, ERROR
+    this.videoProgress = 0;
+    this.videoOut = null;
+    this.videoError = null;
   }
 
   /**
@@ -117,6 +123,12 @@ export class Job {
       createdAt: this.createdAt,
       startedAt: this.startedAt,
       completedAt: this.completedAt,
+      
+      // Video fields
+      videoStatus: this.videoStatus,
+      videoProgress: this.videoProgress,
+      videoOut: this.videoOut,
+      videoError: this.videoError
     };
   }
 }

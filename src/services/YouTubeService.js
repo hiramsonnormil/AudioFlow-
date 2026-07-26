@@ -6,10 +6,41 @@
 import { spawn } from "child_process";
 import fs from "fs";
 import path from "path";
+import { fileURLToPath } from "url";
+import { Readable } from "stream";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// Auto-detect cookies.txt at project root
+const PROJECT_ROOT = path.resolve(__dirname, "../../");
+const DEFAULT_COOKIES_PATH = path.join(PROJECT_ROOT, "cookies.txt");
 
 export class YouTubeService {
   constructor(cookiesPath = null) {
-    this.cookiesPath = cookiesPath;
+    // Use explicitly provided path, or auto-detect cookies.txt at project root
+    this.cookiesPath =
+      cookiesPath ||
+      (fs.existsSync(DEFAULT_COOKIES_PATH) ? DEFAULT_COOKIES_PATH : null);
+
+    if (this.cookiesPath) {
+      console.log(`[YouTubeService] Using cookies: ${this.cookiesPath}`);
+    } else {
+      console.warn(
+        `[YouTubeService] No cookies.txt found. YouTube may block requests. ` +
+          `Place a cookies.txt at: ${DEFAULT_COOKIES_PATH}`
+      );
+    }
+  }
+
+  /**
+   * Constrói os argumentos de cookies para yt-dlp
+   */
+  _cookieArgs() {
+    if (this.cookiesPath && fs.existsSync(this.cookiesPath)) {
+      return ["--cookies", this.cookiesPath];
+    }
+    return [];
   }
 
   /**
@@ -48,29 +79,46 @@ export class YouTubeService {
    * Obtém metadados do vídeo do YouTube
    */
   getMetadata(url, jobId) {
-    return new Promise((resolve) => {
-      const args = ["-j", "--no-warnings", "--socket-timeout", "30"];
-
-      if (this.cookiesPath && fs.existsSync(this.cookiesPath)) {
-        args.unshift("--cookies", this.cookiesPath);
-      }
-
-      args.push(url);
+    return new Promise((resolve, reject) => {
+      const args = [
+        ...this._cookieArgs(),
+        "--extractor-args",
+        "youtube:player_client=android",
+        "-j",
+        "--no-warnings",
+        "--socket-timeout",
+        "30",
+        url,
+      ];
 
       const ydl = spawn("yt-dlp", args);
       let output = "";
+      let stderrOutput = "";
 
       ydl.stdout.on("data", (d) => {
         output += d;
       });
 
       ydl.stderr.on("data", (d) => {
-        console.error(
-          `[${jobId}] yt-dlp metadata error: ${String(d).slice(0, 100)}`
-        );
+        stderrOutput += String(d);
+        const line = String(d).slice(0, 200);
+        if (!line.includes("Downloading") && !line.includes("fragment")) {
+          console.error(`[${jobId}] yt-dlp: ${line.trim()}`);
+        }
       });
 
-      ydl.on("close", () => {
+      ydl.on("close", (code) => {
+        if (code !== 0 || !output.trim()) {
+          // Detect bot/auth errors and give a clear message
+          const isBotError =
+            stderrOutput.includes("Sign in to confirm") ||
+            stderrOutput.includes("bot");
+          const errMsg = isBotError
+            ? `YouTube requer autenticação. Adicione cookies.txt em: ${DEFAULT_COOKIES_PATH} (ver README)`
+            : `yt-dlp falhou (código ${code})`;
+          return reject(new Error(errMsg));
+        }
+
         try {
           const data = JSON.parse(output);
           const title = data.title || `Audio ${jobId}`;
@@ -86,37 +134,43 @@ export class YouTubeService {
           resolve({ title: `Audio ${jobId}`, duration: 0, thumbnail: null });
         }
       });
+
+      ydl.on("error", (err) => {
+        reject(new Error(`yt-dlp spawn error: ${err.message}`));
+      });
     });
   }
 
   /**
    * Obtém stream de áudio do YouTube
+   * Retorna um objeto { stream, process, stderrLog }
+   * Se o yt-dlp falhar, 'stream' emite um evento 'error' para o consumidor tratar
    */
   getAudioStream(url, jobId) {
     const baseArgs = [
+      ...this._cookieArgs(),
+      "--extractor-args",
+      "youtube:player_client=android",
       "-f",
-      "bestaudio",
-      "-x",
-      "--audio-format",
-      "m4a",
+      "ba/b",
       "-o",
       "-",
       "--no-warnings",
       "--socket-timeout",
       "30",
+      url,
     ];
-
-    if (this.cookiesPath && fs.existsSync(this.cookiesPath)) {
-      baseArgs.push("--cookies", this.cookiesPath);
-    }
-
-    baseArgs.push(url);
 
     const dl = spawn("yt-dlp", baseArgs, {
       stdio: ["ignore", "pipe", "pipe"],
     });
 
     let stderrLog = "";
+    let didReceiveData = false;
+
+    dl.stdout.once("data", () => {
+      didReceiveData = true;
+    });
 
     dl.stderr.on("data", (d) => {
       stderrLog += String(d);
@@ -124,13 +178,22 @@ export class YouTubeService {
 
     dl.on("error", (err) => {
       console.error(`[${jobId}] yt-dlp spawn error:`, err.message);
+      dl.stdout.emit("error", err);
     });
 
     dl.on("close", (code) => {
-      if (code !== 0 && stderrLog) {
-        console.error(
-          `[${jobId}] yt-dlp exit code ${code}: ${stderrLog.slice(-500)}`
-        );
+      if (code !== 0) {
+        const isBotError =
+          stderrLog.includes("Sign in to confirm") ||
+          stderrLog.includes("bot");
+        const errMsg = isBotError
+          ? `YouTube bloqueou o download. Adicione cookies.txt em: ${DEFAULT_COOKIES_PATH}`
+          : `yt-dlp exit code ${code}: ${stderrLog.slice(-300)}`;
+        console.error(`[${jobId}] ${errMsg}`);
+        // Emit error on stdout so ffmpeg pipe gets destroyed
+        if (!didReceiveData) {
+          dl.stdout.emit("error", new Error(errMsg));
+        }
       }
     });
 

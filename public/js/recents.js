@@ -1,33 +1,11 @@
 /**
- * recents.js - Gerencia a página de processamentos recentes
+ * recents.js - Gerencia a página de processamentos recentes (Versão Local)
  */
-
-import { getToken, getUser } from './auth/session.js';
-import { openModal } from './auth/modal-auth.js';
 
 const API_BASE = '';
 
 // Inicializa a página
 async function init() {
-  // Verifica autenticação
-  const token = getToken();
-  if (!token) {
-    console.warn('⚠️ Usuário não autenticado - exibindo modal de login');
-    const loadingIndicator = document.getElementById('loading');
-    if (loadingIndicator) {
-      loadingIndicator.style.display = 'none';
-    }
-    setTimeout(() => openModal('login'), 100);
-    return;
-  }
-
-  // Carrega info do usuário
-  const user = getUser();
-  if (user?.email) {
-    document.getElementById('user-email').textContent = user.email;
-    document.getElementById('user-info').style.display = 'block';
-  }
-
   // Carrega navbar
   await loadNavbar();
 
@@ -56,19 +34,14 @@ async function loadNavbar() {
   }
 }
 
-// Carrega os processamentos do usuário
+// Carrega os processamentos
 async function loadProcessings() {
   const loading = document.getElementById('loading');
   const emptyState = document.getElementById('empty-state');
   const grid = document.getElementById('processing-grid');
 
   try {
-    const token = getToken();
-    const response = await fetch(`${API_BASE}/api/recent-processings`, {
-      headers: {
-        'Authorization': `Bearer ${token}`
-      }
-    });
+    const response = await fetch(`${API_BASE}/api/recent-processings`);
 
     if (!response.ok) {
       throw new Error(`HTTP ${response.status}`);
@@ -76,9 +49,6 @@ async function loadProcessings() {
 
     const data = await response.json();
     
-    console.log('📦 Dados recebidos da API:', data);
-    console.log('📦 Primeiro processamento:', data.processings?.[0]);
-
     loading.style.display = 'none';
 
     if (!data.processings || data.processings.length === 0) {
@@ -90,16 +60,6 @@ async function loadProcessings() {
     renderProcessings(data.processings);
     grid.style.display = 'grid';
     
-    // Atualizar avatar do usuário
-    const user = getUser();
-    if (user?.email) {
-      const avatarEl = document.getElementById('user-avatar');
-      if (avatarEl) {
-        const initial = user.email.charAt(0).toUpperCase();
-        avatarEl.textContent = initial;
-      }
-    }
-
   } catch (error) {
     console.error('❌ Erro ao carregar processamentos:', error);
     loading.style.display = 'none';
@@ -127,34 +87,26 @@ function createProcessingCard(proc) {
   card.dataset.key = proc.key;
   card.dataset.expiresIn = proc.expiresIn;
 
-  // Usuários premium têm expiração de 24h, free de 1h
-  const isPremium = proc.tier === 'premium';
-  const maxTime = isPremium ? (24 * 60 * 60 * 1000) : (60 * 60 * 1000); // 24h ou 1h
+  const maxTime = (24 * 60 * 60 * 1000); // 24h local version
   const expiresIn = proc.expiresIn || 0;
   const expirationPercent = Math.max(0, (expiresIn / maxTime) * 100);
   const timeRemaining = formatTimeRemaining(expiresIn);
-  const isWarning = expiresIn < 20 * 60 * 1000; // menos de 20 min
-  const isDanger = expiresIn < 5 * 60 * 1000; // menos de 5 min
+  const isWarning = expiresIn < 20 * 60 * 1000;
+  const isDanger = expiresIn < 5 * 60 * 1000;
   
-  console.log(`📊 Card ${proc.jobId}: expiresIn=${expiresIn}, timeRemaining=${timeRemaining}, isPremium=${isPremium}`);
-
-  // Extrai preset do metadata ou do jobId
   const preset = proc.preset || 'DESCONHECIDO';
-  
-  // Nome do arquivo: título se disponível, senão fileName, senão jobId
   const displayName = proc.title || proc.fileName || proc.jobId;
 
   card.innerHTML = `
     <div class="card-header">
       <div class="card-title">${displayName || proc.jobId}</div>
       <div class="card-preset">${preset}</div>
-      ${isPremium ? '<span style="background: linear-gradient(135deg, #c28c66, #a67351); color: white; padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.75rem; font-weight: 600;">PREMIUM</span>' : ''}
     </div>
 
     <div class="card-info">
       <div class="info-row">
         <span class="info-label">👤 Usuário:</span>
-        <span class="info-value">${proc.userId || 'Desconhecido'}</span>
+        <span class="info-value">Local User</span>
       </div>
       <div class="info-row">
         <span class="info-label">📦 Tamanho:</span>
@@ -171,11 +123,14 @@ function createProcessingCard(proc) {
     </div>
     
     <div class="expiration-time ${isDanger ? 'danger' : isWarning ? 'warning' : ''}" data-expires="${expiresIn}">
-      ${isPremium ? '🌟' : '⏱️'} Expira em: <strong>${timeRemaining}</strong>
+      🌟 Expira em: <strong>${timeRemaining}</strong>
     </div>
 
     <div class="card-actions">
       ${expiresIn > 0 ? `
+        <button class="btn-play-card" onclick="playProcessing('${proc.key}')">
+          ▶ Ouvir Agora
+        </button>
         <a href="/api/download/${encodeURIComponent(proc.key)}" class="btn-download" download onclick="handleDownload(event, '${proc.key}', ${expiresIn})">
           📥 Download
         </a>
@@ -245,13 +200,11 @@ function updateCountdowns() {
     if (!timeElement) return;
 
     let expiresIn = parseInt(card.dataset.expiresIn);
-    expiresIn -= 1000; // Decrementa 1 segundo
+    expiresIn -= 1000;
     
     if (expiresIn <= 0) {
-      // Arquivo expirado - remove o card
       card.remove();
       
-      // Verifica se não há mais cards
       const remainingCards = document.querySelectorAll('.processing-card');
       if (remainingCards.length === 0) {
         document.getElementById('processing-grid').style.display = 'none';
@@ -260,16 +213,13 @@ function updateCountdowns() {
       return;
     }
 
-    // Atualiza o dataset
     card.dataset.expiresIn = expiresIn;
 
-    // Atualiza o texto
     const timeText = timeElement.querySelector('strong');
     if (timeText) {
       timeText.textContent = formatTimeRemaining(expiresIn);
     }
 
-    // Atualiza as classes de aviso
     timeElement.classList.remove('warning', 'danger');
     if (expiresIn < 5 * 60 * 1000) {
       timeElement.classList.add('danger');
@@ -277,8 +227,7 @@ function updateCountdowns() {
       timeElement.classList.add('warning');
     }
 
-    // Atualiza a barra de progresso
-    const expirationPercent = Math.max(0, (expiresIn / (60 * 60 * 1000)) * 100);
+    const expirationPercent = Math.max(0, (expiresIn / (24 * 60 * 60 * 1000)) * 100);
     if (progressBar) {
       progressBar.style.width = `${expirationPercent}%`;
     }
@@ -287,103 +236,62 @@ function updateCountdowns() {
 
 // Handler para download com verificação de expiração
 window.handleDownload = async function(e, key, expiresIn) {
-  // Verificar se ainda está dentro do prazo
   if (expiresIn <= 0) {
     e.preventDefault();
     alert('⏰ Este arquivo expirou e não está mais disponível para download.');
     return false;
   }
   
-  // Permitir download normal
   const link = e.target.closest('a');
   if (!link) return;
   
-  // Adicionar token de autenticação se necessário (via fetch para melhor controle)
-  const token = getToken();
-  if (token) {
-    // Tentar fazer download programaticamente para melhor controle de erros
-    try {
-      e.preventDefault();
-      
-      const response = await fetch(`/api/download/${encodeURIComponent(key)}`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-      
-      if (!response.ok) {
-        let errorMessage = 'Erro ao baixar o arquivo';
-        
-        if (response.status === 404) {
-          errorMessage = 'Arquivo não encontrado ou já expirou no servidor';
-        } else if (response.status === 403) {
-          errorMessage = 'Você não tem permissão para baixar este arquivo';
-        } else if (response.status === 410) {
-          errorMessage = 'Arquivo expirado (mais de 1 hora)';
-        } else {
-          // Tentar obter mensagem de erro do servidor
-          try {
-            const errorData = await response.json();
-            errorMessage = errorData.message || errorMessage;
-          } catch (e) {
-            errorMessage = `Erro ${response.status}: ${response.statusText}`;
-          }
-        }
-        
-        throw new Error(errorMessage);
-      }
-      
-      // Obter o blob
-      const blob = await response.blob();
-      
-      // Criar URL temporária e fazer download
-      const blobUrl = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = blobUrl;
-      
-      // Obter nome do arquivo do header Content-Disposition
-      const contentDisposition = response.headers.get('Content-Disposition');
-      let filename = 'audio.mp3';
-      if (contentDisposition) {
-        const filenameMatch = contentDisposition.match(/filename="(.+)"/);
-        if (filenameMatch) {
-          filename = filenameMatch[1];
-        }
-      }
-      
-      a.download = filename;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      
-      // Limpar URL após um tempo
-      setTimeout(() => URL.revokeObjectURL(blobUrl), 100);
-      
-    } catch (error) {
-      console.error('Erro no download:', error);
-      
-      const errorMessage = error.message || 'Arquivo não disponível';
-      
-      // Se arquivo não encontrado ou expirado, atualizar o card
-      if (errorMessage.includes('não encontrado') || errorMessage.includes('expirado') || errorMessage.includes('404') || errorMessage.includes('410')) {
-        // Encontrar o card correspondente
-        const card = document.querySelector(`[data-key="${key}"]`);
-        if (card) {
-          const downloadBtn = card.querySelector('.btn-download');
-          if (downloadBtn) {
-            downloadBtn.classList.add('expired');
-            downloadBtn.disabled = true;
-            downloadBtn.innerHTML = '⏰ Expirado';
-            downloadBtn.onclick = null;
-          }
-        }
-      }
-      
-      alert(`❌ Erro ao baixar arquivo: ${errorMessage}`);
+  try {
+    e.preventDefault();
+    
+    const response = await fetch(`/api/download/${encodeURIComponent(key)}`);
+    
+    if (!response.ok) {
+      let errorMessage = 'Erro ao baixar o arquivo';
+      if (response.status === 404) errorMessage = 'Arquivo não encontrado ou já expirou no servidor';
+      throw new Error(errorMessage);
     }
-  } else {
-    // Fallback: deixar o link normal funcionar se não tiver token
-    return true;
+    
+    const blob = await response.blob();
+    const blobUrl = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = blobUrl;
+    
+    const contentDisposition = response.headers.get('Content-Disposition');
+    let filename = 'audio.mp3';
+    if (contentDisposition) {
+      const filenameMatch = contentDisposition.match(/filename="(.+)"/);
+      if (filenameMatch) filename = filenameMatch[1];
+    }
+    
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    
+    setTimeout(() => URL.revokeObjectURL(blobUrl), 100);
+    
+  } catch (error) {
+    console.error('Erro no download:', error);
+    const errorMessage = error.message || 'Arquivo não disponível';
+    
+    if (errorMessage.includes('não encontrado') || errorMessage.includes('404')) {
+      const card = document.querySelector(`[data-key="${key}"]`);
+      if (card) {
+        const downloadBtn = card.querySelector('.btn-download');
+        if (downloadBtn) {
+          downloadBtn.classList.add('expired');
+          downloadBtn.disabled = true;
+          downloadBtn.innerHTML = '⏰ Expirado';
+          downloadBtn.onclick = null;
+        }
+      }
+    }
+    alert(`❌ Erro ao baixar arquivo: ${errorMessage}`);
   }
   
   return false;
@@ -396,25 +304,17 @@ window.deleteProcessing = async function(key) {
   }
 
   try {
-    const token = getToken();
     const response = await fetch(`${API_BASE}/api/r2-test/delete/${encodeURIComponent(key)}`, {
-      method: 'DELETE',
-      headers: {
-        'Authorization': `Bearer ${token}`
-      }
+      method: 'DELETE'
     });
 
     if (!response.ok) {
       throw new Error(`HTTP ${response.status}`);
     }
 
-    // Remove o card da interface
     const card = document.querySelector(`[data-key="${key}"]`);
-    if (card) {
-      card.remove();
-    }
+    if (card) card.remove();
 
-    // Verifica se não há mais cards
     const remainingCards = document.querySelectorAll('.processing-card');
     if (remainingCards.length === 0) {
       document.getElementById('processing-grid').style.display = 'none';
@@ -427,7 +327,160 @@ window.deleteProcessing = async function(key) {
   }
 };
 
-// Inicializa quando o DOM estiver pronto
+// ==========================================
+// PLAYER GLOBAL LOGIC
+// ==========================================
+let currentPlaylist = [];
+let currentPlayIndex = -1;
+let isPlaying = false;
+
+window.playProcessing = function(key) {
+  // Build playlist from current DOM cards to ensure order
+  const cards = Array.from(document.querySelectorAll('.processing-card'));
+  currentPlaylist = cards.map(c => {
+    return {
+      key: c.dataset.key,
+      title: c.querySelector('.card-title').textContent,
+      preset: c.querySelector('.card-preset').textContent,
+      cardEl: c
+    };
+  });
+  
+  const index = currentPlaylist.findIndex(item => item.key === key);
+  if (index !== -1) {
+    playTrack(index);
+  }
+};
+
+function playTrack(index) {
+  if (index < 0 || index >= currentPlaylist.length) return;
+  currentPlayIndex = index;
+  const track = currentPlaylist[index];
+  
+  // Highlight active card
+  document.querySelectorAll('.processing-card').forEach(c => c.classList.remove('playing'));
+  document.querySelectorAll('.btn-play-card').forEach(btn => {
+    btn.classList.remove('active');
+    btn.innerHTML = '▶ Ouvir Agora';
+  });
+  
+  track.cardEl.classList.add('playing');
+  const btn = track.cardEl.querySelector('.btn-play-card');
+  if (btn) {
+    btn.classList.add('active');
+    btn.innerHTML = '🔊 Tocando';
+  }
+
+  // Update UI
+  const player = document.getElementById('globalPlayer');
+  player.classList.add('active');
+  
+  document.getElementById('playerTitle').textContent = track.title;
+  document.getElementById('playerPreset').textContent = track.preset;
+  
+  // Play Audio
+  const audio = document.getElementById('globalAudioElement');
+  audio.src = `/api/download/${encodeURIComponent(track.key)}`;
+  audio.play()
+    .then(() => {
+      isPlaying = true;
+      updatePlayPauseIcon();
+    })
+    .catch(err => {
+      console.error("Erro ao tocar áudio:", err);
+      alert("Erro ao tentar tocar esta música.");
+    });
+}
+
+function togglePlay() {
+  const audio = document.getElementById('globalAudioElement');
+  if (!audio.src) return;
+  
+  if (isPlaying) {
+    audio.pause();
+    isPlaying = false;
+  } else {
+    audio.play();
+    isPlaying = true;
+  }
+  updatePlayPauseIcon();
+}
+
+function playNext() {
+  if (currentPlayIndex < currentPlaylist.length - 1) {
+    playTrack(currentPlayIndex + 1);
+  }
+}
+
+function playPrev() {
+  if (currentPlayIndex > 0) {
+    playTrack(currentPlayIndex - 1);
+  }
+}
+
+function updatePlayPauseIcon() {
+  const playIcon = document.querySelector('#playerPlayBtn .play-icon');
+  const pauseIcon = document.querySelector('#playerPlayBtn .pause-icon');
+  if (isPlaying) {
+    playIcon.classList.add('hidden');
+    pauseIcon.classList.remove('hidden');
+  } else {
+    playIcon.classList.remove('hidden');
+    pauseIcon.classList.add('hidden');
+  }
+}
+
+function formatPlayerTime(seconds) {
+  if (isNaN(seconds) || !isFinite(seconds)) return '0:00';
+  const m = Math.floor(seconds / 60);
+  const s = Math.floor(seconds % 60);
+  return `${m}:${s.toString().padStart(2, '0')}`;
+}
+
+// Setup Player Listeners
+document.addEventListener('DOMContentLoaded', () => {
+  const audio = document.getElementById('globalAudioElement');
+  const progressBarBg = document.getElementById('playerProgressBarBg');
+  const progressBarFill = document.getElementById('playerProgressBarFill');
+  const currentTimeEl = document.getElementById('playerCurrentTime');
+  const durationEl = document.getElementById('playerDuration');
+
+  if (audio) {
+    audio.addEventListener('timeupdate', () => {
+      if (!audio.duration) return;
+      const percent = (audio.currentTime / audio.duration) * 100;
+      progressBarFill.style.width = `${percent}%`;
+      currentTimeEl.textContent = formatPlayerTime(audio.currentTime);
+    });
+
+    audio.addEventListener('loadedmetadata', () => {
+      durationEl.textContent = formatPlayerTime(audio.duration);
+    });
+
+    audio.addEventListener('ended', () => {
+      playNext();
+    });
+  }
+
+  if (progressBarBg) {
+    progressBarBg.addEventListener('click', (e) => {
+      if (!audio.duration) return;
+      const rect = progressBarBg.getBoundingClientRect();
+      const pos = (e.clientX - rect.left) / rect.width;
+      audio.currentTime = pos * audio.duration;
+    });
+  }
+
+  const playBtn = document.getElementById('playerPlayBtn');
+  if (playBtn) playBtn.addEventListener('click', togglePlay);
+  
+  const nextBtn = document.getElementById('playerNextBtn');
+  if (nextBtn) nextBtn.addEventListener('click', playNext);
+  
+  const prevBtn = document.getElementById('playerPrevBtn');
+  if (prevBtn) prevBtn.addEventListener('click', playPrev);
+});
+
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', init);
 } else {
