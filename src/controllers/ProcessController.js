@@ -155,21 +155,21 @@ export class ProcessController {
   async getPresets(req, res) {
     // Hardcoded presets for local version since DB is removed
     const presets = [
-      { id: "SLOWED", name: "Slowed (Vinil Lento)", description: "Desaceleração acoplada, grave reforçado sem estouro, sem aliasing", isPremium: false },
-      { id: "DAYCORE", name: "Daycore", description: "O 'espelho' do Nightcore: sonolento, pesado e turvo", isPremium: false },
-      { id: "NIGHTCORE", name: "Speed Up / Nightcore", description: "Aceleração limpa, controle de aspereza de agudos", isPremium: false },
-      { id: "MUFFLED", name: "Abafado", description: "Atenuação progressiva de parede com recuperação de RMS", isPremium: false },
-      { id: "MUFFLED_SLOWED", name: "Muffled Slowed", description: "Lento e abafado perfeitamente mesclados em pipeline único", isPremium: false },
-      { id: "MUFFLED_SPEED", name: "Muffled Speed", description: "Rápido e abafado mesclados (evita a estridência do Nightcore bruto)", isPremium: false },
-      { id: "8D_AUDIO", name: "Áudio 8D", description: "Panorâmica oscilante equilibrada + espacialização real", isPremium: false },
-      { id: "LOFI", name: "Lo-Fi (Cassete/Vinil)", description: "Wow sutil, bitcrush analógico e saturação oversampled", isPremium: false },
-      { id: "BASS_BOOST", name: "Grave Reforçado", description: "Dupla compressão serial (peak+rms) para grave monstruoso", isPremium: false },
-      { id: "VINTAGE_RADIO", name: "Rádio Vintage/AM", description: "Filtros de 1 polo e presença comprimida de broadcast", isPremium: false },
-      { id: "REVERB_HALL", name: "Câmara/Hall Ambiente", description: "Reflexões duplas (iniciais+cauda) com atenuação do ar", isPremium: false },
-      { id: "ROBOTIC", name: "Robótico", description: "Modulação ring-mod (tremolo 45Hz) e phaser metálico", isPremium: false },
-      { id: "UNDERWATER", name: "Subaquático", description: "Filtro ressonante com vibrato de correnteza e difusão líquida", isPremium: false },
-      { id: "STADIUM", name: "Estádio/Arena", description: "Reverb massivo alargado com contenção de rugido grave", isPremium: false },
-      { id: "CLARITY_ENHANCE", name: "Clareza/Realce", description: "Crystalizer e EQs paramétricos para brilho de masterização", isPremium: false }
+      { id: "SLOWED", name: "Slowed (Vinil Lento)", description: "Desaceleração acoplada, grave reforçado sem estouro, sem aliasing", icon: "🕐", isPremium: false },
+      { id: "DAYCORE", name: "Daycore", description: "O 'espelho' do Nightcore: sonolento, pesado e turvo", icon: "☀️", isPremium: false },
+      { id: "NIGHTCORE", name: "Speed Up / Nightcore", description: "Aceleração limpa, controle de aspereza de agudos", icon: "🌟", isPremium: false },
+      { id: "MUFFLED", name: "Abafado", description: "Atenuação progressiva de parede com recuperação de RMS", icon: "🔇", isPremium: false },
+      { id: "MUFFLED_SLOWED", name: "Muffled Slowed", description: "Lento e abafado perfeitamente mesclados em pipeline único", icon: "🌫️", isPremium: false },
+      { id: "MUFFLED_SPEED", name: "Muffled Speed", description: "Rápido e abafado mesclados (evita a estridência do Nightcore bruto)", icon: "🔊", isPremium: false },
+      { id: "8D_AUDIO", name: "Áudio 8D", description: "Panorâmica oscilante equilibrada + espacialização real", icon: "🎧", isPremium: false },
+      { id: "LOFI", name: "Lo-Fi (Cassete/Vinil)", description: "Wow sutil, bitcrush analógico e saturação oversampled", icon: "📻", isPremium: false },
+      { id: "BASS_BOOST", name: "Grave Reforçado", description: "Dupla compressão serial (peak+rms) para grave monstruoso", icon: "🎸", isPremium: false },
+      { id: "VINTAGE_RADIO", name: "Rádio Vintage/AM", description: "Filtros de 1 polo e presença comprimida de broadcast", icon: "🎙️", isPremium: false },
+      { id: "REVERB_HALL", name: "Câmara/Hall Ambiente", description: "Reflexões duplas (iniciais+cauda) com atenuação do ar", icon: "🏛️", isPremium: false },
+      { id: "ROBOTIC", name: "Robótico", description: "Modulação ring-mod (tremolo 45Hz) e phaser metálico", icon: "🤖", isPremium: false },
+      { id: "UNDERWATER", name: "Subaquático", description: "Filtro ressonante com vibrato de correnteza e difusão líquida", icon: "🌊", isPremium: false },
+      { id: "STADIUM", name: "Estádio/Arena", description: "Reverb massivo alargado com contenção de rugido grave", icon: "🏟️", isPremium: false },
+      { id: "CLARITY_ENHANCE", name: "Clareza/Realce", description: "Crystalizer e EQs paramétricos para brilho de masterização", icon: "✨", isPremium: false }
     ];
     res.json(presets);
   }
