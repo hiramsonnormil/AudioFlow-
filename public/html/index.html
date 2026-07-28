@@ -4,34 +4,10 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>phona — Editor de Áudio Online | Slowed + Reverb, Daycore, Nightcore | Grátis</title>
-  <meta name="description"
-    content="Transforme músicas do YouTube com efeitos profissionais online. Slowed, reverb, daycore, nightcore, 8D audio e vaporwave. Ideal para criadores de conteúdo, DJs e produtores. Experimente grátis!" />
+  <title>AudioFlow - Local Audio Processor</title>
   
-  <!-- SEO Keywords -->
-  <meta name="keywords" content="editor de áudio online, slowed reverb, daycore, nightcore, 8d audio, vaporwave, efeitos de áudio, processar música, transformar áudio, youtube para mp3, criador de conteúdo, produtor musical, remix online, áudio profissional grátis" />
-  
-  <!-- Open Graph / Facebook -->
-  <meta property="og:type" content="website" />
-  <meta property="og:url" content="https://phona.app/" />
-  <meta property="og:title" content="phona — Editor de Áudio Profissional Online | Slowed + Reverb" />
-  <meta property="og:description" content="Aplique efeitos profissionais em suas músicas. Slowed, reverb, daycore, nightcore e mais. Perfeito para criadores de conteúdo e produtores." />
-  <meta property="og:image" content="https://phona.app/assets/images/og-image.jpg" />
-  
-  <!-- Twitter -->
-  <meta property="twitter:card" content="summary_large_image" />
-  <meta property="twitter:url" content="https://phona.app/" />
-  <meta property="twitter:title" content="phona — Editor de Áudio Online | Slowed + Reverb" />
-  <meta property="twitter:description" content="Transforme músicas com efeitos profissionais. Ideal para criadores de conteúdo, DJs e produtores musicais." />
-  <meta property="twitter:image" content="https://phona.app/assets/images/twitter-image.jpg" />
-
-  <!-- Favicon -->
   <link rel="icon" type="image/svg+xml" href="/assets/icons/favicon.svg" />
   <link rel="alternate icon" href="/assets/icons/favicon.svg" />
-  <link rel="apple-touch-icon" href="/assets/images/logo.svg" />
-  <link rel="manifest" href="/assets/manifest.json" />
-
-  <!-- Theme colors -->
   <meta name="theme-color" content="#7B61FF" media="(prefers-color-scheme: dark)" />
   <meta name="theme-color" content="#7B61FF" media="(prefers-color-scheme: light)" />
 
@@ -42,18 +18,14 @@
     rel="stylesheet" />
   <link rel="stylesheet" href="/css/styles-landing.css" />
   <link rel="stylesheet" href="/css/global.css" />
-  <link rel="stylesheet" href="/css/modal.css" />
+  <style>
+    .hero { min-height: 100vh; display: flex; flex-direction: column; }
+    .processor-wrapper { position: relative; z-index: 10; flex: 1; display: flex; align-items: center; justify-content: center; padding: 2rem; }
+    .processor-card { max-width: 800px; width: 100%; margin: 0 auto; background: var(--surface-light, rgba(255,255,255,0.05)); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.1); padding: 2rem; border-radius: 24px; }
+  </style>
 </head>
 
 <body>
-  <!-- Sticky CTA -->
-  <div class="sticky-cta">
-    <button class="sticky-btn" onclick="scrollToProcessor()">
-      <span>Criar conta grátis</span>
-      <span class="pulse-dot"></span>
-    </button>
-  </div>
-
   <!-- Hero Section -->
   <section class="hero">
     <div class="hero-bg">
@@ -77,511 +49,44 @@
           <rect x="38" y="27" width="11" height="3" rx="1.5" fill="url(#navGradient)" />
           <rect x="38" y="34" width="8" height="3" rx="1.5" fill="url(#navGradient)" />
         </svg>
-        <span class="logo-text">phona</span>
+        <span class="logo-text">AudioFlow Local</span>
       </div>
-
-      <!-- Hamburger Button (Mobile Only) -->
-      <button class="hamburger" id="hamburgerBtn" aria-label="Menu" aria-expanded="false" aria-controls="mobileMenu">
-        <span class="hamburger-line"></span>
-        <span class="hamburger-line"></span>
-        <span class="hamburger-line"></span>
-      </button>
-
-      <!-- Desktop Navigation -->
       <div class="nav-links">
-        <a href="/#effects" class="nav-link">Efeitos</a>
-        <a href="/#how" class="nav-link">Como funciona</a>
         <a href="/html/recents.html" class="nav-link" id="nav-recents">Meus Processamentos</a>
       </div>
     </nav>
 
-    <!-- Mobile Menu Overlay -->
-    <div class="mobile-menu-overlay" id="mobileMenuOverlay"></div>
-
-    <!-- Mobile Menu -->
-    <div class="mobile-menu" id="mobileMenu">
-      <div class="mobile-menu-header">
-        <div class="mobile-menu-logo">
-          <svg class="logo-icon" width="28" height="28" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
-            <defs>
-              <linearGradient id="mobileNavGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stop-color="#7B61FF" />
-                <stop offset="100%" stop-color="#00E0FF" />
-              </linearGradient>
-            </defs>
-            <circle cx="22" cy="42" r="8" fill="url(#mobileNavGradient)" />
-            <path d="M 29 40 L 29 18 L 42 15 L 42 17 L 30 20 L 30 38 Z" fill="url(#mobileNavGradient)" />
-            <rect x="38" y="20" width="14" height="3" rx="1.5" fill="url(#mobileNavGradient)" />
-            <rect x="38" y="27" width="11" height="3" rx="1.5" fill="url(#mobileNavGradient)" />
-            <rect x="38" y="34" width="8" height="3" rx="1.5" fill="url(#mobileNavGradient)" />
-          </svg>
-          <span class="logo-text">phona</span>
-        </div>
-      </div>
-      <nav class="mobile-menu-nav">
-        <a href="/#effects" class="mobile-nav-link">Efeitos</a>
-        <a href="/#how" class="mobile-nav-link">Como funciona</a>
-        <a href="/html/recents.html" class="mobile-nav-link" id="mobile-nav-recents">Meus Processamentos</a>
-      </nav>
-    </div>
-
-
-    <div class="hero-content">
-      <h1 class="hero-title">
-        Crie remixes incríveis<br />
-        <span class="hero-title-accent">em segundos</span>
-      </h1>
-
-      <p class="hero-description">
-        Transforme qualquer música do YouTube em versão slowed, daycore, nightcore e mais.<br />
-        <span class="hero-highlight">Perfeito para TikTok, Instagram e YouTube</span>
-        — Usado por milhares de criadores de conteúdo.
-      </p>
-
-      <div class="hero-actions">
-        <button class="btn-primary" onclick="scrollToProcessor()">
-          <span>Começar grátis agora</span>
-          <span class="btn-arrow">→</span>
-        </button>
-        <button class="btn-secondary" onclick="scrollToSection('effects')">
-          Explorar todos os efeitos
-        </button>
-      </div>
-
-      <div class="hero-mockup">
-        <div class="mockup-player">
-          <div class="mockup-header">
-            <div class="mockup-dots">
-              <span></span><span></span><span></span>
-            </div>
-            <span class="mockup-title">my_song_slowed.mp3</span>
-            <div class="mockup-badge">PROCESSING</div>
-          </div>
-          <div class="mockup-waveform">
-            <canvas id="mockupWaveCanvas" width="600" height="100"></canvas>
-            <div class="mockup-playhead"></div>
-          </div>
-          <div class="mockup-controls">
-            <button class="mockup-play">
-              <svg viewBox="0 0 24 24" fill="currentColor">
-                <path d="M8 5v14l11-7z" />
-              </svg>
-            </button>
-            <div class="mockup-time">
-              <span>1:23</span>
-              <div class="mockup-progress">
-                <div class="mockup-progress-fill"></div>
-                <div class="mockup-progress-thumb"></div>
-              </div>
-              <span>3:45</span>
-            </div>
-            <div class="mockup-knobs">
-              <div class="knob">
-                <div class="knob-dial"></div>
-                <span>SPEED</span>
-              </div>
-              <div class="knob">
-                <div class="knob-dial"></div>
-                <span>REVERB</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div class="scroll-indicator">
-      <span>Scroll para explorar</span>
-      <div class="scroll-arrow">↓</div>
-    </div>
-  </section>
-
-  <!-- Effects Section -->
-  <section id="effects" class="effects-section">
-    <div class="section-container">
-      <div class="section-header">
-        <h2 class="section-title">
-          Efeitos <span class="text-accent">disponíveis</span>
-        </h2>
-        <p class="section-description">
-          Transforme suas músicas com um clique.
-        </p>
-      </div>
-
-      <div class="effects-grid" id="effectsGrid">
-        <!-- Cards gerados dinamicamente pelo JavaScript -->
-        <div class="effect-card" data-effect="slowed">
-          <div class="effect-texture"></div>
-          <div class="effect-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-              <circle cx="12" cy="12" r="10" stroke-width="2" />
-              <path d="M12 6v6l4 2" stroke-width="2" stroke-linecap="round" />
-            </svg>
-          </div>
-          <h3 class="effect-title">SLOWED</h3>
-          <p class="effect-description">
-            Deixa suas músicas mais profundas e relaxantes.
-          </p>
-          <div class="effect-preview">
-            <canvas class="effect-wave" width="200" height="40"></canvas>
-          </div>
-          <div class="effect-specs">
-            <span>Speed: 0.8x</span>
-            <span>Bass: +6dB</span>
-          </div>
-        </div>
-
-        <div class="effect-card" data-effect="reverb">
-          <div class="effect-texture"></div>
-          <div class="effect-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-              <path d="M12 2 L2 7 L12 12 L22 7 L12 2z" stroke-width="2" stroke-linejoin="round" />
-              <path d="M2 17 L12 22 L22 17" stroke-width="2" stroke-linecap="round" opacity="0.6" />
-              <path d="M2 12 L12 17 L22 12" stroke-width="2" stroke-linecap="round" opacity="0.8" />
-            </svg>
-          </div>
-          <h3 class="effect-title">REVERB</h3>
-          <p class="effect-description">
-            Adiciona profundidade e atmosfera.
-          </p>
-          <div class="effect-preview">
-            <canvas class="effect-wave" width="200" height="40"></canvas>
-          </div>
-          <div class="effect-specs">
-            <span>Room: Large</span>
-            <span>Wet: 40%</span>
-          </div>
-        </div>
-
-        <div class="effect-card" data-effect="daycore">
-          <div class="effect-texture"></div>
-          <div class="effect-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-              <circle cx="12" cy="12" r="5" stroke-width="2" />
-              <path
-                d="M12 1v2m0 18v2M21 12h2M1 12h2m15.364-7.364 1.414-1.414M4.222 19.778l1.414-1.414m12.728 0 1.414 1.414M4.222 4.222l1.414 1.414"
-                stroke-width="2" stroke-linecap="round" />
-            </svg>
-          </div>
-          <h3 class="effect-title">DAYCORE</h3>
-          <p class="effect-description">Versão mais lenta e grave.</p>
-          <div class="effect-preview">
-            <canvas class="effect-wave" width="200" height="40"></canvas>
-          </div>
-          <div class="effect-specs">
-            <span>Speed: 0.75x</span>
-            <span>Pitch: -2</span>
-          </div>
-        </div>
-
-        <div class="effect-card" data-effect="nightcore">
-          <div class="effect-texture"></div>
-          <div class="effect-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-              <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" stroke-width="2" stroke-linejoin="round" />
-            </svg>
-          </div>
-          <h3 class="effect-title">NIGHTCORE</h3>
-          <p class="effect-description">
-            Acelera e eleva o tom.
-          </p>
-          <div class="effect-preview">
-            <canvas class="effect-wave" width="200" height="40"></canvas>
-          </div>
-          <div class="effect-specs">
-            <span>Speed: 1.25x</span>
-            <span>Pitch: +2</span>
-          </div>
-        </div>
-
-        <div class="effect-card" data-effect="8d">
-          <div class="effect-texture"></div>
-          <div class="effect-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-              <circle cx="12" cy="12" r="10" stroke-width="2" stroke-dasharray="2 4" />
-              <circle cx="12" cy="12" r="6" stroke-width="2" stroke-dasharray="2 4" />
-              <circle cx="12" cy="12" r="2" stroke-width="2" />
-            </svg>
-          </div>
-          <h3 class="effect-title">8D AUDIO</h3>
-          <p class="effect-description">Experiência imersiva 360°.</p>
-          <div class="effect-preview">
-            <canvas class="effect-wave" width="200" height="40"></canvas>
-          </div>
-          <div class="effect-specs">
-            <span>Pan: 360°</span>
-            <span>Rate: 0.5Hz</span>
-          </div>
-        </div>
-
-        <div class="effect-card" data-effect="vaporwave">
-          <div class="effect-texture"></div>
-          <div class="effect-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-              <rect x="3" y="3" width="18" height="18" rx="2" stroke-width="2" />
-              <path d="M3 9h18M9 3v18" stroke-width="2" />
-            </svg>
-          </div>
-          <h3 class="effect-title">VAPORWAVE</h3>
-          <p class="effect-description">Estética retrô dos anos 80/90.</p>
-          <div class="effect-preview">
-            <canvas class="effect-wave" width="200" height="40"></canvas>
-          </div>
-          <div class="effect-specs">
-            <span>Lo-Fi</span>
-            <span>Chorus</span>
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- How It Works -->
-  <section id="how" class="how-section">
-    <div class="section-container">
-      <div class="section-header">
-        <h2 class="section-title">
-          Como <span class="text-accent">funciona</span>
-        </h2>
-        <p class="section-description">
-          Em 3 passos simples você cria remixes profissionais.
-        </p>
-      </div>
-
-      <div class="steps-container">
-        <div class="step">
-          <div class="step-number">01</div>
-          <div class="step-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-              <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" stroke-width="2"
-                stroke-linecap="round" />
-              <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" stroke-width="2"
-                stroke-linecap="round" />
-            </svg>
-          </div>
-          <h3 class="step-title">Crie sua conta grátis</h3>
-          <p class="step-description">
-            Cadastro rápido com e-mail ou Google.
-          </p>
-        </div>
-
-        <div class="step-connector">
-          <div class="connector-line"></div>
-          <div class="connector-pulse"></div>
-        </div>
-
-        <div class="step">
-          <div class="step-number">02</div>
-          <div class="step-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-              <circle cx="12" cy="12" r="3" stroke-width="2" />
-              <path d="M12 1v6m0 6v6M1 12h6m6 0h6" stroke-width="2" stroke-linecap="round" />
-            </svg>
-          </div>
-          <h3 class="step-title">Cole o link e escolha o efeito</h3>
-          <p class="step-description">
-            Cole o link do YouTube e selecione o efeito desejado.
-          </p>
-        </div>
-
-        <div class="step-connector">
-          <div class="connector-line"></div>
-          <div class="connector-pulse"></div>
-        </div>
-
-        <div class="step">
-          <div class="step-number">03</div>
-          <div class="step-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3" stroke-width="2"
-                stroke-linecap="round" stroke-linejoin="round" />
-            </svg>
-          </div>
-          <h3 class="step-title">Baixe e compartilhe</h3>
-          <p class="step-description">
-            Download em MP3 de alta qualidade.
-          </p>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- Examples Section -->
-  <section id="examples" class="examples-section">
-    <div class="section-container">
-      <div class="section-header">
-        <h2 class="section-title">
-          Ouça a <span class="text-accent">diferença</span>
-        </h2>
-        <p class="section-description">
-          Compare o original com o efeito aplicado.
-        </p>
-      </div>
-
-      <!-- Audio Players (Hidden) -->
-      <audio id="exampleOriginal" preload="metadata">
-        <source src="/assets/audio/vendido-verdadeoriginal.mp3" type="audio/mpeg">
-        Seu navegador não suporta o elemento de áudio.
-      </audio>
-      <audio id="exampleProcessed" preload="metadata">
-        <source src="/assets/audio/vendido-verdade-chinesa-remake-nightcore-20251207.mp3" type="audio/mpeg">
-        Seu navegador não suporta o elemento de áudio.
-      </audio>
-
-      <div class="examples-grid">
-        <div class="example-card">
-          <div class="example-label">Original</div>
-          <div class="example-player">
-            <div class="example-vinyl" id="vinylOriginal">
-              <div class="vinyl-disc">
-                <div class="vinyl-center"></div>
-                <div class="vinyl-groove"></div>
-                <div class="vinyl-groove"></div>
-                <div class="vinyl-groove"></div>
-              </div>
-            </div>
-            <div class="example-info">
-              <h4>Vendido - Verdade Chinesa</h4>
-              <p>Versão original</p>
-            </div>
-            <button class="example-play" id="playOriginal" data-audio="exampleOriginal" data-vinyl="vinylOriginal">
-              <svg viewBox="0 0 24 24" fill="currentColor">
-                <path d="M8 5v14l11-7z" />
-              </svg>
-            </button>
-          </div>
-          <div class="example-spectrum">
-            <canvas class="spectrum-canvas" width="300" height="60"></canvas>
-          </div>
-        </div>
-
-        <div class="example-arrow">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-            <path d="M5 12h14m-7-7 7 7-7 7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-          </svg>
-        </div>
-
-        <div class="example-card processed">
-          <div class="example-label slowed">Nightcore</div>
-          <div class="example-player">
-            <div class="example-vinyl slowed" id="vinylProcessed">
-              <div class="vinyl-disc">
-                <div class="vinyl-center"></div>
-                <div class="vinyl-groove"></div>
-                <div class="vinyl-groove"></div>
-                <div class="vinyl-groove"></div>
-              </div>
-            </div>
-            <div class="example-info">
-              <h4>Vendido - Verdade Chinesa</h4>
-              <p>Nightcore by phona 🎵</p>
-            </div>
-            <button class="example-play" id="playProcessed" data-audio="exampleProcessed" data-vinyl="vinylProcessed">
-              <svg viewBox="0 0 24 24" fill="currentColor">
-                <path d="M8 5v14l11-7z" />
-              </svg>
-            </button>
-          </div>
-          <div class="example-spectrum">
-            <canvas class="spectrum-canvas processed" width="300" height="60"></canvas>
-          </div>
-        </div>
-      </div>
-
-      <div class="examples-note">
-        <span class="note-icon">🎧</span>
-        <span>Use fones de ouvido para melhor experiência • Clique nos botões de play para ouvir a diferença!</span>
-      </div>
-      
-      <script>
-        // Player de exemplos
-        document.addEventListener('DOMContentLoaded', function() {
-          const playButtons = document.querySelectorAll('.example-play');
-          let currentAudio = null;
-          
-          playButtons.forEach(button => {
-            button.addEventListener('click', function() {
-              const audioId = this.getAttribute('data-audio');
-              const vinylId = this.getAttribute('data-vinyl');
-              const audio = document.getElementById(audioId);
-              const vinyl = document.getElementById(vinylId);
-              
-              // Para qualquer áudio tocando
-              if (currentAudio && currentAudio !== audio) {
-                currentAudio.pause();
-                currentAudio.currentTime = 0;
-                // Remove rotação do vinyl anterior
-                document.querySelectorAll('.example-vinyl').forEach(v => {
-                  v.classList.remove('playing');
-                });
-              }
-              
-              if (audio.paused) {
-                audio.play();
-                vinyl.classList.add('playing');
-                currentAudio = audio;
-                
-                // Muda ícone para pause
-                this.innerHTML = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z" /></svg>';
-              } else {
-                audio.pause();
-                vinyl.classList.remove('playing');
-                
-                // Muda ícone para play
-                this.innerHTML = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z" /></svg>';
-              }
-              
-              // Quando terminar, volta para play
-              audio.addEventListener('ended', function() {
-                vinyl.classList.remove('playing');
-                button.innerHTML = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z" /></svg>';
-              });
-            });
-          });
-        });
-      </script>
-    </div>
-  </section>
-
-  <!-- Processor Section -->
-  <section id="processor" class="processor-section">
-    <div class="processor-container">
-      <div class="processor-header">
-        <h2 class="processor-title">
-          Transforme sua música <span class="text-accent">agora mesmo</span>
-        </h2>
-        <p class="processor-subtitle">
-          Crie sua conta grátis e comece a fazer remixes profissionais em menos de 1 minuto
-        </p>
-      </div>
-
+    <div class="processor-wrapper">
       <div class="processor-card">
+        <div class="processor-header" style="text-align: center; margin-bottom: 2rem;">
+          <h2 class="processor-title" style="font-size: 2.5rem; margin-bottom: 0.5rem;">
+            Processador de <span class="text-accent">Áudio</span>
+          </h2>
+          <p class="processor-subtitle" style="color: var(--text-secondary);">
+            Cole o link do YouTube e selecione o efeito desejado
+          </p>
+        </div>
+
         <div class="processor-grid">
           <div class="input-group">
             <label for="youtubeUrl" class="input-label">
               <span class="label-text">Link do YouTube</span>
-              <span class="label-hint">Cole aqui o link da música ou vídeo</span>
             </label>
             <div class="input-wrapper">
               <span class="input-icon">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                  <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" stroke-width="2"
-                    stroke-linecap="round" />
-                  <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" stroke-width="2"
-                    stroke-linecap="round" />
+                  <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" stroke-width="2" stroke-linecap="round" />
+                  <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" stroke-width="2" stroke-linecap="round" />
                 </svg>
               </span>
-              <input type="text" id="youtubeUrl" class="input-field"
-                placeholder="https://www.youtube.com/watch?v=..." />
+              <input type="text" id="youtubeUrl" class="input-field" placeholder="https://www.youtube.com/watch?v=..." />
             </div>
           </div>
 
           <div class="input-group">
             <label for="presetSelect" class="input-label">
               <span class="label-text">Escolha o efeito</span>
-              <span class="label-hint">Selecione como quer transformar o áudio</span>
             </label>
-            
             <div class="select-wrapper">
               <select id="presetSelect" class="select-field">
                 <option value="">Carregando presets...</option>
@@ -595,8 +100,8 @@
           </div>
         </div>
 
-        <button id="processBtn" class="btn-process">
-          <span class="btn-text">✨ Criar remix agora</span>
+        <button id="processBtn" class="btn-process" style="width: 100%; margin-top: 1.5rem;">
+          <span class="btn-text">✨ Processar Áudio</span>
           <span class="btn-spinner"></span>
           <span class="btn-icon">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
@@ -605,26 +110,12 @@
           </span>
         </button>
 
-        <div class="processor-limit-note" role="note">
-          <div class="processor-limit-icon" aria-hidden="true">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-              <circle cx="12" cy="12" r="10" stroke-width="1.6"></circle>
-              <path d="M12 7v5" stroke-width="1.6" stroke-linecap="round"></path>
-              <circle cx="12" cy="16" r="0.9" fill="currentColor"></circle>
-            </svg>
-          </div>
-          <div class="processor-limit-copy">
-            <strong>Como funciona</strong>
-            <span>Crie sua conta gratuita em 30 segundos e comece a processar músicas de até 20 minutos. É rápido e fácil!</span>
-          </div>
-        </div>
-
-        <div id="statusContainer" class="status-container" style="display: none">
+        <div id="statusContainer" class="status-container" style="display: none; margin-top: 2rem;">
           <div class="status-content">
             <div class="status-icon"></div>
             <div class="status-info">
               <span id="statusText" class="status-text">Processando...</span>
-              <span class="status-subtext">Isso pode levar alguns segundos</span>
+              <span class="status-subtext">Baixando e aplicando efeitos</span>
             </div>
           </div>
           <div class="progress-bar">
@@ -632,7 +123,7 @@
           </div>
         </div>
 
-        <div id="resultContainer" class="result-container" style="display: none">
+        <div id="resultContainer" class="result-container" style="display: none; margin-top: 2rem;">
           <div class="result-header">
             <span class="result-badge">
               <svg viewBox="0 0 24 24" fill="currentColor">
@@ -649,295 +140,16 @@
 
           <a id="downloadBtn" class="btn-download" download>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3" stroke-width="2"
-                stroke-linecap="round" stroke-linejoin="round" />
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
             </svg>
             <span>Download MP3</span>
           </a>
         </div>
       </div>
-
-      <div class="processor-features">
-        <div class="feature">
-          <span class="feature-icon">✦</span>
-          <span>Processamento local de alta qualidade</span>
-        </div>
-        <div class="feature">
-          <span class="feature-icon">⚡</span>
-          <span>Resultados em menos de 1 minuto</span>
-        </div>
-        <div class="feature">
-          <span class="feature-icon">🔒</span>
-          <span>Processamento totalmente privado</span>
-        </div>
-      </div>
     </div>
   </section>
 
-  <!-- Footer -->
-  <footer class="footer">
-    <div class="footer-content">
-      <div class="footer-brand">
-        <div class="footer-logo">
-          <svg class="logo-icon" width="28" height="28" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
-            <defs>
-              <linearGradient id="footerGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stop-color="#7B61FF" />
-                <stop offset="100%" stop-color="#00E0FF" />
-              </linearGradient>
-            </defs>
-            <circle cx="22" cy="42" r="8" fill="url(#footerGradient)" />
-            <path d="M 29 40 L 29 18 L 42 15 L 42 17 L 30 20 L 30 38 Z" fill="url(#footerGradient)" />
-            <rect x="38" y="20" width="14" height="3" rx="1.5" fill="url(#footerGradient)" />
-            <rect x="38" y="27" width="11" height="3" rx="1.5" fill="url(#footerGradient)" />
-            <rect x="38" y="34" width="8" height="3" rx="1.5" fill="url(#footerGradient)" />
-          </svg>
-          <span class="logo-text">phona</span>
-        </div>
-        <p class="footer-tagline">A ferramenta preferida de milhares de criadores de conteúdo</p>
-      </div>
-
-      <div class="footer-links">
-        <a href="#effects">Efeitos</a>
-        <a href="#how">Como funciona</a>
-        <a href="#examples">Exemplos</a>
-      </div>
-    </div>
-
-    <div class="footer-tape">
-      <div class="tape-line"></div>
-      <div class="tape-marks">
-        <span></span><span></span><span></span><span></span><span></span>
-        <span></span><span></span><span></span><span></span><span></span>
-      </div>
-    </div>
-
-    <div class="footer-bottom">
-      <p>© <span id="currentYear"></span> phona. Feito com ♥ para criadores de conteúdo e produtores musicais.</p>
-    </div>
-  </footer>
-
-  <script>
-    // Atualiza o ano automaticamente
-    document.getElementById('currentYear').textContent = new Date().getFullYear();
-  </script>
-
-  <!-- Auth Modal with Tabs -->
-  <div id="authModal" class="modal">
-    <div class="modal-overlay"></div>
-    <div class="modal-content">
-      <button class="modal-close" id="closeAuthModal" aria-label="Fechar">&times;</button>
-
-      <!-- Tabs Header -->
-      <div class="modal-tabs">
-        <button class="modal-tab active" data-tab="login">
-          <span>Entrar</span>
-        </button>
-        <button class="modal-tab" data-tab="signup">
-          <span>Criar conta</span>
-        </button>
-        <div class="modal-tab-indicator"></div>
-      </div>
-
-      <div class="modal-header">
-        <div class="modal-logo">
-          <svg width="40" height="40" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
-            <defs>
-              <linearGradient id="modalLogoGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stop-color="#c28c66" />
-                <stop offset="100%" stop-color="#e8b4a0" />
-              </linearGradient>
-            </defs>
-            <circle cx="22" cy="42" r="8" fill="url(#modalLogoGradient)" />
-            <path d="M 29 40 L 29 18 L 42 15 L 42 17 L 30 20 L 30 38 Z" fill="url(#modalLogoGradient)" />
-            <rect x="38" y="20" width="14" height="3" rx="1.5" fill="url(#modalLogoGradient)" />
-            <rect x="38" y="27" width="11" height="3" rx="1.5" fill="url(#modalLogoGradient)" />
-            <rect x="38" y="34" width="8" height="3" rx="1.5" fill="url(#modalLogoGradient)" />
-          </svg>
-          <span>phona</span>
-        </div>
-        <h2 class="modal-title" id="modalTitle">Bem-vindo de volta</h2>
-        <p class="modal-subtitle" id="modalSubtitle">Entre para transformar seu áudio</p>
-      </div>
-
-      <!-- Error Display -->
-      <div id="authError" class="modal-error" style="display: none;"></div>
-
-      <!-- Login Form -->
-      <form id="loginForm" class="modal-form auth-form active">
-        <div class="form-group">
-          <label for="loginEmail" class="form-label">E-mail</label>
-          <input type="email" id="loginEmail" name="email" class="form-input" placeholder="seu@email.com" required
-            autocomplete="email">
-        </div>
-
-        <div class="form-group">
-          <label for="loginPassword" class="form-label">Senha</label>
-          <div class="password-field">
-            <input type="password" id="loginPassword" name="password" class="form-input" placeholder="••••••••" required
-              autocomplete="current-password">
-            <button type="button" class="password-toggle" id="toggleLoginPassword" aria-label="Mostrar senha">
-              <svg class="eye-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-                <circle cx="12" cy="12" r="3"></circle>
-              </svg>
-              <svg class="eye-off-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                style="display: none;">
-                <path
-                  d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24">
-                </path>
-                <line x1="1" y1="1" x2="23" y2="23"></line>
-              </svg>
-            </button>
-          </div>
-        </div>
-
-        <div class="form-group" style="text-align: right; margin-top: -8px;">
-          <a href="#" id="forgotPasswordLink"
-            style="font-size: 0.875rem; color: var(--copper-light); text-decoration: none;">Esqueci minha senha</a>
-        </div>
-
-        <button type="submit" class="btn btn-primary btn-lg modal-submit">
-          <span class="btn-text">Entrar</span>
-          <span class="spinner" style="display: none;"></span>
-        </button>
-      </form>
-
-      <!-- Signup Form -->
-      <form id="signupForm" class="modal-form auth-form">
-        <div class="form-group">
-          <label for="signupUsername" class="form-label">Nome de usuário</label>
-          <input type="text" id="signupUsername" name="username" class="form-input" placeholder="seunome" required
-            autocomplete="username" minlength="3">
-        </div>
-
-        <div class="form-group">
-          <label for="signupEmail" class="form-label">E-mail</label>
-          <input type="email" id="signupEmail" name="email" class="form-input" placeholder="seu@email.com" required
-            autocomplete="email">
-        </div>
-
-        <div class="form-group">
-          <label for="signupPassword" class="form-label">Senha</label>
-          <div class="password-field">
-            <input type="password" id="signupPassword" name="password" class="form-input" placeholder="••••••••"
-              required autocomplete="new-password" minlength="8">
-            <button type="button" class="password-toggle" id="toggleSignupPassword" aria-label="Mostrar senha">
-              <svg class="eye-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-                <circle cx="12" cy="12" r="3"></circle>
-              </svg>
-              <svg class="eye-off-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                style="display: none;">
-                <path
-                  d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24">
-                </path>
-                <line x1="1" y1="1" x2="23" y2="23"></line>
-              </svg>
-            </button>
-          </div>
-          <p class="form-hint">Mínimo 8 caracteres</p>
-        </div>
-
-        <div class="form-group">
-          <label for="signupConfirmPassword" class="form-label">Confirmar senha</label>
-          <div class="password-field">
-            <input type="password" id="signupConfirmPassword" name="confirmPassword" class="form-input"
-              placeholder="••••••••" required autocomplete="new-password">
-            <button type="button" class="password-toggle" id="toggleSignupConfirmPassword" aria-label="Mostrar senha">
-              <svg class="eye-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-                <circle cx="12" cy="12" r="3"></circle>
-              </svg>
-              <svg class="eye-off-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                style="display: none;">
-                <path
-                  d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24">
-                </path>
-                <line x1="1" y1="1" x2="23" y2="23"></line>
-              </svg>
-            </button>
-          </div>
-        </div>
-
-        <button type="submit" class="btn btn-primary btn-lg modal-submit">
-          <span class="btn-text">Criar conta</span>
-          <span class="spinner" style="display: none;"></span>
-        </button>
-      </form>
-    </div>
-  </div>
-
-  <!-- Forgot Password Modal -->
-  <div id="forgotPasswordModal" class="modal">
-    <div class="modal-overlay"></div>
-    <div class="modal-content">
-      <button class="modal-close" id="closeForgotPasswordModal" aria-label="Fechar">&times;</button>
-
-      <div class="modal-header">
-        <div class="modal-logo">
-          <svg width="40" height="40" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
-            <defs>
-              <linearGradient id="forgotLogoGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stop-color="#c28c66" />
-                <stop offset="100%" stop-color="#e8b4a0" />
-              </linearGradient>
-            </defs>
-            <circle cx="22" cy="42" r="8" fill="url(#forgotLogoGradient)" />
-            <path d="M 29 40 L 29 18 L 42 15 L 42 17 L 30 20 L 30 38 Z" fill="url(#forgotLogoGradient)" />
-            <rect x="38" y="20" width="14" height="3" rx="1.5" fill="url(#forgotLogoGradient)" />
-            <rect x="38" y="27" width="11" height="3" rx="1.5" fill="url(#forgotLogoGradient)" />
-            <rect x="38" y="34" width="8" height="3" rx="1.5" fill="url(#forgotLogoGradient)" />
-          </svg>
-          <span>phona</span>
-        </div>
-        <h2 class="modal-title">Recuperar senha</h2>
-        <p class="modal-subtitle">Use sua conta Google para acessar novamente</p>
-      </div>
-
-      <!-- Error Display -->
-      <div id="forgotPasswordError" class="modal-error" style="display: none;"></div>
-
-      <!-- Explicação -->
-      <div
-        style="padding: var(--space-md); background: rgba(194, 140, 102, 0.1); border: 1px solid rgba(194, 140, 102, 0.3); border-radius: var(--radius); margin-bottom: var(--space-lg);">
-        <p style="font-size: var(--fs-sm); color: var(--text-secondary); margin: 0; line-height: 1.6;">
-          <strong style="color: var(--text-primary); display: block; margin-bottom: var(--space-xs);">Como
-            funciona:</strong>
-          Faça login com sua conta Google usando o mesmo e-mail cadastrado. Isso vinculará sua conta Google e permitirá
-          acesso futuro sem senha.
-        </p>
-      </div>
-
-      <!-- Google OAuth Button -->
-      <button type="button" class="btn btn-primary btn-lg modal-submit google-recovery-btn" id="googleRecoveryBtn">
-        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"
-          style="width: 20px; height: 20px; margin-right: 8px;">
-          <path
-            d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-            fill="white" />
-          <path
-            d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-            fill="white" />
-          <path
-            d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
-            fill="white" />
-          <path
-            d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
-            fill="white" />
-        </svg>
-        <span>Recuperar com Google</span>
-      </button>
-
-      <div class="modal-footer" style="margin-top: var(--space-lg);">
-        Lembrou sua senha? <a href="#" id="backToLoginLink">Fazer login</a>
-      </div>
-    </div>
-  </div>
-
   <script type="module" src="/js/landing-animations.js"></script>
-  <script type="module" src="/js/navbar-auth.js"></script>
   <script type="module" src="/js/landing-processor.js"></script>
 </body>
-
 </html>

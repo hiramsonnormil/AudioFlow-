@@ -47,7 +47,7 @@ function createCustomSelect(nativeSelect, presets) {
 
     const optionIcon = document.createElement("span");
     optionIcon.className = "custom-select-option-icon";
-    optionIcon.innerHTML = preset.icon;
+    optionIcon.innerHTML = preset.icon || "";
 
     const optionText = document.createElement("span");
     optionText.className = "custom-select-option-text";
@@ -64,7 +64,7 @@ function createCustomSelect(nativeSelect, presets) {
       option.classList.add("selected");
 
       if (preset) {
-        iconSpan.innerHTML = preset.icon;
+        iconSpan.innerHTML = preset.icon || "";
         textSpan.textContent = `${preset.name} - ${preset.description}`;
         nativeSelect.value = preset.id;
       }
@@ -114,7 +114,7 @@ function createCustomSelect(nativeSelect, presets) {
       const option = document.createElement("option");
       option.value = preset.id;
       option.textContent = `${preset.name} - ${preset.description}`;
-      option.dataset.icon = preset.icon;
+      option.dataset.icon = preset.icon || "";
       presetEl.appendChild(option);
     });
 
