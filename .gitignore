@@ -5,5 +5,8 @@ npm-debug.log*
 .env.local
 cookies.txt
 *.mp3
+*.mp4
 *.m4a
 *.tmp
+uploads/
+storage/
