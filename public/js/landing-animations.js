@@ -456,7 +456,7 @@ examplePlays.forEach((btn) => {
   });
 });
 
-// Load presets function with filter support
+// Load presets
 let allPresets = [];
 
 async function loadPresets() {
@@ -476,60 +476,12 @@ async function loadPresets() {
     // Create custom select with icons
     createCustomSelect(presetSelect, presets);
 
-    // Aplicar filtro baseado no plano do usuário
-    applyUserPlanFilter();
-
   } catch (error) {
     console.error("Error loading presets:", error);
     if (presetSelect.options.length === 0) {
       presetSelect.innerHTML =
         '<option value="">Erro ao carregar presets</option>';
     }
-  }
-}
-
-// Aplicar filtro automaticamente baseado no plano do usuário
-function applyUserPlanFilter() {
-  try {
-    // Obter plano do usuário do localStorage
-    const userStr = localStorage.getItem('phona:user');
-    if (!userStr) return;
-
-    const user = JSON.parse(userStr);
-    const userPlan = user?.plan || 'free';
-
-    // Encontrar a aba correspondente ao plano
-    const tabs = document.querySelectorAll('.preset-tab');
-    if (!tabs.length) return;
-
-    let filterToApply = 'all';
-
-    // Mapear plano para filtro
-    switch (userPlan) {
-      case 'voz_pro':
-        filterToApply = 'pro';
-        break;
-      case 'voz_master':
-        filterToApply = 'master';
-        break;
-      case 'voz_plus_master':
-      case 'plano_plus_master':
-        filterToApply = 'plus_master';
-        break;
-      case 'free':
-        filterToApply = 'free';
-        break;
-      default:
-        filterToApply = 'all';
-    }
-
-    // Encontrar e clicar na aba correspondente
-    const targetTab = Array.from(tabs).find(tab => tab.dataset.filter === filterToApply);
-    if (targetTab) {
-      targetTab.click();
-    }
-  } catch (error) {
-    // Silenciosamente ignorar erros de filtro automático
   }
 }
 
@@ -555,107 +507,6 @@ function renderPresets(presets) {
     option.dataset.icon = preset.icon;
     presetSelect.appendChild(option);
   });
-}
-
-// Setup preset filter tabs (dentro do dropdown)
-function setupPresetFilterTabs(dropdown, wrapper, nativeSelect, iconSpan, textSpan) {
-  const tabs = dropdown.querySelectorAll('.preset-tab');
-  
-  tabs.forEach(tab => {
-    tab.addEventListener('click', (e) => {
-      e.stopPropagation(); // Evita fechar o dropdown
-      
-      // Update active state
-      tabs.forEach(t => t.classList.remove('active'));
-      tab.classList.add('active');
-
-      // Get filter value
-      const filter = tab.dataset.filter;
-
-      // Filter presets
-      const filteredPresets = filterPresetsByPlan(filter);
-
-      // Remove old preset options (mantém placeholder e tabs)
-      const presetOptions = dropdown.querySelectorAll('.custom-select-option:not(.placeholder)');
-      presetOptions.forEach(opt => opt.remove());
-
-      // Add filtered preset options
-      filteredPresets.forEach((preset) => {
-        const option = document.createElement("div");
-        option.className = "custom-select-option";
-        option.dataset.value = preset.id;
-
-        const optionIcon = document.createElement("span");
-        optionIcon.className = "custom-select-option-icon";
-        optionIcon.innerHTML = preset.icon;
-
-        const optionText = document.createElement("span");
-        optionText.className = "custom-select-option-text";
-        optionText.textContent = `${preset.name} - ${preset.description}`;
-
-        option.appendChild(optionIcon);
-        option.appendChild(optionText);
-        dropdown.appendChild(option);
-
-        // Add click handler
-        option.addEventListener("click", () => {
-          dropdown.querySelectorAll(".custom-select-option").forEach((opt) => {
-            opt.classList.remove("selected");
-          });
-          option.classList.add("selected");
-
-          if (preset) {
-            iconSpan.innerHTML = preset.icon;
-            textSpan.textContent = `${preset.name} - ${preset.description}`;
-            nativeSelect.value = preset.id;
-          }
-
-          nativeSelect.dispatchEvent(new Event("change", { bubbles: true }));
-          wrapper.classList.remove("open");
-        });
-      });
-    });
-  });
-}
-
-// Filter presets by plan
-function filterPresetsByPlan(filter) {
-  if (filter === 'all') {
-    return allPresets;
-  }
-
-  // Define preset tiers
-  const freePresets = ['SLOWED', 'SLOWED_REVERB'];
-  const proPresets = ['SPEED_125', 'ULTRA_SLOWED', 'MUFFLED_SLOWED', 'MUFFLED_SPEED', 
-                     'DAYCORE', 'NIGHTCORE', 'PHONA', 'ECHO', 'REVERB'];
-  const masterPresets = ['BASS_BOOST', 'ROBOT_VOICE', '8D'];
-  const plusMasterPresets = ['BABY_VOICE', 'DEEP_VOICE', 'VAPORWAVE_CLEAN', 
-                             'RADIO_RETRO_AM', 'CRYSTAL_SPEED', 'TAPE_WARP',
-                             'WHISPER_CORE', 'GHOST_REVERB', 'CHOIRIFY', 'SUBHARMONIC_BASS'];
-
-  let allowedPresets = [];
-
-  switch (filter) {
-    case 'free':
-      allowedPresets = freePresets;
-      break;
-    case 'pro':
-    case 'voz_pro':
-      allowedPresets = [...freePresets, ...proPresets];
-      break;
-    case 'master':
-    case 'voz_master':
-      allowedPresets = [...freePresets, ...proPresets, ...masterPresets];
-      break;
-    case 'plus_master':
-    case 'voz_plus_master':
-    case 'plano_plus_master':
-      // Plus Master tem acesso a TODOS os presets
-      allowedPresets = [...freePresets, ...proPresets, ...masterPresets, ...plusMasterPresets];
-      break;
-  }
-
-  return allPresets.filter(preset => allowedPresets.includes(preset.id));
 }
 
 // Create custom select dropdown with icons
@@ -695,18 +546,6 @@ function createCustomSelect(nativeSelect, presets) {
   placeholderOption.textContent = "Selecione um efeito...";
   placeholderOption.dataset.value = "";
   dropdown.appendChild(placeholderOption);
-
-  // Add Filter Tabs inside dropdown
-  const filterTabs = document.createElement("div");
-  filterTabs.className = "preset-filter-tabs";
-  filterTabs.innerHTML = `
-    <button class="preset-tab active" data-filter="all">Todos</button>
-    <button class="preset-tab" data-filter="free">Free</button>
-    <button class="preset-tab" data-filter="pro">Pro</button>
-    <button class="preset-tab" data-filter="master">Master</button>
-    <button class="preset-tab preset-tab-premium" data-filter="plus_master">Plus Master</button>
-  `;
-  dropdown.appendChild(filterTabs);
 
   // Add preset options
   presets.forEach((preset) => {
@@ -760,8 +599,6 @@ function createCustomSelect(nativeSelect, presets) {
   // Hide native select visually but keep it functional
   wrapper.classList.add("native-hidden");
 
-  // Setup filter tabs
-  setupPresetFilterTabs(dropdown, wrapper, nativeSelect, iconSpan, textSpan);
 }
 
 function selectOption(

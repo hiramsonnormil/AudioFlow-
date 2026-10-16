@@ -85,7 +85,6 @@ export class ProcessController {
       preset,
       duration,
       youtubeUrl: url,
-      plan: "local",
     };
 
     job.userId = userIdentity.storageKey;
@@ -107,7 +106,6 @@ export class ProcessController {
     }
 
     const result = job.toJSON();
-    result.tier = "premium"; // always premium features locally
 
     if (job.status === "DONE") {
       result.downloadFilename = job.getFormattedDownloadFilename();

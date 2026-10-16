@@ -107,22 +107,6 @@ export function getUserInitial() {
   return user.username.charAt(0).toUpperCase();
 }
 
-/**
- * Verificar se usuário é Free
- */
-export function isFreeUser() {
-  const user = getUser();
-  return user?.plan === 'free';
-}
-
-/**
- * Obter plano do usuário
- */
-export function getUserPlan() {
-  const user = getUser();
-  return user?.plan || 'free';
-}
-
 export async function restoreSessionFromCookie() {
   try {
     const response = await fetch('/api/auth/session', {
@@ -158,7 +142,5 @@ export default {
   isAuthenticated,
   clearSession,
   getUserInitial,
-  isFreeUser,
-  getUserPlan,
   restoreSessionFromCookie,
 };

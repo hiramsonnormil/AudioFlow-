@@ -39,7 +39,7 @@ router.get('/download/:key(*)', async (req, res) => {
     const { getUserIdentity } = await import('../config/security.js');
     const { storageKey } = getUserIdentity(userSource);
     
-    // Verificar se o arquivo pertence ao usuário (pode ser free/ ou premium/)
+    // Verificar se o arquivo pertence ao usuário
     const allowedPrefixes = [
       `free/${storageKey}/`,
       `premium/${storageKey}/`
@@ -87,21 +87,17 @@ router.get('/download/:key(*)', async (req, res) => {
       throw headError;
     }
     
-    // Verificar se arquivo expirou (1h para free, 24h para premium)
-    const tier = key.startsWith('premium/') ? 'premium' : 'free';
+    // Verificar se arquivo expirou (24h)
     const lastModified = headResponse.LastModified;
     if (lastModified) {
       const now = new Date();
       const fileAge = now - new Date(lastModified).getTime();
-      const ONE_HOUR = 60 * 60 * 1000;
       const TWENTY_FOUR_HOURS = 24 * 60 * 60 * 1000;
-      const expirationTime = tier === 'premium' ? TWENTY_FOUR_HOURS : ONE_HOUR;
-      
-      if (fileAge > expirationTime) {
-        const expirationText = tier === 'premium' ? '24 horas' : '1 hora';
-        return res.status(410).json({ 
+
+      if (fileAge > TWENTY_FOUR_HOURS) {
+        return res.status(410).json({
           error: 'expired',
-          message: `Arquivo expirado (mais de ${expirationText})`
+          message: 'Arquivo expirado (mais de 24 horas)'
         });
       }
     }
