@@ -19,7 +19,6 @@ const playerProgressBar = document.getElementById("playerProgressBar");
 
 let pollId = null;
 let lastProgress = -1;
-let userTier = 'premium'; // always premium locally
 
 initializeProcessPage();
 
@@ -340,15 +339,10 @@ function updateExpirationDisplay(remainingMs) {
 
   if (expirationWarning) {
     const timeStr = formatTimeRemaining(remainingMs);
-    const isPremium = userTier === 'premium';
     const isWarning = remainingMs < 20 * 60 * 1000; // menos de 20 min
     const isDanger = remainingMs < 5 * 60 * 1000; // menos de 5 min
 
-    // Premium: ícone de estrela e estilo diferenciado
-    const icon = isPremium ? '🌟' : '⏱️';
-    const premiumClass = isPremium ? ' premium' : '';
-    
-    expirationWarning.className = 'expiration-warning' + premiumClass +
+    expirationWarning.className = 'expiration-warning premium' +
       (isDanger ? ' danger' : isWarning ? ' warning' : '');
     expirationWarning.innerHTML = `
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -356,7 +350,7 @@ function updateExpirationDisplay(remainingMs) {
         <line x1="12" y1="8" x2="12" y2="12"/>
         <line x1="12" y1="16" x2="12.01" y2="16"/>
       </svg>
-      <span>${icon} Expira em: <strong>${timeStr}</strong></span>
+      <span>🌟 Expira em: <strong>${timeStr}</strong></span>
     `;
   }
 }

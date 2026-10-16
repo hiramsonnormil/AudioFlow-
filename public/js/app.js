@@ -1,5 +1,3 @@
-import { showPlanModal } from "./utils/planModal.js";
-
 const form = document.getElementById("form");
 const urlEl = document.getElementById("url");
 const presetEl = document.getElementById("preset");
@@ -333,14 +331,7 @@ if (form && startBtn) {
       if (!r.ok) {
         const errorCode = payload?.error;
         const message = payload?.message || payload?.error || "Erro ao iniciar processamento";
-        
-        if (errorCode === 'preset_not_available' || errorCode === 'plan_limit_reached') {
-          startBtn.disabled = false;
-          startBtn.innerHTML = '<span class="btn-text">Processar</span>';
-          showPlanModal(message);
-          return;
-        }
-        
+
         throw new Error(message);
       }
 

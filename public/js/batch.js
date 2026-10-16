@@ -220,13 +220,7 @@ batchStartBtn.addEventListener("click", async () => {
       if (!r.ok) {
         const errorCode = payload?.error;
         const message = payload?.message || payload?.error || "server error";
-        
-        if (errorCode === 'preset_not_available' || errorCode === 'plan_limit_reached') {
-          batchStartBtn.disabled = false;
-          showError(message);
-          return;
-        }
-        
+
         throw new Error(message);
       }
 

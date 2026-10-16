@@ -21,15 +21,10 @@ console.log('[RECENTS DEBUG] Funções disponíveis em r2:', Object.keys(r2));
 router.get('/recent-processings', async (req, res) => {
   try {
     const userSource = req.ip;
-    
-    let userPlan = 'premium';
-    const tier = 'premium';
-    
+
     // Importar getUserIdentity para obter o storageKey correto
     const { getUserIdentity } = await import('../config/security.js');
     const { storageKey } = getUserIdentity(userSource);
-
-    console.log(`[RECENTS] User: ${userSource}, Plano: ${userPlan}, Tier: ${tier}, StorageKey: ${storageKey}`);
 
     let freeObjects = [];
     let premiumObjects = [];
@@ -97,14 +92,12 @@ router.get('/recent-processings', async (req, res) => {
       return processing;
     });
 
-    console.log(`[RECENTS] ✅ ${processings.length} processamentos (${freeObjects.length} free + ${premiumObjects.length} premium) para ${userSource}`);
+    console.log(`[RECENTS] ✅ ${processings.length} processamentos para ${userSource}`);
 
     return res.json({
       success: true,
       count: processings.length,
       user: userSource,
-      userPlan: userPlan,
-      tier: tier,
       processings
     });
 

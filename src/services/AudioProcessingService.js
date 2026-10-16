@@ -165,10 +165,9 @@ export class AudioProcessingService {
    * @param {string} preset - Nome do preset aplicado
    * @param {number} durationSec - Duração do áudio em segundos
    * @param {string} title - Título do arquivo (metadata)
-   * @param {string} userPlan - Plano do usuário (free, voz_pro, voz_master)
    * @returns {Promise<{publicUrl: string, key: string, localPath: string}>}
    */
-  async processAndUploadToR2(inputStream, jobId, userId, preset, durationSec, title = 'audio', userPlan = 'free') {
+  async processAndUploadToR2(inputStream, jobId, userId, preset, durationSec, title = 'audio') {
     let tempPath = null;
 
     try {
@@ -202,19 +201,16 @@ export class AudioProcessingService {
         throw new Error('FFmpeg não gerou o arquivo de saída');
       }
 
-      // 3. Define a chave no R2 (estrutura: <tier>/<userId>/<jobId>.mp3)
+      // 3. Define a chave no R2 (estrutura: premium/<userId>/<jobId>.mp3)
       const safeUserFolder =
         typeof userId === "string" && /^[a-z0-9_-]+$/i.test(userId)
           ? userId
           : getUserIdentity("anonymous").storageKey;
 
-      // Determinar tier baseado no plano
-      const tier = (userPlan === 'voz_pro' || userPlan === 'voz_master' || userPlan === 'premium_30')
-        ? 'premium'
-        : 'free';
+      const tier = 'premium';
 
       const r2Key = `${tier}/${safeUserFolder}/${filename}`;
-      console.log(`[R2] Upload para: ${r2Key} (plano: ${userPlan})`);
+      console.log(`[R2] Upload para: ${r2Key}`);
 
       // 4. Faz upload para R2
       const uploadResult = await r2.uploadFile(tempPath, r2Key, {

@@ -94,8 +94,8 @@ async function setupAuthState() {
         }
         if (mobileRecentsLink) mobileRecentsLink.style.display = 'flex';
 
-        // Fetch and display user plan
-        await fetchAndDisplayUserPlan(token);
+        // Sincronizar dados do usuário
+        await syncUserData(token);
     } else {
         // Logged out - Desktop
         if (loginBtn) loginBtn.style.display = 'block';
@@ -215,7 +215,7 @@ function setupMobileMenu() {
     });
 }
 
-async function fetchAndDisplayUserPlan(token) {
+async function syncUserData(token) {
     try {
         const response = await fetch('/api/auth/session', {
             headers: { 'Authorization': `Bearer ${token}` }
@@ -224,7 +224,6 @@ async function fetchAndDisplayUserPlan(token) {
         if (!response.ok) return;
 
         const data = await response.json();
-        const plan = data.user?.plan || 'free';
 
         // Sincronizar localStorage com dados do servidor
         if (data.user) {
@@ -233,13 +232,12 @@ async function fetchAndDisplayUserPlan(token) {
                 try {
                     const userObj = JSON.parse(currentUser);
                     // Atualizar apenas se os dados mudaram
-                    if (userObj.email !== data.user.email || userObj.plan !== data.user.plan || userObj.username !== data.user.username) {
+                    if (userObj.email !== data.user.email || userObj.username !== data.user.username) {
                         const updatedUser = {
                             ...userObj,
                             _id: data.user._id || userObj._id,
                             username: data.user.username,
-                            email: data.user.email,
-                            plan: data.user.plan
+                            email: data.user.email
                         };
                         localStorage.setItem('phona:user', JSON.stringify(updatedUser));
                     }
@@ -249,34 +247,8 @@ async function fetchAndDisplayUserPlan(token) {
                 }
             }
         }
-
-        const planConfig = {
-            free: { icon: 'F', label: 'Free', color: '#999' },
-            voz_pro: { icon: 'P', label: 'Pro', color: '#a78bfa' },
-            voz_master: { icon: 'M', label: 'Master', color: '#fbbf24' },
-            voz_plus_master: { icon: 'M', label: 'Master', color: '#fbbf24' },
-            plano_plus_master: { icon: 'PM', label: 'Plus Master', color: '#fbbf24' }
-        };
-
-        const config = planConfig[plan] || planConfig.free;
-
-        // Desktop badge
-        const desktopBadge = document.getElementById('nav-user-plan-badge');
-        if (desktopBadge && plan !== 'free') {
-            desktopBadge.textContent = `${config.icon} ${config.label}`;
-            desktopBadge.style.background = `${config.color}20`;
-            desktopBadge.style.color = config.color;
-            desktopBadge.style.border = `1px solid ${config.color}40`;
-        }
-
-        // Mobile badge
-        const mobileBadge = document.getElementById('mobile-nav-user-plan-badge');
-        if (mobileBadge && plan !== 'free') {
-            mobileBadge.textContent = `${config.icon} ${config.label}`;
-            mobileBadge.style.color = config.color;
-        }
     } catch (error) {
-        console.error('Erro ao buscar plano do usuário:', error);
+        console.error('Erro ao sincronizar usuário:', error);
     }
 }
 
