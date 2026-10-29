@@ -117,11 +117,6 @@ function startPoll(id) {
       }
       const j = await r.json();
       
-      // Capturar tier do usuário
-      if (j.tier) {
-        userTier = j.tier;
-      }
-
       // Precarregar thumbnail na primeira chamada bem-sucedida (se não foi feito ainda)
       if (!thumbPreloaded && !thumbnail.src) {
         let videoId = j.videoId;
@@ -342,7 +337,7 @@ function updateExpirationDisplay(remainingMs) {
     const isWarning = remainingMs < 20 * 60 * 1000; // menos de 20 min
     const isDanger = remainingMs < 5 * 60 * 1000; // menos de 5 min
 
-    expirationWarning.className = 'expiration-warning premium' +
+    expirationWarning.className = 'expiration-warning active' +
       (isDanger ? ' danger' : isWarning ? ' warning' : '');
     expirationWarning.innerHTML = `
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">

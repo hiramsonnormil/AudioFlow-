@@ -4,7 +4,7 @@
  * Este módulo gerencia:
  * - Upload de arquivos processados para o R2
  * - Geração de URLs públicas
- * - Limpeza automática de arquivos de usuários free (expiração 1h)
+ * - Limpeza automática de arquivos expirados (retenção de 24h)
  * - Deleção de arquivos locais temporários após upload
  */
 
@@ -12,6 +12,11 @@ import { S3Client, PutObjectCommand, DeleteObjectCommand, ListObjectsV2Command, 
 import fs from 'fs/promises';
 import path from 'path';
 import { Readable } from 'stream';
+
+// Prefixo único dos arquivos processados no bucket: audio/<userId>/<jobId>.mp3
+export const STORAGE_PREFIX = 'audio';
+// Tempo de retenção dos arquivos processados no R2
+export const RETENTION_MS = 24 * 60 * 60 * 1000;
 
 // Normaliza valores vindos do .env (remove aspas e spaces acidentais)
 const _norm = (v) => {
@@ -76,7 +81,7 @@ const getAccountIdFromEndpoint = () => {
  * Faz upload de um arquivo local para o R2
  * 
  * @param {string} localPath - Caminho completo do arquivo local
- * @param {string} key - Chave/caminho do objeto no R2 (ex: free/user123/job456.mp3)
+ * @param {string} key - Chave/caminho do objeto no R2 (ex: audio/user123/job456.mp3)
  * @param {object} options - Opções adicionais (userId, preset, etc)
  * @returns {Promise<{key: string, publicUrl: string}>}
  */
@@ -165,16 +170,16 @@ async function deleteObject(key) {
 }
 
 /**
- * Lista e limpa objetos expirados de um usuário free (mais de 1 hora)
+ * Lista e limpa objetos expirados de um usuário (mais antigos que RETENTION_MS)
  * 
- * @param {string} userId - ID do usuário free
+ * @param {string} userId - ID do usuário (storageKey)
  * @returns {Promise<{deleted: number, errors: number}>}
  */
-async function cleanupExpiredFreeObjects(userId) {
+async function cleanupExpiredObjects(userId) {
   try {
     // Lista objetos do usuário usando prefixo
     ensureClient();
-    const prefix = `free/${userId}/`;
+    const prefix = `${STORAGE_PREFIX}/${userId}/`;
     const command = new ListObjectsV2Command({
       Bucket: _BUCKET,
       Prefix: prefix,
@@ -187,18 +192,17 @@ async function cleanupExpiredFreeObjects(userId) {
     }
     
     const now = Date.now();
-    const ONE_HOUR = 60 * 60 * 1000; // 1 hora em milissegundos
     
     let deleted = 0;
     let errors = 0;
     
-    // Para cada objeto, verifica se passou de 1 hora
+    // Para cada objeto, verifica se passou do tempo de retenção
     for (const obj of response.Contents) {
       try {
         // A data de modificação do objeto é usada como referência
         const objectAge = now - new Date(obj.LastModified).getTime();
         
-        if (objectAge > ONE_HOUR) {
+        if (objectAge > RETENTION_MS) {
           await deleteObject(obj.Key);
           deleted++;
         }
@@ -212,83 +216,6 @@ async function cleanupExpiredFreeObjects(userId) {
   } catch (error) {
     console.error('[R2] Erro na limpeza de objetos expirados:', error);
     throw new Error(`Falha na limpeza: ${error.message}`);
-  }
-}
-
-/**
- * Lista objetos válidos (não expirados) de um usuário free
- * 
- * @param {string} userId - ID do usuário free
- * @returns {Promise<Array>} Lista de objetos com informações e URLs
- */
-async function listFreeUserObjects(userId) {
-  try {
-    ensureClient();
-    const prefix = `free/${userId}/`;
-    const command = new ListObjectsV2Command({
-      Bucket: _BUCKET,
-      Prefix: prefix,
-    });
-    
-    const response = await _s3.send(command);
-    
-    if (!response.Contents || response.Contents.length === 0) {
-      return [];
-    }
-    
-    const now = Date.now();
-    const ONE_HOUR = 60 * 60 * 1000;
-    const validObjects = [];
-    
-    // Filtra apenas objetos válidos (menos de 1 hora)
-    for (const obj of response.Contents) {
-      const objectAge = now - new Date(obj.LastModified).getTime();
-      
-      if (objectAge <= ONE_HOUR) {
-        // Extrai informações do nome do arquivo
-        const fileName = path.basename(obj.Key);
-        const jobId = fileName.replace(path.extname(fileName), '');
-        
-        // Busca metadata do objeto
-        let metadata = {};
-        try {
-          const headCommand = new HeadObjectCommand({
-            Bucket: _BUCKET,
-            Key: obj.Key,
-          });
-          const headResponse = await _s3.send(headCommand);
-          metadata = headResponse.Metadata || {};
-        } catch (error) {
-          console.warn(`[R2] Não foi possível obter metadata de ${obj.Key}:`, error.message);
-        }
-        
-        validObjects.push({
-          key: obj.Key,
-          fileName: fileName,
-          jobId: jobId,
-          size: obj.Size,
-          createdAt: obj.LastModified,
-          expiresIn: Math.max(0, ONE_HOUR - objectAge), // Tempo restante em ms
-          publicUrl: getPublicUrl(obj.Key),
-          // Metadata do R2
-          preset: metadata['preset'] || 'CUSTOM',
-          userId: metadata['user-id'] || userId,
-          title: metadata['title'] || null, // Título do áudio
-        });
-      } else {
-        // Objeto expirado - deleta silenciosamente
-        try {
-          await deleteObject(obj.Key);
-        } catch (error) {
-          console.error(`[R2] Erro ao deletar objeto expirado ${obj.Key}:`, error);
-        }
-      }
-    }
-    
-    return validObjects;
-  } catch (error) {
-    console.error('[R2] Erro ao listar objetos do usuário:', error);
-    throw new Error(`Falha ao listar objetos: ${error.message}`);
   }
 }
 
@@ -311,7 +238,7 @@ async function deleteLocalFile(localPath) {
  * Baixa um arquivo do R2 usando autenticação S3
  * Retorna um stream que pode ser usado diretamente com res.pipe()
  * 
- * @param {string} key - Chave do objeto no R2 (ex: free/user@email.com/job123.mp3)
+ * @param {string} key - Chave do objeto no R2 (ex: audio/user@email.com/job123.mp3)
  * @returns {Promise<Readable>} Stream do arquivo
  */
 async function downloadFile(key) {
@@ -341,8 +268,8 @@ async function downloadFile(key) {
 
 /**
  * Extrai a key do R2 a partir de uma URL pública
- * Ex: https://account.r2.cloudflarestorage.com/phona/free/user@email.com/file.mp3
- * Retorna: free/user@email.com/file.mp3
+ * Ex: https://account.r2.cloudflarestorage.com/phona/audio/user@email.com/file.mp3
+ * Retorna: audio/user@email.com/file.mp3
  */
 function extractKeyFromUrl(url) {
   try {
@@ -366,16 +293,15 @@ function extractKeyFromUrl(url) {
 }
 
 /**
- * Lista objetos de um usuário específico (funciona para free ou premium)
- * Suporta tier 'free' (com expiração de 1h) e 'premium' (com expiração de 24h)
+ * Lista objetos válidos (não expirados) de um usuário
+ * Objetos mais antigos que RETENTION_MS são removidos silenciosamente
  * @param {string} userId - Hash do usuário (storageKey)
- * @param {string} tier - 'free' ou 'premium'
  * @returns {Promise<Array>} Lista de objetos válidos com metadata
  */
-export async function listUserObjects(userId, tier = 'free') {
+export async function listUserObjects(userId) {
   try {
     ensureClient();
-    const prefix = `${tier}/${userId}/`;
+    const prefix = `${STORAGE_PREFIX}/${userId}/`;
     const command = new ListObjectsV2Command({
       Bucket: _BUCKET,
       Prefix: prefix,
@@ -389,17 +315,12 @@ export async function listUserObjects(userId, tier = 'free') {
     }
     
     const now = Date.now();
-    const ONE_HOUR = 60 * 60 * 1000;
-    const TWENTY_FOUR_HOURS = 24 * 60 * 60 * 1000;
     const validObjects = [];
-    
-    // Para premium, expiração de 24 horas; free expira em 1 hora
-    const expirationTime = tier === 'premium' ? TWENTY_FOUR_HOURS : ONE_HOUR;
     
     for (const obj of response.Contents) {
       const objectAge = now - new Date(obj.LastModified).getTime();
       
-      if (objectAge <= expirationTime) {
+      if (objectAge <= RETENTION_MS) {
         const fileName = path.basename(obj.Key);
         const jobId = fileName.replace(path.extname(fileName), '');
         
@@ -422,15 +343,14 @@ export async function listUserObjects(userId, tier = 'free') {
           jobId: jobId,
           size: obj.Size,
           createdAt: obj.LastModified,
-          expiresIn: tier === 'premium' ? Math.max(0, TWENTY_FOUR_HOURS - objectAge) : Math.max(0, ONE_HOUR - objectAge),
+          expiresIn: Math.max(0, RETENTION_MS - objectAge),
           publicUrl: getPublicUrl(obj.Key),
           preset: metadata['preset'] || 'CUSTOM',
           userId: metadata['user-id'] || userId,
           title: metadata['title'] || null,
-          tier: tier,
         });
       } else {
-        // Objeto expirado - deleta silenciosamente (free após 1h, premium após 24h)
+        // Objeto expirado - deleta silenciosamente
         try {
           await deleteObject(obj.Key);
           console.log(`[R2] Objeto expirado deletado: ${obj.Key}`);
@@ -443,7 +363,7 @@ export async function listUserObjects(userId, tier = 'free') {
     console.log(`[R2] ✅ ${validObjects.length} objetos válidos em ${prefix}`);
     return validObjects;
   } catch (error) {
-    console.error(`[R2] Erro ao listar objetos de ${tier}/${userId}:`, error);
+    console.error(`[R2] Erro ao listar objetos de ${userId}:`, error);
     throw error;
   }
 }
@@ -452,8 +372,7 @@ export {
   uploadFile,
   getPublicUrl,
   deleteObject,
-  cleanupExpiredFreeObjects,
-  listFreeUserObjects,
+  cleanupExpiredObjects,
   deleteLocalFile,
   downloadFile,
   extractKeyFromUrl,

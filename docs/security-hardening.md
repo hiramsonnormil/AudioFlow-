@@ -10,7 +10,7 @@ This document summarizes the main controls introduced to keep AudioFlow secure a
 
 ## HTTP Surface
 - Helmet, CORS, HPP, XSS cleaning, Mongo sanitization and compression are enabled globally.
-- API entrypoints are rate-limited, and sensitive authentication/free-processing routes have dedicated buckets.
+- API entrypoints are rate-limited, and sensitive authentication/processing routes have dedicated buckets.
 - Request bodies are capped via `REQUEST_BODY_LIMIT` to prevent payload abuse.
 
 ## Authentication
@@ -19,7 +19,7 @@ This document summarizes the main controls introduced to keep AudioFlow secure a
 
 ## Data Hygiene
 - User identifiers stored in jobs/R2 paths are hashed so PII never leaks through file structures.
-- Free-processing endpoints validate URLs/presets, reuse the same sanitization helpers, and share the hashed identifiers with storage cleanup routines.
+- Processing endpoints validate URLs/presets, reuse the same sanitization helpers, and share the hashed identifiers with storage cleanup routines.
 - Background audio processing re-validates identifiers before writing to disk or object storage.
 
 Keep these guarantees in mind when adding new endpoints: reuse the helpers in `src/config/security.js`, apply an appropriate rate limiter, and validate every external input before persisting or executing it.

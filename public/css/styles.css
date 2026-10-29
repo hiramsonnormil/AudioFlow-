@@ -803,34 +803,6 @@ audio {
   }
 }
 
-/* ============= Pricing ============= */
-.pricing {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-  gap: var(--s-16);
-}
-.pricing-card {
-  background: hsl(var(--panel) / 0.7);
-  border: var(--border);
-  border-radius: var(--radius-lg);
-  padding: var(--s-24);
-  box-shadow: var(--shadow);
-  display: grid;
-  gap: var(--s-12);
-}
-.pricing-card .price {
-  font-size: clamp(1.6rem, 3vw, 2rem);
-  font-weight: 800;
-}
-.pricing-card ul {
-  margin: 0;
-  padding-left: 1.2em;
-  color: hsl(var(--muted));
-}
-.pricing-card .cta {
-  margin-top: var(--s-8);
-}
-
 /* ============= Dashboard layout ============= */
 .dashboard {
   container-type: inline-size;

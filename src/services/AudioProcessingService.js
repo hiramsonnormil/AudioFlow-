@@ -155,7 +155,7 @@ export class AudioProcessingService {
    * 
    * Fluxo completo:
    * 1. Gera arquivo temporário com FFmpeg em /tmp
-   * 2. Faz upload para R2 no caminho <tier>/<userId>/<jobId>.mp3
+   * 2. Faz upload para R2 no caminho audio/<userId>/<jobId>.mp3
    * 3. Deleta arquivo temporário local
    * 4. Retorna URL pública do R2
    * 
@@ -201,15 +201,13 @@ export class AudioProcessingService {
         throw new Error('FFmpeg não gerou o arquivo de saída');
       }
 
-      // 3. Define a chave no R2 (estrutura: premium/<userId>/<jobId>.mp3)
+      // 3. Define a chave no R2 (estrutura: audio/<userId>/<jobId>.mp3)
       const safeUserFolder =
         typeof userId === "string" && /^[a-z0-9_-]+$/i.test(userId)
           ? userId
           : getUserIdentity("anonymous").storageKey;
 
-      const tier = 'premium';
-
-      const r2Key = `${tier}/${safeUserFolder}/${filename}`;
+      const r2Key = `${r2.STORAGE_PREFIX}/${safeUserFolder}/${filename}`;
       console.log(`[R2] Upload para: ${r2Key}`);
 
       // 4. Faz upload para R2

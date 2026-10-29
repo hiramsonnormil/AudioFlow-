@@ -26,14 +26,11 @@ router.get('/recent-processings', async (req, res) => {
     const { getUserIdentity } = await import('../config/security.js');
     const { storageKey } = getUserIdentity(userSource);
 
-    let freeObjects = [];
-    let premiumObjects = [];
+    let storedObjects = [];
     let isLocalFallback = false;
     
     try {
-      // Buscar em ambas as pastas para garantir
-      freeObjects = await r2.listUserObjects(storageKey, 'free');
-      premiumObjects = await r2.listUserObjects(storageKey, 'premium');
+      storedObjects = await r2.listUserObjects(storageKey);
     } catch (err) {
       console.warn(`[RECENTS] Fallback local - R2 desabilitado: ${err.message}`);
       isLocalFallback = true;
@@ -62,7 +59,7 @@ router.get('/recent-processings', async (req, res) => {
               expiresIn: ONE_HOUR - objectAge,
               preset: job.metadata?.preset || 'CUSTOM',
               title: job.metadata?.title || 'Áudio Local',
-              tier: 'local'
+              source: 'local'
             });
           }
         }
@@ -71,7 +68,7 @@ router.get('/recent-processings', async (req, res) => {
       // Ordena do mais recente para o mais antigo
       objects.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
     } else {
-      objects = [...freeObjects, ...premiumObjects];
+      objects = storedObjects;
     }
     // Retorna os objetos com informações adicionais
     const processings = objects.map(obj => {
@@ -86,9 +83,9 @@ router.get('/recent-processings', async (req, res) => {
         userId: userSource, // Email visível para o usuário
         preset: obj.preset || 'CUSTOM',
         title: obj.title || null, // Título do áudio se disponível nos metadados
-        tier: obj.tier,
+        source: obj.source || 'r2',
       };
-      console.log(`[RECENTS] 📦 Objeto: ${obj.jobId}, expiresIn: ${obj.expiresIn}, tier: ${obj.tier}`);
+      console.log(`[RECENTS] 📦 Objeto: ${obj.jobId}, expiresIn: ${obj.expiresIn}, source: ${obj.source || 'r2'}`);
       return processing;
     });
 

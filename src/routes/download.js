@@ -7,6 +7,7 @@ import express from 'express';
 
 import { S3Client, GetObjectCommand, HeadObjectCommand } from '@aws-sdk/client-s3';
 import path from 'path';
+import { STORAGE_PREFIX } from '../../storage/r2.js';
 
 const router = express.Router();
 
@@ -40,12 +41,7 @@ router.get('/download/:key(*)', async (req, res) => {
     const { storageKey } = getUserIdentity(userSource);
     
     // Verificar se o arquivo pertence ao usuário
-    const allowedPrefixes = [
-      `free/${storageKey}/`,
-      `premium/${storageKey}/`
-    ];
-    
-    const hasPermission = allowedPrefixes.some(prefix => key.startsWith(prefix));
+    const hasPermission = key.startsWith(`${STORAGE_PREFIX}/${storageKey}/`);
     
     if (!hasPermission) {
       console.log(`[DOWNLOAD] Acesso negado: ${key} não pertence a ${userSource}`);

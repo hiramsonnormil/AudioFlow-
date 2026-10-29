@@ -15,7 +15,7 @@ const router = express.Router();
  * POST /api/r2-test/upload-test
  * 
  * Endpoint de teste para simular upload de arquivo processado para R2
- * Simula o fluxo de um usuário free fazendo upload de áudio processado
+ * Simula o fluxo de upload de um áudio processado
  */
 router.post('/upload-test', async (req, res) => {
   try {
@@ -31,8 +31,8 @@ router.post('/upload-test', async (req, res) => {
     
     // Cria arquivo temporário de teste
     await fs.writeFile(localPath, testContent);
-    // Define a chave no formato para usuário free: free/<userId>/<jobId>.mp3
-    const key = `free/${userId}/${jobId}.mp3`;
+    // Define a chave no formato padrão: audio/<userId>/<jobId>.mp3
+    const key = `${r2.STORAGE_PREFIX}/${userId}/${jobId}.mp3`;
     
     // Faz upload para o R2
     const uploadResult = await r2.uploadFile(localPath, key, {
@@ -53,7 +53,7 @@ router.post('/upload-test', async (req, res) => {
         userId,
         jobId,
         preset,
-        expiresIn: '1 hora',
+        expiresIn: '24 horas',
       }
     });
     
@@ -67,18 +67,18 @@ router.post('/upload-test', async (req, res) => {
 });
 
 /**
- * GET /api/r2-test/recent-free
+ * GET /api/r2-test/recent
  * 
- * Simula a página de "processamentos recentes" para usuário free
- * Lista apenas arquivos do último 1h que ainda não expiraram
+ * Simula a página de "processamentos recentes"
+ * Lista apenas arquivos que ainda não expiraram
  */
-router.get('/recent-free', async (req, res) => {
+router.get('/recent', async (req, res) => {
   try {
     // Pega userId do token ou query param para teste
     const userId = req.user?.id || req.query.userId || 'test-user-123';
     
-    // Busca objetos válidos (menos de 1h) do usuário no R2
-    const objects = await r2.listFreeUserObjects(userId);
+    // Busca objetos válidos (não expirados) do usuário no R2
+    const objects = await r2.listUserObjects(userId);
     
     // Formata resposta para o frontend
     const processamentos = objects.map(obj => ({
@@ -118,7 +118,7 @@ router.post('/cleanup', async (req, res) => {
   try {
     const userId = req.user?.id || req.body.userId || 'test-user-123';
     
-    const result = await r2.cleanupExpiredFreeObjects(userId);
+    const result = await r2.cleanupExpiredObjects(userId);
     
     res.json({
       success: true,

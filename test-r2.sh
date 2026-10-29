@@ -36,7 +36,7 @@ sleep 2
 
 # Teste 2: Listagem de processamentos recentes
 echo -e "${BLUE}[2/4] Listando processamentos recentes...${NC}"
-LIST_RESPONSE=$(curl -s -X GET "$BASE_URL/api/r2-test/recent-free?userId=$USER_ID")
+LIST_RESPONSE=$(curl -s -X GET "$BASE_URL/api/r2-test/recent?userId=$USER_ID")
 
 echo "$LIST_RESPONSE" | jq '.'
 
@@ -61,7 +61,7 @@ sleep 1
 
 # Teste 4: Listar novamente para ver os dois arquivos
 echo -e "${BLUE}[4/4] Listando novamente...${NC}"
-LIST_RESPONSE_2=$(curl -s -X GET "$BASE_URL/api/r2-test/recent-free?userId=$USER_ID")
+LIST_RESPONSE_2=$(curl -s -X GET "$BASE_URL/api/r2-test/recent?userId=$USER_ID")
 
 echo "$LIST_RESPONSE_2" | jq '.'
 
@@ -83,6 +83,6 @@ echo -e "${BLUE}Para testar a limpeza manual (deleta arquivos expirados):${NC}"
 echo "curl -X POST $BASE_URL/api/r2-test/cleanup -H 'Content-Type: application/json' -d '{\"userId\": \"$USER_ID\"}'"
 echo ""
 echo -e "${BLUE}Para deletar um arquivo específico:${NC}"
-echo "curl -X DELETE '$BASE_URL/api/r2-test/delete/free/$USER_ID/<jobId>.mp3'"
+echo "curl -X DELETE '$BASE_URL/api/r2-test/delete/audio/$USER_ID/<jobId>.mp3'"
 echo ""
 echo -e "${GREEN}✓ Testes concluídos!${NC}"

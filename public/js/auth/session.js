@@ -93,8 +93,8 @@ export function clearSession() {
   localStorage.removeItem(TOKEN_KEY);
   localStorage.removeItem(USER_KEY);
   
-  // Também limpar job temporário do plano Free
-  localStorage.removeItem('phona:free:downloadJob');
+  // Também limpar job temporário de download
+  localStorage.removeItem('phona:downloadJob');
 }
 
 /**

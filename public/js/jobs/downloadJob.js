@@ -1,6 +1,6 @@
 /**
  * PHONA Download Page
- * Gerencia download de arquivos processados (plano Free)
+ * Gerencia download de arquivos processados
  */
 
 import { requireAuth, redirectToApp } from '../router.js';
@@ -88,7 +88,7 @@ function loadJob() {
 
   // Pequeno delay para efeito visual
   setTimeout(() => {
-    const job = getLocal('phona:free:downloadJob');
+    const job = getLocal('phona:downloadJob');
 
     if (!job || !job.jobId) {
       showEmptyState();
@@ -145,7 +145,7 @@ async function cleanupJob() {
   }
 
   // Remover do localStorage
-  removeLocal('phona:free:downloadJob');
+  removeLocal('phona:downloadJob');
 
   // Tentar remover do servidor (opcional, sem bloquear)
   try {
@@ -176,7 +176,7 @@ function setupNavigationCleanup() {
   window.addEventListener('beforeunload', () => {
     if (currentJob) {
       // Sync cleanup (beforeunload não suporta async bem)
-      removeLocal('phona:free:downloadJob');
+      removeLocal('phona:downloadJob');
     }
   });
 

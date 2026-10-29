@@ -69,7 +69,6 @@ export const jobController = {
         preset,
         duration,
         youtubeUrl: url,
-        plan: "local",
       };
       job.userId = userIdentity.storageKey;
       job.metadata.userStorageKey = userIdentity.storageKey;

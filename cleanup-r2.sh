@@ -2,10 +2,10 @@
 
 #########################################################
 # Script de limpeza automática de arquivos expirados   #
-# Cloudflare R2 - Usuários Free                         #
+# Cloudflare R2                                         #
 #                                                       #
 # Este script deve ser executado periodicamente via     #
-# cron job para limpar arquivos com mais de 1 hora     #
+# cron job para limpar arquivos com mais de 24 horas   #
 #########################################################
 
 # Configurações
@@ -21,12 +21,12 @@ log "========================================"
 log "Iniciando limpeza de arquivos expirados"
 log "========================================"
 
-# Lista todos os usuários free (você precisa adaptar isso ao seu sistema)
+# Lista de usuários a limpar (você precisa adaptar isso ao seu sistema)
 # Exemplo: buscar do banco de dados, arquivo, etc
 # Por enquanto, vamos fazer uma limpeza geral
 
-# Opção 1: Se você mantém lista de usuários free
-USERS_FILE="/tmp/free-users.txt"
+# Opção 1: Se você mantém uma lista de usuários
+USERS_FILE="/tmp/r2-users.txt"
 
 if [ -f "$USERS_FILE" ]; then
     log "Limpando arquivos de usuários listados em $USERS_FILE"

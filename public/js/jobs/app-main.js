@@ -369,7 +369,7 @@ async function handleProcess(e) {
       `,
     });
 
-    // Salvar job no localStorage para plano Free
+    // Salvar job no localStorage para download posterior
     saveJobForDownload(currentJobId, url, preset, presetName);
 
   } catch (error) {
@@ -391,7 +391,7 @@ async function handleProcess(e) {
 }
 
 /**
- * Salvar job para download (plano Free)
+ * Salvar job para download
  */
 function saveJobForDownload(jobId, url, preset, presetName) {
   const downloadJob = {
@@ -404,7 +404,7 @@ function saveJobForDownload(jobId, url, preset, presetName) {
     createdAt: new Date().toISOString(),
   };
 
-  setLocal('phona:free:downloadJob', downloadJob);
+  setLocal('phona:downloadJob', downloadJob);
 }
 
 /**

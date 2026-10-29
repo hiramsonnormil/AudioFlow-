@@ -735,31 +735,31 @@
   color: var(--error);
 }
 
-/* Estilo especial para usuários premium */
-.expiration-warning.premium {
+/* Aviso de expiração ativo */
+.expiration-warning.active {
   background: linear-gradient(135deg, rgba(194, 140, 102, 0.15), rgba(166, 115, 81, 0.1));
   border: 1px solid var(--copper);
   color: var(--copper);
   box-shadow: 0 4px 16px rgba(194, 140, 102, 0.2);
 }
 
-.expiration-warning.premium svg {
+.expiration-warning.active svg {
   color: var(--copper);
 }
 
-.expiration-warning.premium strong {
+.expiration-warning.active strong {
   color: var(--copper-light);
   font-weight: 700;
 }
 
-/* Premium com warning (menos de 20 min) */
-.expiration-warning.premium.warning {
+/* Ativo com warning (menos de 20 min) */
+.expiration-warning.active.warning {
   background: linear-gradient(135deg, rgba(255, 193, 58, 0.15), rgba(194, 140, 102, 0.1));
   border-color: #ffc13a;
 }
 
-/* Premium com danger (menos de 5 min) */
-.expiration-warning.premium.danger {
+/* Ativo com danger (menos de 5 min) */
+.expiration-warning.active.danger {
   background: linear-gradient(135deg, rgba(255, 77, 77, 0.15), rgba(194, 140, 102, 0.1));
   border-color: var(--error);
 }
